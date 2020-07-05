@@ -24,8 +24,8 @@
 // prototypically inherits from Readable, and then parasitically from
 // Writable.
 
-import Readable from './_stream_readable.js';
-import Writable from './_stream_writable.js';
+import Readable from './readable.js';
+import Writable from './writable.js';
 import {
   StringDecoder,
 } from "https://raw.githubusercontent.com/Soremwar/deno/stream/std/node/string_decoder.js";

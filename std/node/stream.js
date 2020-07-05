@@ -20,11 +20,11 @@
 // USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import Stream from "./internal/streams/legacy.js";
-import Readable from "./_stream_readable.js";
-import Writable from "./_stream_writable.js";
-import Duplex from "./_stream_duplex.js";
-import Transform from "./_stream_transform.js";
-import PassThrough from "./_stream_passthrough.js";
+import Readable from "./_stream/readable.js";
+import Writable from "./_stream/writable.js";
+import Duplex from "./_stream/duplex.js";
+import Transform from "./_stream/transform.js";
+import PassThrough from "./_stream/passthrough.js";
 import pipeline from './internal/streams/pipeline.js';
 import eos from './internal/streams/end-of-stream.js';
 import {

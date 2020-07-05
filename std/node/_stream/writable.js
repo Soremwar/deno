@@ -26,21 +26,21 @@
 import {
   captureRejectionSymbol,
 } from 'https://raw.githubusercontent.com/Soremwar/deno/stream/std/node/events.ts';
-import Stream from "./internal/streams/legacy.js";
+import Stream from "../internal/streams/legacy.js";
 import { Buffer } from 'http://deno.land/std/node/buffer.ts';
 import {
   construct,
   destroy,
   undestroy,
   errorOrDestroy,
-} from './internal/streams/destroy.js';
+} from '../internal/streams/destroy.js';
 import {
   getHighWaterMark,
   getDefaultHighWaterMark
-} from './internal/streams/state.js';
+} from '../internal/streams/state.js';
 import {
   codes as error_codes,
-} from "./internal/errors.js";
+} from "../internal/errors.js";
 
 const {
   ERR_INVALID_ARG_TYPE,

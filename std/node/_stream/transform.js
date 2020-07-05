@@ -63,8 +63,8 @@
 
 import {
   codes as error_codes,
-} from "./internal/errors.js";
-import Duplex from './_stream_duplex.js';
+} from "../internal/errors.js";
+import Duplex from './duplex.js';
 
 const {
   ERR_METHOD_NOT_IMPLEMENTED,

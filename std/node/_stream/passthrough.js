@@ -23,7 +23,7 @@
 // basically just the most minimal sort of Transform stream.
 // Every written chunk gets output as-is.
 
-import Transform from './_stream_transform.js';
+import Transform from './transform.js';
 
 Object.setPrototypeOf(PassThrough.prototype, Transform.prototype);
 Object.setPrototypeOf(PassThrough, Transform);
