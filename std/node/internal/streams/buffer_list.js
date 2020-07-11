@@ -1,7 +1,8 @@
 //TODO@Soremwar
 //Investigate/Bring back inspect calls
+//Add types
 
-import { Buffer } from 'http://deno.land/std/node/buffer.ts';
+import Buffer from '../../buffer.ts';
 
 export default class BufferList {
   constructor() {

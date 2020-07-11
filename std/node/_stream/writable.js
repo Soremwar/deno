@@ -1,3 +1,5 @@
+//TODO@Soremwar
+//Typescript
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,9 +27,9 @@
 
 import {
   captureRejectionSymbol,
-} from 'https://raw.githubusercontent.com/Soremwar/deno/stream/std/node/events.ts';
+} from '../events.ts';
 import Stream from "../internal/streams/legacy.js";
-import { Buffer } from 'http://deno.land/std/node/buffer.ts';
+import Buffer from '../buffer.ts';
 import {
   construct,
   destroy,

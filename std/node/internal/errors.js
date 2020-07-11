@@ -1,4 +1,6 @@
 //TODO@Soremwar
+//Add types
+//Convert errors to class
 
 import {
   platform

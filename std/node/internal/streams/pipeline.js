@@ -10,7 +10,7 @@ import {
 } from '../errors.js';
 import eos from "./end-of-stream.js";
 import createReadableStreamAsyncIterator from "./async_iterator.js";
-import * as events from "https://deno.land/std/node/events.ts";
+import * as events from "../../events.ts";
 
 const {
   ERR_INVALID_ARG_TYPE,

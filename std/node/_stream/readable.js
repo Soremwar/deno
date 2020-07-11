@@ -25,9 +25,9 @@
 
 import {
   captureRejectionSymbol,
-} from 'https://raw.githubusercontent.com/Soremwar/deno/stream/std/node/events.ts';
+} from '../events.ts';
 import Stream from "../internal/streams/legacy.js";
-import { Buffer } from 'http://deno.land/std/node/buffer.ts';
+import Buffer from '../buffer.ts';
 import BufferList from '../internal/streams/buffer_list.js';
 import * as destroyImpl from '../internal/streams/destroy.js';
 import {
@@ -39,7 +39,7 @@ import {
 } from "../internal/errors.js";
 import {
   StringDecoder,
-} from "https://raw.githubusercontent.com/Soremwar/deno/stream/std/node/string_decoder.js";
+} from "../string_decoder.ts";
 import createReadableStreamAsyncIterator from "../internal/streams/async_iterator.js";
 import streamFrom from "../internal/streams/from.js";
 

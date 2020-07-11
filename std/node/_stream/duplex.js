@@ -28,7 +28,7 @@ import Readable from './readable.js';
 import Writable from './writable.js';
 import {
   StringDecoder,
-} from "https://raw.githubusercontent.com/Soremwar/deno/stream/std/node/string_decoder.js";
+} from "../string_decoder.ts";
 
 const kPaused = Symbol('kPaused');
 Object.setPrototypeOf(Duplex.prototype, Readable.prototype);

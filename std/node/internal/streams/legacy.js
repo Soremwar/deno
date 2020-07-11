@@ -1,7 +1,7 @@
 //TODO@Soremwar
 //Move from prototypes to classes
 
-import events from "https://deno.land/std/node/events.ts";
+import events from "../../events.ts";
 
 function Stream(opts) {
   events.call(this, opts);

@@ -1,4 +1,4 @@
-import { Buffer } from 'http://deno.land/std/node/buffer.ts';
+import Buffer from '../../buffer.ts';
 import {
   codes as error_codes,
 } from "../errors.js";

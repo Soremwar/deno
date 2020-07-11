@@ -29,7 +29,7 @@ import pipeline from './internal/streams/pipeline.js';
 import eos from './internal/streams/end-of-stream.js';
 import {
   types
-} from "http://deno.land/std/node/util.ts";
+} from "./util.ts";
 
 const _isUint8Array = types.isUint8Array;
 
