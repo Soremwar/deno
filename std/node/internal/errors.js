@@ -2,11 +2,7 @@
 
 import {
   platform
-} from 'https://deno.land/std/node/process.ts';
-import {
-  getSystemErrorName,
-} from './util.js';
-import { assert } from "https://deno.land/std/testing/asserts.ts";
+} from '../process.ts';
 
 const sep = platform === 'win32' ? '\\' : '/';
 
@@ -76,17 +72,6 @@ const maybeOverridePrepareStackTrace = (globalThis, error, trace) => {
 };
 
 let excludedStackFn;
-
-// Lazily loaded
-let util;
-
-let internalUtil = null;
-async function lazyInternalUtil() {
-  if (!internalUtil) {
-    internalUtil = await import('./util.js');
-  }
-  return internalUtil;
-}
 
 let internalUtilInspect = null;
 async function lazyInternalUtilInspect() {
@@ -260,25 +245,6 @@ function makeNodeErrorWithCode(Base, key) {
   };
 }
 
-// This function removes unnecessary frames from Node.js core errors.
-function hideStackFrames(fn) {
-  return function hidden(...args) {
-    // Make sure the most outer `hideStackFrames()` function is used.
-    let setStackFn = false;
-    if (excludedStackFn === undefined) {
-      excludedStackFn = hidden;
-      setStackFn = true;
-    }
-    try {
-      return fn(...args);
-    } finally {
-      if (setStackFn === true) {
-        excludedStackFn = undefined;
-      }
-    }
-  };
-}
-
 function addCodeToName(err, name, code) {
   // Set the stack
   if (excludedStackFn !== undefined) {
@@ -326,22 +292,18 @@ function E(sym, val, def, ...otherClasses) {
 function getMessage(key, args, self) {
   const msg = messages.get(key);
 
-  if (assert === undefined) assert = require('internal/assert');
-
   if (typeof msg === 'function') {
-    assert(
-      msg.length <= args.length, // Default options do not count.
+    if(msg.length > args.length) throw new codes.ERR_INTERNAL_ASSERTION(
       `Code: ${key}; The provided arguments length (${args.length}) does not ` +
-        `match the required ones (${msg.length}).`
+      `match the required ones (${msg.length}).`
     );
     return msg.apply(self, args);
   }
 
   const expectedLength = (msg.match(/%[dfijoOs]/g) || []).length;
-  assert(
-    expectedLength === args.length,
+  if(expectedLength !== args.length) throw new codes.ERR_INTERNAL_ASSERTION(
     `Code: ${key}; The provided arguments length (${args.length}) does not ` +
-      `match the required ones (${expectedLength}).`
+    `match the required ones (${expectedLength}).`
   );
   if (args.length === 0)
     return msg;
@@ -349,281 +311,6 @@ function getMessage(key, args, self) {
   args.unshift(msg);
   return lazyInternalUtilInspect().format.apply(null, args);
 }
-
-let uvBinding;
-
-function lazyUv() {
-  if (!uvBinding) {
-    uvBinding = internalBinding('uv');
-  }
-  return uvBinding;
-}
-
-const uvUnmappedError = ['UNKNOWN', 'unknown error'];
-
-function uvErrmapGet(name) {
-  uvBinding = lazyUv();
-  if (!uvBinding.errmap) {
-    uvBinding.errmap = uvBinding.getErrorMap();
-  }
-  return uvBinding.errmap.get(name);
-}
-
-
-/**
- * This creates an error compatible with errors produced in the C++
- * function UVException using a context object with data assembled in C++.
- * The goal is to migrate them to ERR_* errors later when compatibility is
- * not a concern.
- *
- * @param {Object} ctx
- * @returns {Error}
- */
-function uvException(ctx) {
-  const [ code, uvmsg ] = uvErrmapGet(ctx.errno) || uvUnmappedError;
-  let message = `${code}: ${ctx.message || uvmsg}, ${ctx.syscall}`;
-
-  let path;
-  let dest;
-  if (ctx.path) {
-    path = ctx.path.toString();
-    message += ` '${path}'`;
-  }
-  if (ctx.dest) {
-    dest = ctx.dest.toString();
-    message += ` -> '${dest}'`;
-  }
-
-  // Reducing the limit improves the performance significantly. We do not loose
-  // the stack frames due to the `captureStackTrace()` function that is called
-  // later.
-  const tmpLimit = Error.stackTraceLimit;
-  Error.stackTraceLimit = 0;
-  // Pass the message to the constructor instead of setting it on the object
-  // to make sure it is the same as the one created in C++
-  // eslint-disable-next-line no-restricted-syntax
-  const err = new Error(message);
-  Error.stackTraceLimit = tmpLimit;
-
-  for (const prop of Object.keys(ctx)) {
-    if (prop === 'message' || prop === 'path' || prop === 'dest') {
-      continue;
-    }
-    err[prop] = ctx[prop];
-  }
-
-  err.code = code;
-  if (path) {
-    err.path = path;
-  }
-  if (dest) {
-    err.dest = dest;
-  }
-
-  // eslint-disable-next-line no-restricted-syntax
-  Error.captureStackTrace(err, excludedStackFn || uvException);
-  return err;
-}
-
-/**
- * This creates an error compatible with errors produced in the C++
- * This function should replace the deprecated
- * `exceptionWithHostPort()` function.
- *
- * @param {number} err - A libuv error number
- * @param {string} syscall
- * @param {string} address
- * @param {number} [port]
- * @returns {Error}
- */
-function uvExceptionWithHostPort(err, syscall, address, port) {
-  const [ code, uvmsg ] = uvErrmapGet(err) || uvUnmappedError;
-  const message = `${syscall} ${code}: ${uvmsg}`;
-  let details = '';
-
-  if (port && port > 0) {
-    details = ` ${address}:${port}`;
-  } else if (address) {
-    details = ` ${address}`;
-  }
-
-  // Reducing the limit improves the performance significantly. We do not loose
-  // the stack frames due to the `captureStackTrace()` function that is called
-  // later.
-  const tmpLimit = Error.stackTraceLimit;
-  Error.stackTraceLimit = 0;
-  // eslint-disable-next-line no-restricted-syntax
-  const ex = new Error(`${message}${details}`);
-  Error.stackTraceLimit = tmpLimit;
-  ex.code = code;
-  ex.errno = err;
-  ex.syscall = syscall;
-  ex.address = address;
-  if (port) {
-    ex.port = port;
-  }
-
-  // eslint-disable-next-line no-restricted-syntax
-  Error.captureStackTrace(ex, excludedStackFn || uvExceptionWithHostPort);
-  return ex;
-}
-
-/**
- * This used to be util._errnoException().
- *
- * @param {number} err - A libuv error number
- * @param {string} syscall
- * @param {string} [original]
- * @returns {Error}
- */
-function errnoException(err, syscall, original) {
-  // TODO(joyeecheung): We have to use the type-checked
-  // getSystemErrorName(err) to guard against invalid arguments from users.
-  // This can be replaced with [ code ] = errmap.get(err) when this method
-  // is no longer exposed to user land.
-  if (util === undefined) util = require('util');
-  const code = util.getSystemErrorName(err);
-  const message = original ?
-    `${syscall} ${code} ${original}` : `${syscall} ${code}`;
-
-  // eslint-disable-next-line no-restricted-syntax
-  const ex = new Error(message);
-  ex.errno = err;
-  ex.code = code;
-  ex.syscall = syscall;
-
-  // eslint-disable-next-line no-restricted-syntax
-  Error.captureStackTrace(ex, excludedStackFn || errnoException);
-  return ex;
-}
-
-/**
- * Deprecated, new function is `uvExceptionWithHostPort()`
- * New function added the error description directly
- * from C++. this method for backwards compatibility
- * @param {number} err - A libuv error number
- * @param {string} syscall
- * @param {string} address
- * @param {number} [port]
- * @param {string} [additional]
- * @returns {Error}
- */
-function exceptionWithHostPort(err, syscall, address, port, additional) {
-  // TODO(joyeecheung): We have to use the type-checked
-  // getSystemErrorName(err) to guard against invalid arguments from users.
-  // This can be replaced with [ code ] = errmap.get(err) when this method
-  // is no longer exposed to user land.
-  if (util === undefined) util = require('util');
-  const code = util.getSystemErrorName(err);
-  let details = '';
-  if (port && port > 0) {
-    details = ` ${address}:${port}`;
-  } else if (address) {
-    details = ` ${address}`;
-  }
-  if (additional) {
-    details += ` - Local (${additional})`;
-  }
-
-  // Reducing the limit improves the performance significantly. We do not loose
-  // the stack frames due to the `captureStackTrace()` function that is called
-  // later.
-  const tmpLimit = Error.stackTraceLimit;
-  Error.stackTraceLimit = 0;
-  // eslint-disable-next-line no-restricted-syntax
-  const ex = new Error(`${syscall} ${code}${details}`);
-  Error.stackTraceLimit = tmpLimit;
-  ex.errno = err;
-  ex.code = code;
-  ex.syscall = syscall;
-  ex.address = address;
-  if (port) {
-    ex.port = port;
-  }
-
-  // eslint-disable-next-line no-restricted-syntax
-  Error.captureStackTrace(ex, excludedStackFn || exceptionWithHostPort);
-  return ex;
-}
-
-/**
- * @param {number|string} code - A libuv error number or a c-ares error code
- * @param {string} syscall
- * @param {string} [hostname]
- * @returns {Error}
- */
-function dnsException(code, syscall, hostname) {
-  let errno;
-  // If `code` is of type number, it is a libuv error number, else it is a
-  // c-ares error code.
-  // TODO(joyeecheung): translate c-ares error codes into numeric ones and
-  // make them available in a property that's not error.errno (since they
-  // can be in conflict with libuv error codes). Also make sure
-  // util.getSystemErrorName() can understand them when an being informed that
-  // the number is a c-ares error code.
-  if (typeof code === 'number') {
-    errno = code;
-    // ENOTFOUND is not a proper POSIX error, but this error has been in place
-    // long enough that it's not practical to remove it.
-    if (code === lazyUv().UV_EAI_NODATA || code === lazyUv().UV_EAI_NONAME) {
-      code = 'ENOTFOUND'; // Fabricated error name.
-    } else {
-      code = lazyInternalUtil().getSystemErrorName(code);
-    }
-  }
-  const message = `${syscall} ${code}${hostname ? ` ${hostname}` : ''}`;
-  // Reducing the limit improves the performance significantly. We do not loose
-  // the stack frames due to the `captureStackTrace()` function that is called
-  // later.
-  const tmpLimit = Error.stackTraceLimit;
-  Error.stackTraceLimit = 0;
-  // eslint-disable-next-line no-restricted-syntax
-  const ex = new Error(message);
-  Error.stackTraceLimit = tmpLimit;
-  ex.errno = errno;
-  ex.code = code;
-  ex.syscall = syscall;
-  if (hostname) {
-    ex.hostname = hostname;
-  }
-
-  // eslint-disable-next-line no-restricted-syntax
-  Error.captureStackTrace(ex, excludedStackFn || dnsException);
-  return ex;
-}
-
-function connResetException(msg) {
-  // eslint-disable-next-line no-restricted-syntax
-  const ex = new Error(msg);
-  ex.code = 'ECONNRESET';
-  return ex;
-}
-
-let maxStack_ErrorName;
-let maxStack_ErrorMessage;
-/**
- * Returns true if `err.name` and `err.message` are equal to engine-specific
- * values indicating max call stack size has been exceeded.
- * "Maximum call stack size exceeded" in V8.
- *
- * @param {Error} err
- * @returns {boolean}
- */
-function isStackOverflowError(err) {
-  if (maxStack_ErrorMessage === undefined) {
-    try {
-      function overflowStack() { overflowStack(); }
-      overflowStack();
-    } catch (err) {
-      maxStack_ErrorMessage = err.message;
-      maxStack_ErrorName = err.name;
-    }
-  }
-
-  return err && err.name === maxStack_ErrorName &&
-         err.message === maxStack_ErrorMessage;
-}
-
 // Only use this for integers! Decimal numbers do not work with this function.
 function addNumericalSeparator(val) {
   let res = '';
@@ -637,89 +324,6 @@ function addNumericalSeparator(val) {
 
 // Used to enhance the stack that will be picked up by the inspector
 const kEnhanceStackBeforeInspector = Symbol('kEnhanceStackBeforeInspector');
-
-// These are supposed to be called only on fatal exceptions before
-// the process exits.
-/*
-const fatalExceptionStackEnhancers = {
-  beforeInspector(error) {
-    if (typeof error[kEnhanceStackBeforeInspector] !== 'function') {
-      return error.stack;
-    }
-
-    try {
-      // Set the error.stack here so it gets picked up by the
-      // inspector.
-      error.stack = error[kEnhanceStackBeforeInspector]();
-    } catch {
-      // We are just enhancing the error. If it fails, ignore it.
-    }
-    return error.stack;
-  },
-  afterInspector(error) {
-    const originalStack = error.stack;
-    let useColors = true;
-    // Some consoles do not convert ANSI escape sequences to colors,
-    // rather display them directly to the stdout. On those consoles,
-    // libuv emulates colors by intercepting stdout stream and calling
-    // corresponding Windows API functions for setting console colors.
-    // However, fatal error are handled differently and we cannot easily
-    // highlight them. On Windows, detecting whether a console supports
-    // ANSI escape sequences is not reliable.
-    if (process.platform === 'win32') {
-      const info = internalBinding('os').getOSInformation();
-      const ver = info[2].split('.').map((a) => +a);
-      if (ver[0] !== 10 || ver[2] < 14393) {
-        useColors = false;
-      }
-    }
-    const {
-      inspect,
-      inspectDefaultOptions: {
-        colors: defaultColors
-      }
-    } = lazyInternalUtilInspect();
-    const colors = useColors &&
-                   ((internalBinding('util').guessHandleType(2) === 'TTY' &&
-                   require('internal/tty').hasColors()) ||
-                   defaultColors);
-    try {
-      return inspect(error, {
-        colors,
-        customInspect: false,
-        depth: Math.max(inspect.defaultOptions.depth, 5)
-      });
-    } catch {
-      return originalStack;
-    }
-  }
-};
-*/
-export {
-  //addCodeToName, // Exported for NghttpError
-  codes,
-  /*
-  dnsException,
-  errnoException,
-  exceptionWithHostPort,
-  getMessage,
-  hideStackFrames,
-  isStackOverflowError,
-  connResetException,
-  uvErrmapGet,
-  uvException,
-  uvExceptionWithHostPort,
-  SystemError,
-  // This is exported only to facilitate testing.
-  E,
-  kNoOverride,
-  prepareStackTrace,
-  maybeOverridePrepareStackTrace,
-  overrideStackTrace,
-  kEnhanceStackBeforeInspector,
-  fatalExceptionStackEnhancers
-  */
-};
 
 // To declare an error message, use the E(sym, val, def) function above. The sym
 // must be an upper case string. The val can be either a function or a string.
@@ -957,10 +561,9 @@ E('ERR_INVALID_ADDRESS_FAMILY', function(addressType, host, port) {
 }, RangeError);
 E('ERR_INVALID_ARG_TYPE',
   (name, expected, actual) => {
-    assert(typeof name === 'string', "'name' must be a string");
-    if (!Array.isArray(expected)) {
-      expected = [expected];
-    }
+    if(typeof name !== 'string') throw new codes.ERR_INTERNAL_ASSERTION(
+      "'name' must be a string"
+    );
 
     let msg = 'The ';
     if (name.endsWith(' argument')) {
@@ -977,15 +580,17 @@ E('ERR_INVALID_ARG_TYPE',
     const other = [];
 
     for (const value of expected) {
-      assert(typeof value === 'string',
-             'All expected entries have to be of type string');
+      if(typeof value !== 'string') throw new codes.ERR_INTERNAL_ASSERTION(
+        'All expected entries have to be of type string'
+      );
       if (kTypes.includes(value)) {
         types.push(value.toLowerCase());
       } else if (classRegExp.test(value)) {
         instances.push(value);
       } else {
-        assert(value !== 'object',
-               'The value "object" should be written as "Object"');
+        if(value === 'object') throw new codes.ERR_INTERNAL_ASSERTION(
+          'The value "object" should be written as "Object"'
+        );
         other.push(value);
       }
     }
@@ -1098,7 +703,7 @@ E('ERR_INVALID_MODULE_SPECIFIER', (pkgPath, subpath, base = undefined) => {
   if (subpath === undefined) {
     return `Invalid package name '${pkgPath}' imported from ${base}`;
   } else if (base === undefined) {
-    assert(subpath !== '.');
+    if(subpath === '.') throw new codes.ERR_INTERNAL_ASSERTION();
     return `Package subpath '${subpath}' is not a valid module request for ` +
       `the "exports" resolution of ${pkgPath}${sep}package.json`;
   }
@@ -1190,7 +795,8 @@ E('ERR_INVALID_URL_SCHEME',
   (expected) => {
     if (typeof expected === 'string')
       expected = [expected];
-    assert(expected.length <= 2);
+
+    if(expected.length > 2) throw new codes.ERR_INTERNAL_ASSERTION();
     const res = expected.length === 2 ?
       `one of scheme ${expected[0]} or ${expected[1]}` :
       `of scheme ${expected[0]}`;
@@ -1231,7 +837,9 @@ E('ERR_MANIFEST_UNKNOWN_ONERROR',
 E('ERR_METHOD_NOT_IMPLEMENTED', 'The %s method is not implemented', Error);
 E('ERR_MISSING_ARGS',
   (...args) => {
-    assert(args.length > 0, 'At least one arg needs to be specified');
+    if(args.length === 0) throw new codes.ERR_INTERNAL_ASSERTION(
+      'At least one arg needs to be specified'
+    );
     let msg = 'The ';
     const len = args.length;
     const wrap = (a) => `"${a}"`;
@@ -1272,7 +880,9 @@ E('ERR_NO_ICU',
   '%s is not supported on Node.js compiled without ICU', TypeError);
 E('ERR_OUT_OF_RANGE',
   (str, range, input, replaceDefaultBoolean = false) => {
-    assert(range, 'Missing "range" argument');
+    if(!range) throw new codes.ERR_INTERNAL_ASSERTION(
+      'Missing "range" argument'
+    );
     let msg = replaceDefaultBoolean ? str :
       `The value of "${str}" is out of range.`;
     let received;
@@ -1386,8 +996,9 @@ E('ERR_SOCKET_ALREADY_BOUND', 'Socket is already bound', Error);
 E('ERR_SOCKET_BAD_BUFFER_SIZE',
   'Buffer size must be a positive integer', TypeError);
 E('ERR_SOCKET_BAD_PORT', (name, port, allowZero = true) => {
-  assert(typeof allowZero === 'boolean',
-         "The 'allowZero' argument must be of type boolean.");
+  if(typeof allowZero !== 'boolean') throw new codes.ERR_INTERNAL_ASSERTION(
+    "The 'allowZero' argument must be of type boolean."
+  );
   const operator = allowZero ? '>=' : '>';
   return `${name} should be ${operator} 0 and < 65536. Received ${port}.`;
 }, RangeError);
@@ -1518,3 +1129,8 @@ E('ERR_WORKER_UNSUPPORTED_EXTENSION',
 E('ERR_WORKER_UNSUPPORTED_OPERATION',
   '%s is not supported in workers', TypeError);
 E('ERR_ZLIB_INITIALIZATION_FAILED', 'Initialization failed', Error);
+
+export {
+  codes,
+  kEnhanceStackBeforeInspector,
+};
