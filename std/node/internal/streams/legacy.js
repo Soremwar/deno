@@ -1,12 +1,16 @@
 //TODO@Soremwar
 //Move from prototypes to classes
-
 import EventEmitter from "../../events.ts";
+import {
+  types,
+} from "../../util.ts";
 
 class Stream extends EventEmitter {
   constructor(options) {
     super(options);
   }
+
+  static _isUint8Array = types.isUint8Array;
 
   pipe(dest, options) {
     const source = this;

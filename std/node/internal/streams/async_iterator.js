@@ -34,7 +34,10 @@ function readAndResolve(iter) {
 function onReadable(iter) {
   // We wait for the next tick, because it might
   // emit an error with `process.nextTick()`.
-  process.nextTick(readAndResolve, iter);
+  //TODO
+  //This replaces `process.nextTick(readAndResolve, iter);`
+  //Is this reliable?
+  queueMicrotask(() => readAndResolve(iter));
 }
 
 function wrapForNext(lastPromise, iter) {
