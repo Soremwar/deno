@@ -4,22 +4,22 @@ import {
   ServerRequest,
   serve,
   Server as DenoServer,
-} from "https://deno.land/std@0.69.0/http/server.ts";
+} from "../http/server.ts";
 import type {
   HTTPOptions,
-} from "https://deno.land/std@0.69.0/http/server.ts";
+} from "../http/server.ts";
 import {
   EventEmitter,
-} from "https://deno.land/std@0.69.0/node/events.ts";
+} from "./events.ts";
 import type {
   Buffer,
-} from "https://deno.land/std@0.69.0/node/buffer.ts";
+} from "./buffer.ts";
 import type { Socket } from "./net.ts";
 
 const kOnKeylog = Symbol("onkeylog");
 const kRequestOptions = Symbol("requestOptions");
 const kRequestAsyncResource = Symbol("requestAsyncResource");
-const asyncIdSymbol = Symbol("Placeholder for async_id_symbol"); // TODO(any) What is the value? Here's a link to where it's pulled from: https://github.com/nodejs/node/blob/59ca56eddefc78bab87d7e8e074b3af843ab1bc3/lib/internal/async_hooks.js#L97
+const asyncIdSymbol = Symbol("async_id"); // TODO(any) What is the value? Here's a link to where it's pulled from: https://github.com/nodejs/node/blob/59ca56eddefc78bab87d7e8e074b3af843ab1bc3/lib/internal/async_hooks.js#L97
 
 const tokenRegExp = /^[\^_`a-zA-Z\-0-9!#$%&'*+.|~]+$/;
 const headerCharRegex = /[^\t\x20-\x7e\x80-\xff]/;
@@ -31,9 +31,9 @@ const MAX_HEADER_SIZE = 80 * 1024;
 
 // https://github.com/nodejs/node/blob/59ca56eddefc78bab87d7e8e074b3af843ab1bc3/lib/_http_agent.js#L63
 class ReusedHandle {
-  public type: unknown; // TODO(any) Unsure what type this is
-  public handle: unknown; // TODO(any) What would the type be for `socket._handle`
-  constructor(type, handle) { // TODO(any) Add types, see above
+  public type: unknown; // TODO(any) Low priority: Unsure what type this is
+  public handle: unknown; // TODO(any) Low priority: What would the type be for `socket._handle`
+  constructor(type: unknown, handle: unknown) { // TODO(any) Low priority: Add types, see above
     this.type = type;
     this.handle = handle;
   }
@@ -625,12 +625,13 @@ export class Http {
    *        ...
    *      }
    *
+   * @param options - Configs to start the server on
    * @param requestListener - Callback for when a request is made
    */
-  public createServer(
+  public createServer(options: HTTPOptions | ((req: ServerRequest, res: Response) => void),
     requestListener: (req: ServerRequest, res: Response) => void,
   ): Server {
-    return new Server(requestListener);
+    return new Server(options, requestListener);
   }
 
   public validateHeaderName(name: string): void {
