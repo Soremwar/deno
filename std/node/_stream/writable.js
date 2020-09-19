@@ -60,30 +60,16 @@ function nop() {}
 
 const kOnFinished = Symbol("kOnFinished");
 
-function WritableState(options, stream, isDuplex) {
-  // Duplex streams are both readable and writable, but share
-  // the same options object.
-  // However, some cases require setting options to different
-  // values for the readable and the writable sides of the duplex stream,
-  // e.g. options.readableObjectMode vs. options.writableObjectMode, etc.
-  if (typeof isDuplex !== "boolean") {
-    isDuplex = stream instanceof Stream.Duplex;
-  }
-
+function WritableState(options, stream) {
   // Object stream flag to indicate whether or not this stream
   // contains buffers or objects.
   this.objectMode = !!(options && options.objectMode);
-
-  if (isDuplex) {
-    this.objectMode = this.objectMode ||
-      !!(options && options.writableObjectMode);
-  }
 
   // The point at which write() starts returning false
   // Note: 0 is a valid value, means that we always return false if
   // the entire buffer is not flushed immediately on write().
   this.highWaterMark = options
-    ? getHighWaterMark(this, options, "writableHighWaterMark", isDuplex)
+    ? getHighWaterMark(this, options, "writableHighWaterMark", false)
     : getDefaultHighWaterMark(false);
 
   // if _final has been called.
@@ -204,81 +190,43 @@ Object.defineProperty(WritableState.prototype, "bufferedRequestCount", {
   },
 });
 
-// Test _writableState for inheritance to account for Duplex streams,
-// whose prototype chain only points to Readable.
-let realHasInstance;
-if (typeof Symbol === "function" && Symbol.hasInstance) {
-  realHasInstance = Function.prototype[Symbol.hasInstance];
-  Object.defineProperty(Writable, Symbol.hasInstance, {
-    value: function (object) {
-      if (realHasInstance.call(this, object)) {
-        return true;
-      }
-      if (this !== Writable) {
-        return false;
+class Writable extends Stream {
+  constructor(options){
+    super(options);
+    this._writableState = new WritableState(options, this);
+
+    if (options) {
+      if (typeof options.write === "function") {
+        this._write = options.write;
       }
 
-      return object && object._writableState instanceof WritableState;
-    },
-  });
-} else {
-  realHasInstance = function (object) {
-    return object instanceof this;
-  };
-}
+      if (typeof options.writev === "function") {
+        this._writev = options.writev;
+      }
 
-function Writable(options) {
-  // Writable ctor is applied to Duplexes, too.
-  // `realHasInstance` is necessary because using plain `instanceof`
-  // would return false, as no `_writableState` property is attached.
+      if (typeof options.destroy === "function") {
+        this._destroy = options.destroy;
+      }
 
-  // Trying to use the custom `instanceof` for Writable here will also break the
-  // Node.js LazyTransform implementation, which has a non-trivial getter for
-  // `_writableState` that would lead to infinite recursion.
+      if (typeof options.final === "function") {
+        this._final = options.final;
+      }
 
-  // Checking for a Stream.Duplex instance is faster here instead of inside
-  // the WritableState constructor, at least with V8 6.5.
-  const isDuplex = (this instanceof Stream.Duplex);
+      if (typeof options.construct === "function") {
+        this._construct = options.construct;
+      }
+    }
 
-  if (!isDuplex && !realHasInstance.call(Writable, this)) {
-    return new Writable(options);
+    construct(this, () => {
+      const state = this._writableState;
+
+      if (!state.writing) {
+        clearBuffer(this, state);
+      }
+
+      finishMaybe(this, state);
+    });
   }
-
-  this._writableState = new WritableState(options, this, isDuplex);
-
-  if (options) {
-    if (typeof options.write === "function") {
-      this._write = options.write;
-    }
-
-    if (typeof options.writev === "function") {
-      this._writev = options.writev;
-    }
-
-    if (typeof options.destroy === "function") {
-      this._destroy = options.destroy;
-    }
-
-    if (typeof options.final === "function") {
-      this._final = options.final;
-    }
-
-    if (typeof options.construct === "function") {
-      this._construct = options.construct;
-    }
-  }
-
-  Stream.call(this, options);
-
-  construct(this, () => {
-    const state = this._writableState;
-
-    if (!state.writing) {
-      clearBuffer(this, state);
-    }
-
-    finishMaybe(this, state);
-  });
 }
 
 // Otherwise people can pipe Writable streams, which is just wrong.
@@ -333,7 +281,10 @@ Writable.prototype.write = function (chunk, encoding, cb) {
   }
 
   if (err) {
-    process.nextTick(cb, err);
+    //TODO(Soremwar)
+    //This replaces `process.nextTick(cb, err);`
+    //Check if this is a reliable replace
+    queueMicrotask(() => cb(err));
     errorOrDestroy(this, err, true);
     return false;
   }
@@ -464,7 +415,10 @@ function onwrite(stream, er) {
     }
 
     if (sync) {
-      process.nextTick(onwriteError, stream, state, er, cb);
+      //TODO(Soremwar)
+      //This replaces `process.nextTick(onwriteError, stream, state, er, cb);`
+      //Check if this is a reliable replace
+      queueMicrotask(() => onwriteError(stream, state, er, cb));
     } else {
       onwriteError(stream, state, er, cb);
     }
@@ -485,7 +439,10 @@ function onwrite(stream, er) {
         state.afterWriteTickInfo.count++;
       } else {
         state.afterWriteTickInfo = { count: 1, cb, stream, state };
-        process.nextTick(afterWriteTick, state.afterWriteTickInfo);
+        //TODO(Soremwar)
+        //This replaces `process.nextTick(afterWriteTick, state.afterWriteTickInfo);`
+        //Check if this is a reliable replace
+        queueMicrotask(() => afterWriteTick(state.afterWriteTickInfo));
       }
     } else {
       afterWrite(stream, state, 1, cb);
@@ -644,7 +601,10 @@ Writable.prototype.end = function (chunk, encoding, cb) {
 
   if (typeof cb === "function") {
     if (err || state.finished) {
-      process.nextTick(cb, err);
+      //TODO(Soremwar)
+      //This replaces `process.nextTick(cb, err);`
+      //Check if this is a reliable replace
+      queueMicrotask(() => cb(err));
     } else {
       state[kOnFinished].push(cb);
     }
@@ -680,7 +640,10 @@ function callFinal(stream, state) {
       // Some streams assume 'finish' will be emitted
       // asynchronously relative to _final callback.
       state.pendingcb++;
-      process.nextTick(finish, stream, state);
+      //TODO(Soremwar)
+      //This replaces `process.nextTick(finish, stream, state);`
+      //Check if this is a reliable replace
+      queueMicrotask(() => finish(stream, state));
     }
   });
   state.sync = false;
@@ -704,7 +667,10 @@ function finishMaybe(stream, state, sync) {
     if (state.pendingcb === 0 && needFinish(state)) {
       state.pendingcb++;
       if (sync) {
-        process.nextTick(finish, stream, state);
+        //TODO(Soremwar)
+        //This replaces `process.nextTick(finish, stream, state);`
+        //Check if this is a reliable replace
+        queueMicrotask(() => finish(stream, state));
       } else {
         finish(stream, state);
       }
@@ -820,7 +786,10 @@ Object.defineProperties(Writable.prototype, {
 Writable.prototype.destroy = function (err, cb) {
   const state = this._writableState;
   if (!state.destroyed) {
-    process.nextTick(errorBuffer, state);
+    //TODO(Soremwar)
+    //This replaces `process.nextTick(errorBuffer, state);`
+    //Check if this is a reliable replace
+    queueMicrotask(() => errorBuffer(state));
   }
   destroy.call(this, err, cb);
   return this;

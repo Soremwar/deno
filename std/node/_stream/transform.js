@@ -64,7 +64,7 @@
 import {
   codes as error_codes,
 } from "../internal/errors.js";
-import Duplex from "./duplex.js";
+import Duplex from "./duplex.ts";
 
 const {
   ERR_METHOD_NOT_IMPLEMENTED,

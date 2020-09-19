@@ -31,8 +31,6 @@ import {
 } from "../string_decoder.ts";
 
 const kPaused = Symbol("kPaused");
-Object.setPrototypeOf(Duplex.prototype, Readable.prototype);
-Object.setPrototypeOf(Duplex, Readable);
 
 {
   // Allow the keys array to be GC'ed.
@@ -43,32 +41,34 @@ Object.setPrototypeOf(Duplex, Readable);
   }
 }
 
-function Duplex(options) {
-  if (!(this instanceof Duplex)) {
-    return new Duplex(options);
-  }
+class Duplex extends Readable implements Writable {
+  allowHalfOpen = true;
+  readable = true;
+  writable = true;
 
-  Readable.call(this, options);
-  Writable.call(this, options);
-  this.allowHalfOpen = true;
+  #writable: Writable;
 
-  if (options) {
-    if (options.readable === false) {
-      this.readable = false;
-    }
-
-    if (options.writable === false) {
-      this.writable = false;
-    }
-
-    if (options.allowHalfOpen === false) {
-      this.allowHalfOpen = false;
+  constructor(options: any){
+    super(options);
+    this.#writable = new Writable(options);
+    if (options) {
+      if (options.readable === false) {
+        this.readable = false;
+      }
+  
+      if (options.writable === false) {
+        this.writable = false;
+      }
+  
+      if (options.allowHalfOpen === false) {
+        this.allowHalfOpen = false;
+      }
     }
   }
 }
 
 Object.defineProperties(Duplex.prototype, {
-  writable: Object.getOwnPropertyDescriptor(Writable.prototype, "writable"),
+  //writable: Object.getOwnPropertyDescriptor(Writable.prototype, "writable"),
   writableHighWaterMark: Object.getOwnPropertyDescriptor(
     Writable.prototype,
     "writableHighWaterMark",
