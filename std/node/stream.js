@@ -25,10 +25,10 @@ import Writable from "./_stream/writable.js";
 import Duplex from "./_stream/duplex.js";
 import Transform from "./_stream/transform.js";
 import PassThrough from "./_stream/passthrough.js";
-import pipeline from './internal/streams/pipeline.js';
-import eos from './internal/streams/end-of-stream.js';
+import pipeline from "./internal/streams/pipeline.js";
+import eos from "./internal/streams/end-of-stream.js";
 import {
-  types
+  types,
 } from "./util.ts";
 
 const _isUint8Array = types.isUint8Array;

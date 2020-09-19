@@ -64,7 +64,7 @@
 import {
   codes as error_codes,
 } from "../internal/errors.js";
-import Duplex from './duplex.js';
+import Duplex from "./duplex.js";
 
 const {
   ERR_METHOD_NOT_IMPLEMENTED,
@@ -72,11 +72,12 @@ const {
 Object.setPrototypeOf(Transform.prototype, Duplex.prototype);
 Object.setPrototypeOf(Transform, Duplex);
 
-const kCallback = Symbol('kCallback');
+const kCallback = Symbol("kCallback");
 
 export default function Transform(options) {
-  if (!(this instanceof Transform))
+  if (!(this instanceof Transform)) {
     return new Transform(options);
+  }
 
   Duplex.call(this, options);
 
@@ -88,22 +89,24 @@ export default function Transform(options) {
   this[kCallback] = null;
 
   if (options) {
-    if (typeof options.transform === 'function')
+    if (typeof options.transform === "function") {
       this._transform = options.transform;
+    }
 
-    if (typeof options.flush === 'function')
+    if (typeof options.flush === "function") {
       this._flush = options.flush;
+    }
   }
 
   // When the writable side finishes, then flush out anything remaining.
   // Backwards compat. Some Transform streams incorrectly implement _final
   // instead of or in addition to _flush. By using 'prefinish' instead of
   // implementing _final we continue supporting this unfortunate use case.
-  this.on('prefinish', prefinish);
+  this.on("prefinish", prefinish);
 }
 
 function prefinish() {
-  if (typeof this._flush === 'function' && !this.destroyed) {
+  if (typeof this._flush === "function" && !this.destroyed) {
     this._flush((er, data) => {
       if (er) {
         this.destroy(er);
@@ -120,11 +123,11 @@ function prefinish() {
   }
 }
 
-Transform.prototype._transform = function(chunk, encoding, callback) {
-  throw new ERR_METHOD_NOT_IMPLEMENTED('_transform()');
+Transform.prototype._transform = function (chunk, encoding, callback) {
+  throw new ERR_METHOD_NOT_IMPLEMENTED("_transform()");
 };
 
-Transform.prototype._write = function(chunk, encoding, callback) {
+Transform.prototype._write = function (chunk, encoding, callback) {
   const rState = this._readableState;
   const wState = this._writableState;
   const length = rState.length;
@@ -152,7 +155,7 @@ Transform.prototype._write = function(chunk, encoding, callback) {
   });
 };
 
-Transform.prototype._read = function() {
+Transform.prototype._read = function () {
   if (this[kCallback]) {
     const callback = this[kCallback];
     this[kCallback] = null;

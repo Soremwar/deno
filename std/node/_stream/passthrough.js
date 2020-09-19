@@ -23,18 +23,19 @@
 // basically just the most minimal sort of Transform stream.
 // Every written chunk gets output as-is.
 
-import Transform from './transform.js';
+import Transform from "./transform.js";
 
 Object.setPrototypeOf(PassThrough.prototype, Transform.prototype);
 Object.setPrototypeOf(PassThrough, Transform);
 
 export default function PassThrough(options) {
-  if (!(this instanceof PassThrough))
+  if (!(this instanceof PassThrough)) {
     return new PassThrough(options);
+  }
 
   Transform.call(this, options);
 }
 
-PassThrough.prototype._transform = function(chunk, _encoding, cb) {
+PassThrough.prototype._transform = function (chunk, _encoding, cb) {
   cb(null, chunk);
 };

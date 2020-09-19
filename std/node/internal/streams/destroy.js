@@ -2,13 +2,13 @@
 
 import {
   codes as error_codes,
-} from '../errors.js';
+} from "../errors.js";
 const {
   ERR_MULTIPLE_CALLBACK,
 } = error_codes;
 
-const kDestroy = Symbol('kDestroy');
-const kConstruct = Symbol('kConstruct');
+const kDestroy = Symbol("kDestroy");
+const kConstruct = Symbol("kConstruct");
 
 // Backwards compat. cb() is undocumented and unused in core but
 // unfortunately might be used by modules.
@@ -19,7 +19,7 @@ function destroy(err, cb) {
   const s = w || r;
 
   if ((w && w.destroyed) || (r && r.destroyed)) {
-    if (typeof cb === 'function') {
+    if (typeof cb === "function") {
       cb();
     }
 
@@ -50,7 +50,7 @@ function destroy(err, cb) {
 
   // If still constructing then defer calling _destroy.
   if (!s.constructed) {
-    this.once(kDestroy, function(er) {
+    this.once(kDestroy, function (er) {
       _destroy(this, err || er, cb);
     });
   } else {
@@ -84,7 +84,7 @@ function _destroy(self, err, cb) {
       r.closed = true;
     }
 
-    if (typeof cb === 'function') {
+    if (typeof cb === "function") {
       cb(err);
     }
 
@@ -113,7 +113,7 @@ function emitCloseNT(self) {
   }
 
   if ((w && w.emitClose) || (r && r.emitClose)) {
-    self.emit('close');
+    self.emit("close");
   }
 }
 
@@ -132,7 +132,7 @@ function emitErrorNT(self, err) {
     r.errorEmitted = true;
   }
 
-  self.emit('error', err);
+  self.emit("error", err);
 }
 
 function undestroy() {
@@ -180,9 +180,9 @@ function errorOrDestroy(stream, err, sync) {
     return this;
   }
 
-  if ((r && r.autoDestroy) || (w && w.autoDestroy))
+  if ((r && r.autoDestroy) || (w && w.autoDestroy)) {
     stream.destroy(err);
-  else if (err) {
+  } else if (err) {
     // Avoid V8 leak, https://github.com/nodejs/node/pull/34103#issuecomment-652002364
     err.stack;
 
@@ -201,7 +201,7 @@ function errorOrDestroy(stream, err, sync) {
 }
 
 function construct(stream, cb) {
-  if (typeof stream._construct !== 'function') {
+  if (typeof stream._construct !== "function") {
     return;
   }
 
@@ -261,15 +261,15 @@ function emitConstructNT(stream) {
 }
 
 function isRequest(stream) {
-  return stream && stream.setHeader && typeof stream.abort === 'function';
+  return stream && stream.setHeader && typeof stream.abort === "function";
 }
 
 // Normalize destroy for legacy.
 function destroyer(stream, err) {
   if (isRequest(stream)) return stream.abort();
   if (isRequest(stream.req)) return stream.req.abort();
-  if (typeof stream.destroy === 'function') return stream.destroy(err);
-  if (typeof stream.close === 'function') return stream.close();
+  if (typeof stream.destroy === "function") return stream.destroy(err);
+  if (typeof stream.close === "function") return stream.close();
 }
 
 export {

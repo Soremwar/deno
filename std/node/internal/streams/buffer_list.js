@@ -2,7 +2,7 @@
 //Investigate/Bring back inspect calls
 //Add types
 
-import Buffer from '../../buffer.ts';
+import Buffer from "../../buffer.ts";
 
 export default class BufferList {
   constructor() {
@@ -13,30 +13,34 @@ export default class BufferList {
 
   push(v) {
     const entry = { data: v, next: null };
-    if (this.length > 0)
+    if (this.length > 0) {
       this.tail.next = entry;
-    else
+    } else {
       this.head = entry;
+    }
     this.tail = entry;
     ++this.length;
   }
 
   unshift(v) {
     const entry = { data: v, next: this.head };
-    if (this.length === 0)
+    if (this.length === 0) {
       this.tail = entry;
+    }
     this.head = entry;
     ++this.length;
   }
 
   shift() {
-    if (this.length === 0)
+    if (this.length === 0) {
       return;
+    }
     const ret = this.head.data;
-    if (this.length === 1)
+    if (this.length === 1) {
       this.head = this.tail = null;
-    else
+    } else {
       this.head = this.head.next;
+    }
     --this.length;
     return ret;
   }
@@ -47,18 +51,21 @@ export default class BufferList {
   }
 
   join(s) {
-    if (this.length === 0)
-      return '';
+    if (this.length === 0) {
+      return "";
+    }
     let p = this.head;
-    let ret = '' + p.data;
-    while (p = p.next)
+    let ret = "" + p.data;
+    while (p = p.next) {
       ret += s + p.data;
+    }
     return ret;
   }
 
   concat(n) {
-    if (this.length === 0)
+    if (this.length === 0) {
       return Buffer.alloc(0);
+    }
     const ret = Buffer.allocUnsafe(n >>> 0);
     let p = this.head;
     let i = 0;
@@ -99,7 +106,7 @@ export default class BufferList {
 
   // Consumes a specified amount of characters from the buffered data.
   _getString(n) {
-    let ret = '';
+    let ret = "";
     let p = this.head;
     let c = 0;
     do {
@@ -111,10 +118,11 @@ export default class BufferList {
         if (n === str.length) {
           ret += str;
           ++c;
-          if (p.next)
+          if (p.next) {
             this.head = p.next;
-          else
+          } else {
             this.head = this.tail = null;
+          }
         } else {
           ret += str.slice(0, n);
           this.head = p;
@@ -143,10 +151,11 @@ export default class BufferList {
         if (n === buf.length) {
           ret.set(buf, retLen - n);
           ++c;
-          if (p.next)
+          if (p.next) {
             this.head = p.next;
-          else
+          } else {
             this.head = this.tail = null;
+          }
         } else {
           ret.set(new Uint8Array(buf.buffer, buf.byteOffset, n), retLen - n);
           this.head = p;
@@ -159,4 +168,4 @@ export default class BufferList {
     this.length -= c;
     return ret;
   }
-};
+}

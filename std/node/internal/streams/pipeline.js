@@ -1,13 +1,13 @@
 // Ported from https://github.com/mafintosh/pump with
 // permission from the author, Mathias Buus (@mafintosh).
 
-import { once } from '../util.js';
+import { once } from "../util.js";
 import {
   destroyer as impl_destroyer,
-} from './destroy.js';
+} from "./destroy.js";
 import {
   codes as internal_codes,
-} from '../errors.js';
+} from "../errors.js";
 import eos from "./end-of-stream.js";
 import createReadableStreamAsyncIterator from "./async_iterator.js";
 import * as events from "../../events.ts";
@@ -17,7 +17,7 @@ const {
   ERR_INVALID_RETURN_VALUE,
   ERR_INVALID_CALLBACK,
   ERR_MISSING_ARGS,
-  ERR_STREAM_DESTROYED
+  ERR_STREAM_DESTROYED,
 } = internal_codes;
 
 let PassThrough;
@@ -26,7 +26,7 @@ function destroyer(stream, reading, writing, callback) {
   callback = once(callback);
 
   let finished = false;
-  stream.on('close', () => {
+  stream.on("close", () => {
     finished = true;
   });
 
@@ -36,7 +36,7 @@ function destroyer(stream, reading, writing, callback) {
     const rState = stream._readableState;
     if (
       err &&
-      err.code === 'ERR_STREAM_PREMATURE_CLOSE' &&
+      err.code === "ERR_STREAM_PREMATURE_CLOSE" &&
       reading &&
       (rState && rState.ended && !rState.errored && !rState.errorEmitted)
     ) {
@@ -49,8 +49,8 @@ function destroyer(stream, reading, writing, callback) {
       // eos will only fail with premature close on the reading side for
       // duplex streams.
       stream
-        .once('end', callback)
-        .once('error', callback);
+        .once("end", callback)
+        .once("error", callback);
     } else {
       callback(err);
     }
@@ -60,7 +60,7 @@ function destroyer(stream, reading, writing, callback) {
     if (finished) return;
     finished = true;
     impl_destroyer(stream, err);
-    callback(err || new ERR_STREAM_DESTROYED('pipe'));
+    callback(err || new ERR_STREAM_DESTROYED("pipe"));
   };
 }
 
@@ -68,21 +68,22 @@ function popCallback(streams) {
   // Streams should never be an empty array. It should always contain at least
   // a single stream. Therefore optimize for the average case instead of
   // checking for length === 0 as well.
-  if (typeof streams[streams.length - 1] !== 'function')
+  if (typeof streams[streams.length - 1] !== "function") {
     throw new ERR_INVALID_CALLBACK(streams[streams.length - 1]);
+  }
   return streams.pop();
 }
 
 function isPromise(obj) {
-  return !!(obj && typeof obj.then === 'function');
+  return !!(obj && typeof obj.then === "function");
 }
 
 function isReadable(obj) {
-  return !!(obj && typeof obj.pipe === 'function');
+  return !!(obj && typeof obj.pipe === "function");
 }
 
 function isWritable(obj) {
-  return !!(obj && typeof obj.write === 'function');
+  return !!(obj && typeof obj.write === "function");
 }
 
 function isStream(obj) {
@@ -91,10 +92,10 @@ function isStream(obj) {
 
 function isIterable(obj, isAsync) {
   if (!obj) return false;
-  if (isAsync === true) return typeof obj[Symbol.asyncIterator] === 'function';
-  if (isAsync === false) return typeof obj[Symbol.iterator] === 'function';
-  return typeof obj[Symbol.asyncIterator] === 'function' ||
-    typeof obj[Symbol.iterator] === 'function';
+  if (isAsync === true) return typeof obj[Symbol.asyncIterator] === "function";
+  if (isAsync === false) return typeof obj[Symbol.iterator] === "function";
+  return typeof obj[Symbol.asyncIterator] === "function" ||
+    typeof obj[Symbol.iterator] === "function";
 }
 
 function makeAsyncIterable(val) {
@@ -105,7 +106,10 @@ function makeAsyncIterable(val) {
     return fromReadable(val);
   }
   throw new ERR_INVALID_ARG_TYPE(
-    'val', ['Readable', 'Iterable', 'AsyncIterable'], val);
+    "val",
+    ["Readable", "Iterable", "AsyncIterable"],
+    val,
+  );
 }
 
 async function* fromReadable(val) {
@@ -118,7 +122,7 @@ async function pump(iterable, writable, finish) {
     for await (const chunk of iterable) {
       if (!writable.write(chunk)) {
         if (writable.destroyed) return;
-        await events.once(writable, 'drain');
+        await events.once(writable, "drain");
       }
     }
     writable.end();
@@ -135,7 +139,7 @@ function pipeline(...streams) {
   if (Array.isArray(streams[0])) streams = streams[0];
 
   if (streams.length < 2) {
-    throw new ERR_MISSING_ARGS('streams');
+    throw new ERR_MISSING_ARGS("streams");
   }
 
   let error;
@@ -147,7 +151,7 @@ function pipeline(...streams) {
   function finish(err) {
     const final = --finishCount === 0;
 
-    if (err && (!error || error.code === 'ERR_STREAM_PREMATURE_CLOSE')) {
+    if (err && (!error || error.code === "ERR_STREAM_PREMATURE_CLOSE")) {
       error = err;
     }
 
@@ -176,31 +180,39 @@ function pipeline(...streams) {
     }
 
     if (i === 0) {
-      if (typeof stream === 'function') {
+      if (typeof stream === "function") {
         ret = stream();
         if (!isIterable(ret)) {
           throw new ERR_INVALID_RETURN_VALUE(
-            'Iterable, AsyncIterable or Stream', 'source', ret);
+            "Iterable, AsyncIterable or Stream",
+            "source",
+            ret,
+          );
         }
       } else if (isIterable(stream) || isReadable(stream)) {
         ret = stream;
       } else {
         throw new ERR_INVALID_ARG_TYPE(
-          'source', ['Stream', 'Iterable', 'AsyncIterable', 'Function'],
-          stream);
+          "source",
+          ["Stream", "Iterable", "AsyncIterable", "Function"],
+          stream,
+        );
       }
-    } else if (typeof stream === 'function') {
+    } else if (typeof stream === "function") {
       ret = makeAsyncIterable(ret);
       ret = stream(ret);
 
       if (reading) {
         if (!isIterable(ret, true)) {
           throw new ERR_INVALID_RETURN_VALUE(
-            'AsyncIterable', `transform[${i - 1}]`, ret);
+            "AsyncIterable",
+            `transform[${i - 1}]`,
+            ret,
+          );
         }
       } else {
         if (!PassThrough) {
-          PassThrough = require('_stream_passthrough');
+          PassThrough = require("_stream_passthrough");
         }
 
         // If the last argument to pipeline is not a stream
@@ -209,7 +221,7 @@ function pipeline(...streams) {
         // composed through `.pipe(stream)`.
 
         const pt = new PassThrough({
-          objectMode: true
+          objectMode: true,
         });
         if (isPromise(ret)) {
           ret
@@ -224,7 +236,10 @@ function pipeline(...streams) {
           pump(ret, pt, finish);
         } else {
           throw new ERR_INVALID_RETURN_VALUE(
-            'AsyncIterable or Promise', 'destination', ret);
+            "AsyncIterable or Promise",
+            "destination",
+            ret,
+          );
         }
 
         ret = pt;
@@ -240,7 +255,7 @@ function pipeline(...streams) {
         // pipe() did/does not end() stdio destinations.
         // Now they allow it but "secretly" don't close the underlying fd.
         if (stream === process.stdout || stream === process.stderr) {
-          ret.on('end', () => stream.end());
+          ret.on("end", () => stream.end());
         }
       } else {
         ret = makeAsyncIterable(ret);
@@ -250,9 +265,12 @@ function pipeline(...streams) {
       }
       ret = stream;
     } else {
-      const name = reading ? `transform[${i - 1}]` : 'destination';
+      const name = reading ? `transform[${i - 1}]` : "destination";
       throw new ERR_INVALID_ARG_TYPE(
-        name, ['Stream', 'Function'], ret);
+        name,
+        ["Stream", "Function"],
+        ret,
+      );
     }
   }
 

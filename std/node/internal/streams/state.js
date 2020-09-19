@@ -4,8 +4,11 @@ import {
 const { ERR_INVALID_OPT_VALUE } = error_codes;
 
 function highWaterMarkFrom(options, isDuplex, duplexKey) {
-  return options.highWaterMark != null ? options.highWaterMark :
-    isDuplex ? options[duplexKey] : null;
+  return options.highWaterMark != null
+    ? options.highWaterMark
+    : isDuplex
+    ? options[duplexKey]
+    : null;
 }
 
 function getDefaultHighWaterMark(objectMode) {
@@ -16,7 +19,7 @@ function getHighWaterMark(state, options, duplexKey, isDuplex) {
   const hwm = highWaterMarkFrom(options, isDuplex, duplexKey);
   if (hwm != null) {
     if (!Number.isInteger(hwm) || hwm < 0) {
-      const name = isDuplex ? duplexKey : 'highWaterMark';
+      const name = isDuplex ? duplexKey : "highWaterMark";
       throw new ERR_INVALID_OPT_VALUE(name, hwm);
     }
     return Math.floor(hwm);
@@ -28,5 +31,5 @@ function getHighWaterMark(state, options, duplexKey, isDuplex) {
 
 export {
   getHighWaterMark,
-  getDefaultHighWaterMark
+  getDefaultHighWaterMark,
 };

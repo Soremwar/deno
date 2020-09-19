@@ -1,38 +1,39 @@
-import Buffer from '../../buffer.ts';
+import Buffer from "../../buffer.ts";
 import {
   codes as error_codes,
 } from "../errors.js";
 
 const {
   ERR_INVALID_ARG_TYPE,
-  ERR_STREAM_NULL_VALUES
+  ERR_STREAM_NULL_VALUES,
 } = error_codes;
 
 export default function from(Readable, iterable, opts) {
   let iterator;
-  if (typeof iterable === 'string' || iterable instanceof Buffer) {
+  if (typeof iterable === "string" || iterable instanceof Buffer) {
     return new Readable({
       objectMode: true,
       ...opts,
       read() {
         this.push(iterable);
         this.push(null);
-      }
+      },
     });
   }
 
-  if (iterable && iterable[Symbol.asyncIterator])
+  if (iterable && iterable[Symbol.asyncIterator]) {
     iterator = iterable[Symbol.asyncIterator]();
-  else if (iterable && iterable[Symbol.iterator])
+  } else if (iterable && iterable[Symbol.iterator]) {
     iterator = iterable[Symbol.iterator]();
-  else
-    throw new ERR_INVALID_ARG_TYPE('iterable', ['Iterable'], iterable);
+  } else {
+    throw new ERR_INVALID_ARG_TYPE("iterable", ["Iterable"], iterable);
+  }
 
   const readable = new Readable({
     objectMode: true,
     highWaterMark: 1,
     // TODO(ronag): What options should be allowed?
-    ...opts
+    ...opts,
   });
 
   // Reading boolean to protect against _read
@@ -42,14 +43,14 @@ export default function from(Readable, iterable, opts) {
   // needToClose boolean if iterator needs to be explicitly closed
   let needToClose = false;
 
-  readable._read = function() {
+  readable._read = function () {
     if (!reading) {
       reading = true;
       next();
     }
   };
 
-  readable._destroy = function(error, cb) {
+  readable._destroy = function (error, cb) {
     if (needToClose) {
       needToClose = false;
       close().then(
@@ -62,7 +63,7 @@ export default function from(Readable, iterable, opts) {
   };
 
   async function close() {
-    if (typeof iterator.return === 'function') {
+    if (typeof iterator.return === "function") {
       const { value } = await iterator.return();
       await value;
     }

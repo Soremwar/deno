@@ -1,6 +1,6 @@
 //TODO@Soremwar
 //Remove unused internal/util.js
-'use strict';
+"use strict";
 /*
 const {
   ArrayFrom,
@@ -31,7 +31,7 @@ import {
   */
   //uvErrmapGet,
   //overrideStackTrace,
-} from './errors.js';
+} from "./errors.js";
 /*
 const { signals } = internalBinding('constants').os;
 const {
@@ -393,7 +393,7 @@ function isInsideNodeModules() {
 */
 export function once(callback) {
   let called = false;
-  return function(...args) {
+  return function (...args) {
     if (called) return;
     called = true;
     callback.apply(this, args);
@@ -446,5 +446,5 @@ export {
   // default isEncoding implementation, just in case userland overrides it.
   kIsEncodingSymbol: Symbol('kIsEncodingSymbol'),
   kVmBreakFirstLineSymbol: Symbol('kVmBreakFirstLineSymbol')
-*/
-}
+  */
+};

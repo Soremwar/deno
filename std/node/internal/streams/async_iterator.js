@@ -1,15 +1,15 @@
-'use strict';
+"use strict";
 
-import finished from './end-of-stream.js';
-import * as destroyImpl from './destroy.js';
+import finished from "./end-of-stream.js";
+import * as destroyImpl from "./destroy.js";
 
-const kLastResolve = Symbol('lastResolve');
-const kLastReject = Symbol('lastReject');
-const kError = Symbol('error');
-const kEnded = Symbol('ended');
-const kLastPromise = Symbol('lastPromise');
-const kHandlePromise = Symbol('handlePromise');
-const kStream = Symbol('stream');
+const kLastResolve = Symbol("lastResolve");
+const kLastReject = Symbol("lastReject");
+const kError = Symbol("error");
+const kEnded = Symbol("ended");
+const kLastPromise = Symbol("lastPromise");
+const kHandlePromise = Symbol("handlePromise");
+const kStream = Symbol("stream");
 
 let Readable;
 
@@ -51,14 +51,15 @@ function wrapForNext(lastPromise, iter) {
 }
 
 const AsyncIteratorPrototype = Object.getPrototypeOf(
-  Object.getPrototypeOf(async function* () {}).prototype);
+  Object.getPrototypeOf(async function* () {}).prototype,
+);
 
 function finish(self, err) {
   return new Promise((resolve, reject) => {
     const stream = self[kStream];
 
     finished(stream, (err) => {
-      if (err && err.code !== 'ERR_STREAM_PREMATURE_CLOSE') {
+      if (err && err.code !== "ERR_STREAM_PREMATURE_CLOSE") {
         reject(err);
       } else {
         resolve(createIterResult(undefined, true));
@@ -93,7 +94,7 @@ const ReadableStreamAsyncIteratorPrototype = Object.setPrototypeOf({
           resolve(createIterResult(undefined, true));
         } else {
           finished(this[kStream], (err) => {
-            if (err && err.code !== 'ERR_STREAM_PREMATURE_CLOSE') {
+            if (err && err.code !== "ERR_STREAM_PREMATURE_CLOSE") {
               reject(err);
             } else {
               resolve(createIterResult(undefined, true));
@@ -137,11 +138,11 @@ const ReadableStreamAsyncIteratorPrototype = Object.setPrototypeOf({
 }, AsyncIteratorPrototype);
 
 const createReadableStreamAsyncIterator = (stream) => {
-  if (typeof stream.read !== 'function') {
+  if (typeof stream.read !== "function") {
     // v1 stream
 
     if (!Readable) {
-      Readable = require('_stream_readable');
+      Readable = require("_stream_readable");
     }
 
     const src = stream;
@@ -156,7 +157,7 @@ const createReadableStreamAsyncIterator = (stream) => {
     [kError]: { value: null, writable: true },
     [kEnded]: {
       value: stream.readableEnded || stream._readableState.endEmitted,
-      writable: true
+      writable: true,
     },
     // The function passed to new Promise is cached so we avoid allocating a new
     // closure at every run.
@@ -179,7 +180,7 @@ const createReadableStreamAsyncIterator = (stream) => {
   iterator[kLastPromise] = null;
 
   finished(stream, { writable: false }, (err) => {
-    if (err && err.code !== 'ERR_STREAM_PREMATURE_CLOSE') {
+    if (err && err.code !== "ERR_STREAM_PREMATURE_CLOSE") {
       const reject = iterator[kLastReject];
       // Reject if we are waiting for data in the Promise returned by next() and
       // store the error.
@@ -203,7 +204,7 @@ const createReadableStreamAsyncIterator = (stream) => {
     iterator[kEnded] = true;
   });
 
-  stream.on('readable', onReadable.bind(null, iterator));
+  stream.on("readable", onReadable.bind(null, iterator));
 
   return iterator;
 };

@@ -24,38 +24,42 @@
 // prototypically inherits from Readable, and then parasitically from
 // Writable.
 
-import Readable from './readable.js';
-import Writable from './writable.js';
+import Readable from "./readable.js";
+import Writable from "./writable.js";
 import {
   StringDecoder,
 } from "../string_decoder.ts";
 
-const kPaused = Symbol('kPaused');
+const kPaused = Symbol("kPaused");
 Object.setPrototypeOf(Duplex.prototype, Readable.prototype);
 Object.setPrototypeOf(Duplex, Readable);
 
 {
   // Allow the keys array to be GC'ed.
   for (const method of Object.keys(Writable.prototype)) {
-    if (!Duplex.prototype[method])
+    if (!Duplex.prototype[method]) {
       Duplex.prototype[method] = Writable.prototype[method];
+    }
   }
 }
 
 function Duplex(options) {
-  if (!(this instanceof Duplex))
+  if (!(this instanceof Duplex)) {
     return new Duplex(options);
+  }
 
   Readable.call(this, options);
   Writable.call(this, options);
   this.allowHalfOpen = true;
 
   if (options) {
-    if (options.readable === false)
+    if (options.readable === false) {
       this.readable = false;
+    }
 
-    if (options.writable === false)
+    if (options.writable === false) {
       this.writable = false;
+    }
 
     if (options.allowHalfOpen === false) {
       this.allowHalfOpen = false;
@@ -64,26 +68,41 @@ function Duplex(options) {
 }
 
 Object.defineProperties(Duplex.prototype, {
-  writable:
-    Object.getOwnPropertyDescriptor(Writable.prototype, 'writable'),
-  writableHighWaterMark:
-    Object.getOwnPropertyDescriptor(Writable.prototype, 'writableHighWaterMark'),
-  writableObjectMode:
-    Object.getOwnPropertyDescriptor(Writable.prototype, 'writableObjectMode'),
-  writableBuffer:
-    Object.getOwnPropertyDescriptor(Writable.prototype, 'writableBuffer'),
-  writableLength:
-    Object.getOwnPropertyDescriptor(Writable.prototype, 'writableLength'),
-  writableFinished:
-    Object.getOwnPropertyDescriptor(Writable.prototype, 'writableFinished'),
-  writableCorked:
-    Object.getOwnPropertyDescriptor(Writable.prototype, 'writableCorked'),
-  writableEnded:
-    Object.getOwnPropertyDescriptor(Writable.prototype, 'writableEnded'),
+  writable: Object.getOwnPropertyDescriptor(Writable.prototype, "writable"),
+  writableHighWaterMark: Object.getOwnPropertyDescriptor(
+    Writable.prototype,
+    "writableHighWaterMark",
+  ),
+  writableObjectMode: Object.getOwnPropertyDescriptor(
+    Writable.prototype,
+    "writableObjectMode",
+  ),
+  writableBuffer: Object.getOwnPropertyDescriptor(
+    Writable.prototype,
+    "writableBuffer",
+  ),
+  writableLength: Object.getOwnPropertyDescriptor(
+    Writable.prototype,
+    "writableLength",
+  ),
+  writableFinished: Object.getOwnPropertyDescriptor(
+    Writable.prototype,
+    "writableFinished",
+  ),
+  writableCorked: Object.getOwnPropertyDescriptor(
+    Writable.prototype,
+    "writableCorked",
+  ),
+  writableEnded: Object.getOwnPropertyDescriptor(
+    Writable.prototype,
+    "writableEnded",
+  ),
   destroyed: {
     get() {
-      if (this._readableState === undefined ||
-        this._writableState === undefined) {
+      if (
+        this._readableState === undefined ||
+        this._writableState === undefined
+      ) {
         return false;
       }
       return this._readableState.destroyed && this._writableState.destroyed;
@@ -95,7 +114,7 @@ Object.defineProperties(Duplex.prototype, {
         this._readableState.destroyed = value;
         this._writableState.destroyed = value;
       }
-    }
+    },
   },
 });
 
@@ -108,13 +127,15 @@ Duplex.ReadableState = function (options) {
 
   // Object stream flag. Used to make read(n) ignore n and to
   // make all the buffer merging and length checks go away.
-  this.objectMode = Boolean(options && (options.objectMode || options.readableObjectMode));
+  this.objectMode = Boolean(
+    options && (options.objectMode || options.readableObjectMode),
+  );
 
   // The point at which it stops calling _read() to fill the buffer
   // Note: 0 is a valid value, means "don't call _read preemptively ever"
-  this.highWaterMark = options ?
-    getHighWaterMark(this, options, 'readableHighWaterMark', true) :
-    getDefaultHighWaterMark(false);
+  this.highWaterMark = options
+    ? getHighWaterMark(this, options, "readableHighWaterMark", true)
+    : getDefaultHighWaterMark(false);
 
   // A linked list is used to store data chunks instead of an array because the
   // linked list can remove elements from the beginning faster than
@@ -175,7 +196,7 @@ Duplex.ReadableState = function (options) {
   // Crypto is kind of old and crusty.  Historically, its default string
   // encoding is 'binary' so we have to make this configurable.
   // Everything else in the universe uses 'utf8', though.
-  this.defaultEncoding = (options && options.defaultEncoding) || 'utf8';
+  this.defaultEncoding = (options && options.defaultEncoding) || "utf8";
 
   // Ref the piped dest which we need a drain event on it
   // type: null | Writable | Set<Writable>.
@@ -191,6 +212,6 @@ Duplex.ReadableState = function (options) {
     this.decoder = new StringDecoder(options.encoding);
     this.encoding = options.encoding;
   }
-}
+};
 
 export default Duplex;

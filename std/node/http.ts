@@ -32,7 +32,7 @@ const MAX_HEADER_SIZE = 80 * 1024;
 // https://github.com/nodejs/node/blob/59ca56eddefc78bab87d7e8e074b3af843ab1bc3/lib/_http_agent.js#L63
 class ReusedHandle {
   public type: unknown; // TODO(any) Unsure what type this is
-  public handle: unknown  // TODO(any) What would the type be for `socket._handle`
+  public handle: unknown; // TODO(any) What would the type be for `socket._handle`
   constructor(type, handle) { // TODO(any) Add types, see above
     this.type = type;
     this.handle = handle;
@@ -207,7 +207,7 @@ class Agent extends EventEmitter {
     }
 
     return true;
-  }// TODO(any) Add docblock, add type to param
+  } // TODO(any) Add docblock, add type to param
 
   private asyncResetHandle(socket) {
     // Guard against an uninitialized or user supplied Socket.
