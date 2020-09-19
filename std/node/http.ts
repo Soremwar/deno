@@ -16,9 +16,11 @@ import type {
   Buffer,
 } from "./buffer.ts";
 import type { Socket } from "./net.ts";
+import { Socket } from "./net.ts"
 import {NetAgent} from "./_http/net_agent.ts";
 import {Agent} from "./_http/_http_agent";
 import {ClientRequest} from "./_http/_http_client";
+import {IncomingMessage} from "./_http/_http_incoming.ts";
 
 const tokenRegExp = /^[\^_`a-zA-Z\-0-9!#$%&'*+.|~]+$/;
 const headerCharRegex = /[^\t\x20-\x7e\x80-\xff]/;
@@ -54,15 +56,15 @@ class Response {
 
   //TODO
   //Header types must have a type specified somewhere
-  public getHeader(name: string): any {
+  public getHeader(name: string): string {
     return this.headers.get(name.toLowerCase());
   }
 
-  public getHeaderNames() {
+  public getHeaderNames(): string[] {
     return Array.from(this.headers.keys());
   }
 
-  public getHeaders(): { [name: string]: any } {
+  public getHeaders(): { [name: string]: string } {
     return Object.fromEntries(this.headers);
   }
 
@@ -74,7 +76,7 @@ class Response {
     this.headers.delete(name.toLowerCase());
   }
 
-  public setHeader(name: string, value: any): void {
+  public setHeader(name: string, value: string): void {
     this.headers.append(name, value);
   }
 
@@ -96,7 +98,7 @@ class Response {
   //This will stream the provided chunk by bits
   //Callback will be called when the provided chunk is emitted
   public write(
-    chunk: string | Buffer,
+    chunk: string | Deno.Buffer,
     encoding = "utf8",
     callback: () => void,
   ): boolean {
@@ -235,7 +237,8 @@ export class Http extends NetAgent {
 
   private _globalAgent: Agent = globalAgent;
 
-  public IncomingMessage() { // TODO(any): Finish content, return and param types
+  public IncomingMessage(socket: Socket): IncomingMessage { // TODO(any): Finish content, return and param types
+    return new IncomingMessage(socket)
   }
 
   public OutgoingMessage() { // TODO(any): Finish content, return and param types
