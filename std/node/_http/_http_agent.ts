@@ -317,3 +317,5 @@ export class Agent extends EventEmitter {
     return name;
   }
 }
+
+export const globalAgent = new Agent();

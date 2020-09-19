@@ -18,6 +18,7 @@ import type {
 import type { Socket } from "./net.ts";
 import {NetAgent} from "./_http/net_agent.ts";
 import {Agent} from "./_http/_http_agent";
+import {ClientRequest} from "./_http/_http_client";
 
 const tokenRegExp = /^[\^_`a-zA-Z\-0-9!#$%&'*+.|~]+$/;
 const headerCharRegex = /[^\t\x20-\x7e\x80-\xff]/;
@@ -233,10 +234,6 @@ export class Http extends NetAgent {
   private _maxHeaderSize?: number;
 
   private _globalAgent: Agent = globalAgent;
-
-  // TODO https://github.com/nodejs/node/blob/c205f672e9cf0c70ea26f87eb97342947a244e18/lib/_http_client.js#L88
-  public ClientRequest(input, options, cb) { // TODO(any): Finish content, return and param types
-  }
 
   public IncomingMessage() { // TODO(any): Finish content, return and param types
   }
