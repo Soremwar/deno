@@ -360,14 +360,17 @@ E("ERR_ASSERTION", "%s", Error);
 E("ERR_ASYNC_CALLBACK", "%s must be a function", TypeError);
 E("ERR_ASYNC_TYPE", 'Invalid name for async "type": %s', TypeError);
 E("ERR_BROTLI_INVALID_PARAM", "%s is not a valid Brotli parameter", RangeError);
-E("ERR_BUFFER_OUT_OF_BOUNDS", // Using a default argument here is important so the argument is not counted
-// towards `Function#length`.
-(name = undefined) => {
-  if (name) {
-    return `"${name}" is outside of buffer bounds`;
-  }
-  return "Attempt to access memory outside buffer bounds";
-}, RangeError);
+E(
+  "ERR_BUFFER_OUT_OF_BOUNDS", // Using a default argument here is important so the argument is not counted
+  // towards `Function#length`.
+  (name = undefined) => {
+    if (name) {
+      return `"${name}" is outside of buffer bounds`;
+    }
+    return "Attempt to access memory outside buffer bounds";
+  },
+  RangeError,
+);
 E(
   "ERR_BUFFER_TOO_LARGE",
   "Cannot create a Buffer larger than %s bytes",
@@ -865,15 +868,18 @@ E(
   "Callback must be a function. Received %O",
   TypeError,
 );
-E("ERR_INVALID_CHAR", // Using a default argument here is important so the argument is not counted
-// towards `Function#length`.
-(name, field = undefined) => {
-  let msg = `Invalid character in ${name}`;
-  if (field !== undefined) {
-    msg += ` ["${field}"]`;
-  }
-  return msg;
-}, TypeError);
+E(
+  "ERR_INVALID_CHAR", // Using a default argument here is important so the argument is not counted
+  // towards `Function#length`.
+  (name, field = undefined) => {
+    let msg = `Invalid character in ${name}`;
+    if (field !== undefined) {
+      msg += ` ["${field}"]`;
+    }
+    return msg;
+  },
+  TypeError,
+);
 E(
   "ERR_INVALID_CURSOR_POS",
   "Cannot set cursor row without setting its column",
@@ -1374,13 +1380,16 @@ E(
   Error,
 );
 E("ERR_UNESCAPED_CHARACTERS", "%s contains unescaped characters", TypeError);
-E("ERR_UNHANDLED_ERROR", // Using a default argument here is important so the argument is not counted
-// towards `Function#length`.
-(err = undefined) => {
-  const msg = "Unhandled error.";
-  if (err === undefined) return msg;
-  return `${msg} (${err})`;
-}, Error);
+E(
+  "ERR_UNHANDLED_ERROR", // Using a default argument here is important so the argument is not counted
+  // towards `Function#length`.
+  (err = undefined) => {
+    const msg = "Unhandled error.";
+    if (err === undefined) return msg;
+    return `${msg} (${err})`;
+  },
+  Error,
+);
 E("ERR_UNKNOWN_BUILTIN_MODULE", "No such built-in module: %s", Error);
 E("ERR_UNKNOWN_CREDENTIAL", "%s identifier does not exist: %s", Error);
 E("ERR_UNKNOWN_ENCODING", "Unknown encoding: %s", TypeError);

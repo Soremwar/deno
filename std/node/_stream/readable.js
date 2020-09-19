@@ -182,6 +182,37 @@ class Readable extends Stream {
       maybeReadMore(this, this._readableState);
     });
   }
+
+  // Set up data events if they are asked for
+  // Ensure readable listeners eventually get something.
+  on(ev, fn) {
+    const res = super.on.call(this, ev, fn);
+    const state = this._readableState;
+
+    if (ev === "data") {
+      // Update readableListening so that resume() may be a no-op
+      // a few lines down. This is needed to support once('readable').
+      state.readableListening = this.listenerCount("readable") > 0;
+
+      // Try start flowing on next tick if stream isn't explicitly paused.
+      if (state.flowing !== false) {
+        this.resume();
+      }
+    } else if (ev === "readable") {
+      if (!state.endEmitted && !state.readableListening) {
+        state.readableListening = state.needReadable = true;
+        state.flowing = false;
+        state.emittedReadable = false;
+        if (state.length) {
+          emitReadable(this);
+        } else if (!state.reading) {
+          queueMicrotask(() => nReadingNextTick(this));
+        }
+      }
+    }
+
+    return res;
+  }
 }
 
 Readable.prototype.destroy = destroyImpl.destroy;
@@ -837,38 +868,6 @@ Readable.prototype.unpipe = function (dest) {
 
   return this;
 };
-
-// Set up data events if they are asked for
-// Ensure readable listeners eventually get something.
-Readable.prototype.on = function (ev, fn) {
-  const res = Stream.prototype.on.call(this, ev, fn);
-  const state = this._readableState;
-
-  if (ev === "data") {
-    // Update readableListening so that resume() may be a no-op
-    // a few lines down. This is needed to support once('readable').
-    state.readableListening = this.listenerCount("readable") > 0;
-
-    // Try start flowing on next tick if stream isn't explicitly paused.
-    if (state.flowing !== false) {
-      this.resume();
-    }
-  } else if (ev === "readable") {
-    if (!state.endEmitted && !state.readableListening) {
-      state.readableListening = state.needReadable = true;
-      state.flowing = false;
-      state.emittedReadable = false;
-      if (state.length) {
-        emitReadable(this);
-      } else if (!state.reading) {
-        queueMicrotask(() => nReadingNextTick(this));
-      }
-    }
-  }
-
-  return res;
-};
-Readable.prototype.addListener = Readable.prototype.on;
 
 Readable.prototype.removeListener = function (ev, fn) {
   const res = Stream.prototype.removeListener.call(this, ev, fn);
