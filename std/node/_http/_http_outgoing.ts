@@ -6,7 +6,6 @@ const kOutHeaders = Symbol('kOutHeaders')
 const kNeedDrain = Symbol('kNeedDrain')
 const kCorked = Symbol('corked');
 const crlf_buf = Buffer.from('\r\n');
-const CRLF = '\r\n'
 let utcCache;
 
 function getDefaultHighWaterMark(objectMode?) {
@@ -234,24 +233,24 @@ export class OutgoingMessage extends Stream {
   public outputSize: number = 0
   public writable: boolean = true
   public destroyed: boolean = false;
-  private _last: boolean = false
+  protected _last: boolean = false
   public chunkedEncoding: boolean = false;
   public shouldKeepAlive: boolean = true;
-  private _defaultKeepAlive: boolean = true;
+  protected _defaultKeepAlive: boolean = true;
   public useChunkedEncodingByDefault: boolean = true;
   public sendDate: boolean = false;
-  private _removedConnection: boolean = false;
-  private _removedContLen: boolean = false;
-  private _removedTE: boolean = false;
-  private _contentLength = null;
-  private _hasBody = true;
-  private _trailer = '';
+  protected _removedConfnection: boolean = false;
+  protected _removedContLen: boolean = false;
+  protected _removedTE: boolean = false;
+  protected _contentLength = null;
+  protected _hasBody = true;
+  protected _trailer = '';
   public finished: boolean = false;
-  private _headerSent: boolean = false;
-  private _closed: boolean = false
+  protected _headerSent: boolean = false;
+  protected _closed: boolean = false
   public socket: Socket|null = null;
-  private _header: null|string = null
-  private _keepAliveTimeout: number = 0
+  protected _header: null|string = null
+  protected _keepAliveTimeout: number = 0
   constructor() {
     super();
 
@@ -398,7 +397,7 @@ export class OutgoingMessage extends Stream {
     headers[name.toLowerCase()] = [name, value];
   };
 
-  private _finish() {
+  protected _finish() {
     assert(this.socket);
     this.emit('prefinish');
   };
@@ -422,7 +421,7 @@ export class OutgoingMessage extends Stream {
   //
   // This function, outgoingFlush(), is called by both the Server and Client
   // to attempt to flush any pending messages out to the socket.
-  private _flush() {
+  protected _flush() {
     const socket = this.socket;
 
     if (socket && socket.writable) {
@@ -591,7 +590,7 @@ export class OutgoingMessage extends Stream {
   };
 
   private _implicitHeader() {
-    throw new ERR_METHOD_NOT_IMPLEMENTED('_implicitHeader()');
+    throw new ERR_METHOD_NOT_IMPLEMENTED('_implicitHeader()'); // pulled from node, we dont need to implement it
   };
 
   get headersSent () {
@@ -647,7 +646,7 @@ export class OutgoingMessage extends Stream {
     return this;
   };
 
-  private _send(data, encoding?, callback?) {
+  private _send(data, encoding?, callback?: (err?: Error) => void) {
     // This is a shameful hack to get the headers and first body chunk onto
     // the same packet. Future versions of Node are going to take care of
     // this at a lower level and in a more general way.
@@ -697,7 +696,7 @@ export class OutgoingMessage extends Stream {
     }
   };
 
-  private _writeRaw(data, encoding, callback) {
+  protected _writeRaw(data, encoding, callback) {
     const conn = this.socket;
     if (conn && conn.destroyed) {
       // The socket was destroyed. If we're still trying to write to it,
@@ -725,7 +724,7 @@ export class OutgoingMessage extends Stream {
     return this.outputSize < HIGH_WATER_MARK;
   }
 
-  private _storeHeader(firstLine, headers) {
+  protected _storeHeader(firstLine, headers) {
     // firstLine in the case of request is: 'GET /index.html HTTP/1.1\r\n'
     // in the case of response it is: 'HTTP/1.1 200 OK\r\n'
     const state = {

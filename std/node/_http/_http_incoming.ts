@@ -1,4 +1,6 @@
 import Socket from "../_net/socket.ts";
+import Readable from "../_stream/readable.js";
+
 
 export class IncomingMessage extends Readable {
   private _readableState: { readingMore: boolean} = {
