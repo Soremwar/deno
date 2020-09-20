@@ -5,6 +5,7 @@ import {
 } from "../events.ts";
 import {
   assert,
+  assertEquals,
   assertStrictEquals,
 } from "../../testing/asserts.ts";
 
@@ -202,4 +203,30 @@ Deno.test("Readable stream can be paused", () => {
   assert(readable.isPaused());
   readable.resume();
   assert(!readable.isPaused());
+});
+
+Deno.test("Readable stream sets enconding correctly", () => {
+  const readable = new Readable({
+    read() {},
+  });
+
+  readable.setEncoding("utf8");
+
+  readable.push(new TextEncoder().encode("DEF"));
+  readable.unshift(new TextEncoder().encode("ABC"));
+
+  assertStrictEquals(readable.read(), "ABCDEF");
+});
+
+Deno.test("Readable stream sets encoding correctly", () => {
+  const readable = new Readable({
+    read() {},
+  });
+
+  readable.setEncoding("utf8");
+
+  readable.push(new TextEncoder().encode("DEF"));
+  readable.unshift(new TextEncoder().encode("ABC"));
+
+  assertStrictEquals(readable.read(), "ABCDEF");
 });

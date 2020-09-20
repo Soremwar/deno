@@ -1,5 +1,6 @@
 //TODO@Soremwar
 //Move from prototypes to classes
+import Buffer from "../../buffer.ts";
 import EventEmitter from "../../events.ts";
 import {
   types,
@@ -11,6 +12,7 @@ class Stream extends EventEmitter {
   }
 
   static _isUint8Array = types.isUint8Array;
+  static _uint8ArrayToBuffer = (chunk) => Buffer.from(chunk);
 
   pipe(dest, options) {
     const source = this;
