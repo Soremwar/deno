@@ -23,7 +23,7 @@ interface ListenerOptions {
 const kRequestOptions = Symbol("requestOptions");
 const kOnKeylog = Symbol("onkeylog");
 const kRequestAsyncResource = Symbol("requestAsyncResource");
-const asyncIdSymbol = Symbol("async_id"); // TODO(any) What is the value? Here's a link to where it's pulled from: https://github.com/nodejs/node/blob/59ca56eddefc78bab87d7e8e074b3af843ab1bc3/lib/internal/async_hooks.js#L97
+export const asyncIdSymbol = Symbol("async_id"); // TODO(any) What is the value? Here's a link to where it's pulled from: https://github.com/nodejs/node/blob/59ca56eddefc78bab87d7e8e074b3af843ab1bc3/lib/internal/async_hooks.js#L97
 
 // https://github.com/nodejs/node/blob/59ca56eddefc78bab87d7e8e074b3af843ab1bc3/lib/_http_agent.js#L63
 class ReusedHandle {

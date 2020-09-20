@@ -1,4 +1,5 @@
 import {Agent, globalAgent} from "./_http_agent.ts";
+import { checkIsHttpToken } from "./_http_common.ts";
 
 const searchParamsSymbol = Symbol('query')
 const INVALID_PATH_REGEX = /[^\u0021-\u00ff]/;
@@ -12,16 +13,6 @@ function validateHost(host: string, name: string): string {
       host);
   }
   return host;
-}
-
-const tokenRegExp = /^[\^_`a-zA-Z\-0-9!#$%&'*+.|~]+$/;
-/**
- * Verifies that the given val is a valid HTTP token
- * per the rules defined in RFC 7230
- * See https://tools.ietf.org/html/rfc7230#section-3.2.6
- */
-function checkIsHttpToken(val) {
-  return tokenRegExp.test(val);
 }
 
 // Type checking used by timers.enroll() and Socket#setTimeout()
