@@ -11,6 +11,7 @@ import {
 import eos from "./end-of-stream.js";
 import createReadableStreamAsyncIterator from "./async_iterator.js";
 import * as events from "../../events.ts";
+import PassThrough from "../../_stream/passthrough.js";
 
 const {
   ERR_INVALID_ARG_TYPE,
@@ -19,8 +20,6 @@ const {
   ERR_MISSING_ARGS,
   ERR_STREAM_DESTROYED,
 } = internal_codes;
-
-let PassThrough;
 
 function destroyer(stream, reading, writing, callback) {
   callback = once(callback);
@@ -211,10 +210,6 @@ function pipeline(...streams) {
           );
         }
       } else {
-        if (!PassThrough) {
-          PassThrough = require("_stream_passthrough");
-        }
-
         // If the last argument to pipeline is not a stream
         // we must create a proxy stream so that pipeline(...)
         // always returns a stream which can be further
