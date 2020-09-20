@@ -48,18 +48,18 @@ class Duplex extends Readable implements Writable {
 
   #writable: Writable;
 
-  constructor(options: any){
+  constructor(options: any) {
     super(options);
     this.#writable = new Writable(options);
     if (options) {
       if (options.readable === false) {
         this.readable = false;
       }
-  
+
       if (options.writable === false) {
         this.writable = false;
       }
-  
+
       if (options.allowHalfOpen === false) {
         this.allowHalfOpen = false;
       }

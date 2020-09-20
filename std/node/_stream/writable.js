@@ -191,7 +191,7 @@ Object.defineProperty(WritableState.prototype, "bufferedRequestCount", {
 });
 
 class Writable extends Stream {
-  constructor(options){
+  constructor(options) {
     super(options);
     this._writableState = new WritableState(options, this);
 

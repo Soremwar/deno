@@ -1,6 +1,6 @@
 // TODO(any): Finish this class (sort out constructor, fix errors etc)
-import {EventEmitter} from "../events.ts";
-import {Socket} from "../net.ts";
+import { EventEmitter } from "../events.ts";
+import { Socket } from "../net.ts";
 
 interface AgentOptions {
   path?: string | null;
@@ -88,7 +88,7 @@ export class Agent extends EventEmitter {
       if (this.maxTotalSockets <= 0) {
         throw new RangeError(
           "maxTotalSockets must be > 0, but instead it is: " +
-          this.maxTotalSockets,
+            this.maxTotalSockets,
         );
       }
     }
@@ -236,7 +236,7 @@ export class Agent extends EventEmitter {
         if (this.sockets[prop] && this.sockets[prop].length) break;
         debug(
           "removeSocket, have a request with different origin," +
-          " make a socket",
+            " make a socket",
         );
         req = this.requests[prop][0];
         options = req[kRequestOptions];

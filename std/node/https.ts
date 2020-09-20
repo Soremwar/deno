@@ -1,6 +1,6 @@
-import {HTTPOptions, HTTPSOptions, ServerRequest} from "../http/server.ts";
-import {NetAgent} from "./_http/net_agent.ts";
-import { Server } from "./_http/_http_server.ts"
+import { HTTPOptions, HTTPSOptions, ServerRequest } from "../http/server.ts";
+import { NetAgent } from "./_http/net_agent.ts";
+import { Server } from "./_http/_http_server.ts";
 
 export class Https extends NetAgent {
   public Server(
@@ -21,7 +21,9 @@ export class Https extends NetAgent {
    * @param options - Configs to start the server on
    * @param requestListener - Callback for when a request is made
    */
-  public createServer(options: HTTPSOptions | ((req: ServerRequest, res: Response) => void), requestListener: (req: ServerRequest, res: Response) => void,
+  public createServer(
+    options: HTTPSOptions | ((req: ServerRequest, res: Response) => void),
+    requestListener: (req: ServerRequest, res: Response) => void,
   ): Server {
     return new Server(options, requestListener);
   }

@@ -4,9 +4,9 @@
  * This file is only to test the secure side.
  */
 
-import {Https} from "./https.ts";
+import { Https } from "./https.ts";
 
 // TODO(any) Start a https server, make a request, assert request was successful
 Deno.test("Can run a HTTPS server", async () => {
-  const https = new Https()
-})
+  const https = new Https();
+});

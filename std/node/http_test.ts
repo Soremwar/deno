@@ -1,6 +1,6 @@
 //import { Http } from "./http.ts";
-import {serve, ServerRequest} from "../http/server.ts";
-import {assertEquals} from "../testing/asserts.ts";
+import { serve, ServerRequest } from "../http/server.ts";
+import { assertEquals } from "../testing/asserts.ts";
 
 // TODO(any) Covers: Http#Server
 Deno.test("Can return a Server object and then listen", () => {
@@ -13,7 +13,7 @@ Deno.test("Can return a Server object and then listen", () => {
   //   response = res
   // })
   // TODO(any) Send request, and assert response is set with correct properties
-})
+});
 
 // TODO(any) Covers: Http#createServer
 Deno.test("Can start a server", () => {
@@ -26,49 +26,45 @@ Deno.test("Can start a server", () => {
   //   response = res
   // })
   // TODO(any) Send request, and assert response is set with correct properties
-})
+});
 
 // TODO(any) Covers: Http#Agent
 Deno.test("Can create an agent", () => {
-})
+});
 
 // TODO(any) Covers: Http#ClientRequest
 Deno.test("Can create a client request", () => {
-
-})
+});
 
 // TODO(any) Covers: Http#IncomingMessage
 Deno.test("Can do whatever this method needs to do", () => {
-
-})
+});
 
 // TODO(any) Covers: Http#OutgoingMessage
 Deno.test("Can do whatever this method needs to do", () => {
-
-})
+});
 
 // TODO(any) Covers: Http#ServerResponse
 Deno.test("Can do whatever this method needs to do", () => {
-
-})
+});
 
 // TODO(any) Covers: Http#validateHeaderName
 Deno.test("Can correctly validate HTTP headers", () => {
-  const invalidHTTPHeaderNames = []
-  const validHTTPHeaderNames = []
+  const invalidHTTPHeaderNames = [];
+  const validHTTPHeaderNames = [];
   //const http = new Http()
   // TODO(any) Loop over each invalid header name, asserting error was thrown
   // TODO(any) Loop over each valid header name, asserting no errors were thrown
-})
+});
 
 // TODO(any) Covers: Http#validateHeaderValue
 Deno.test("Can correctly validate HTTP header values", () => {
-  const invalidHTTPHeaderValues = []
-  const validHTTPHeaderValues = []
+  const invalidHTTPHeaderValues = [];
+  const validHTTPHeaderValues = [];
   //const http = new Http()
   // TODO(any) Loop over each invalid header value, asserting error was thrown
   // TODO(any) Loop over each valid header value, asserting no errors were thrown
-})
+});
 
 // TODO(any) Covers: Http#get
 Deno.test("Can send a GET request and return the expected response", async () => {
@@ -77,7 +73,7 @@ Deno.test("Can send a GET request and return the expected response", async () =>
   // const response = await http.get("http://localhost:1337")
   // assertEquals(response.status_code, 200)
   // server.close()
-})
+});
 
 // TODO(any) Covers: Http#request
 Deno.test("Can send requests matching all HTTP verbs and return the expected responses", async () => {
@@ -100,6 +96,4 @@ Deno.test("Can send requests matching all HTTP verbs and return the expected res
   // })
   // assertEquals(response.status_code, 200)
   // server.close()
-})
-
-
+});

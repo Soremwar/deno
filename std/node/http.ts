@@ -2,24 +2,15 @@
 
 import {
   ServerRequest,
-  serve,
-  Server as DenoServer,
 } from "../http/server.ts";
-import { Server } from "./_http/_http_server.ts"
+import { Server } from "./_http/_http_server.ts";
 import type {
   HTTPOptions,
 } from "../http/server.ts";
-import {
-  EventEmitter,
-} from "./events.ts";
-import type {
-  Buffer,
-} from "./buffer.ts";
 import type { Socket } from "./net.ts";
 import { Socket } from "./net.ts"
 import {NetAgent} from "./_http/net_agent.ts";
 import {Agent} from "./_http/_http_agent";
-import {ClientRequest} from "./_http/_http_client";
 import {IncomingMessage} from "./_http/_http_incoming.ts";
 
 const tokenRegExp = /^[\^_`a-zA-Z\-0-9!#$%&'*+.|~]+$/;
@@ -269,7 +260,8 @@ export class Http extends NetAgent {
    * @param options - Configs to start the server on
    * @param requestListener - Callback for when a request is made
    */
-  public createServer(options: HTTPOptions | ((req: ServerRequest, res: Response) => void),
+  public createServer(
+    options: HTTPOptions | ((req: ServerRequest, res: Response) => void),
     requestListener: (req: ServerRequest, res: Response) => void,
   ): Server {
     return new Server(options, requestListener);
