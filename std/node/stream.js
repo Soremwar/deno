@@ -19,39 +19,41 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 // USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-import Stream from "./internal/streams/legacy.js";
-import Readable from "./_stream/readable.js";
-import Writable from "./_stream/writable.js";
 import Duplex from "./_stream/duplex.ts";
-import Transform from "./_stream/transform.js";
+import eos from "./internal/streams/end-of-stream.js";
 import PassThrough from "./_stream/passthrough.js";
 import pipeline from "./internal/streams/pipeline.js";
-import eos from "./internal/streams/end-of-stream.js";
+import promises from "./_stream/promises.js";
+import Readable from "./_stream/readable.js";
+import Stream from "./internal/streams/legacy.js";
+import Transform from "./_stream/transform.js";
+import Writable from "./_stream/writable.js";
 import {
   types,
 } from "./util.ts";
 
 const _isUint8Array = types.isUint8Array;
 
-Stream.Readable = Readable;
-Stream.Writable = Writable;
+Stream._isUint8Array = _isUint8Array;
 Stream.Duplex = Duplex;
-Stream.Transform = Transform;
+Stream.finished = eos;
 Stream.PassThrough = PassThrough;
 Stream.pipeline = pipeline;
-Stream.finished = eos;
+Stream.promises = promises;
+Stream.Readable = Readable;
 Stream.Stream = Stream;
-Stream._isUint8Array = _isUint8Array;
+Stream.Transform = Transform;
+Stream.Writable = Writable;
 
 export default Stream;
 export {
-  Stream,
-  Readable,
-  Writable,
+  _isUint8Array,
   Duplex,
-  Transform,
+  eos as finished,
   PassThrough,
   pipeline,
-  eos as finished,
-  _isUint8Array,
+  Readable,
+  Stream,
+  Transform,
+  Writable,
 };
