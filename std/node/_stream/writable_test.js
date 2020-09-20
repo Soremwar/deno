@@ -88,10 +88,6 @@ Deno.test("Writable stream writes Uint8Array in object mode", async () => {
 
   writable.end(ABC);
 
-  writable.write(new TextEncoder().encode("ABC"));
-  writable.write(new TextEncoder().encode("DEF"));
-  writable.end(new TextEncoder().encode("GHI"));
-
   const write_timeout = setTimeout(
     () => write_expected_executions.reject(),
     1000,
