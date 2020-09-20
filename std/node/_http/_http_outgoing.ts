@@ -417,7 +417,7 @@ export class OutgoingMessage extends Stream {
   protected _finish() {
     assert(this.socket);
     this.emit("prefinish");
-  }// This logic is probably a bit confusing. Let me explain a bit:
+  } // This logic is probably a bit confusing. Let me explain a bit:
   //
   // In both HTTP servers and clients it is possible to queue up several
   // outgoing messages. This is easiest to imagine in the case of a client.

@@ -21,23 +21,23 @@ Deno.test("Promise pipeline works correctly", async () => {
   let finished = false;
   const processed = [];
   const expected = [
-    Buffer.from('a'),
-    Buffer.from('b'),
-    Buffer.from('c')
+    Buffer.from("a"),
+    Buffer.from("b"),
+    Buffer.from("c"),
   ];
 
   const read = new Readable({
-    read() { }
+    read() {},
   });
 
   const write = new Writable({
     write(data, enc, cb) {
       processed.push(data);
       cb();
-    }
+    },
   });
 
-  write.on('finish', () => {
+  write.on("finish", () => {
     finished = true;
   });
 
@@ -66,10 +66,10 @@ Deno.test("Promise pipeline works correctly", async () => {
 
 Deno.test("Promise pipeline throws on invalid arguments", async () => {
   const read = new Readable({
-    read() {}
+    read() {},
   });
 
-  await pipeline(read, () => {})
+  await pipeline(read, () => {});
 
   await assertThrowsAsync(
     () => pipeline(read, () => {}),
@@ -87,16 +87,16 @@ Deno.test("Promise pipeline throws on invalid arguments", async () => {
 
 Deno.test("Promise pipeline throws on readable destroyed", async () => {
   const read = new Readable({
-    read() { }
+    read() {},
   });
 
   const write = new Writable({
     write(_data, _enc, cb) {
       cb();
-    }
+    },
   });
 
-  read.push('data');
+  read.push("data");
   read.destroy();
 
   await assertThrowsAsync(

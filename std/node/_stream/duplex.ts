@@ -38,7 +38,6 @@ import {
   kPaused,
 } from "../internal/streams/symbols.js";
 
-
 //@ts-ignore
 class Duplex extends Readable implements Writable {
   allowHalfOpen = true;
@@ -46,7 +45,7 @@ class Duplex extends Readable implements Writable {
   writable = true;
 
   #writable: Writable;
-  
+
   _final: any;
   _writableState: any;
   _write: any;
@@ -101,9 +100,9 @@ class Duplex extends Readable implements Writable {
   }
 
   on(event: string, listener: any): this {
-    if(["drain", "finish", "pipe", "unpipe"].includes(event)){
+    if (["drain", "finish", "pipe", "unpipe"].includes(event)) {
       this.#writable.on(event, listener);
-    }else{
+    } else {
       super.on(event, listener);
     }
 
@@ -124,7 +123,7 @@ class Duplex extends Readable implements Writable {
       this._readableState.destroyed = value;
       this._writableState.destroyed = value;
     }
-  } 
+  }
 }
 
 class ReadableState {
@@ -158,7 +157,7 @@ class ReadableState {
   encoding: null;
   [kPaused]: any;
 
-  constructor(options: any){
+  constructor(options: any) {
     // Duplex streams are both readable and writable, but share
     // the same options object.
     // However, some cases require setting options to different

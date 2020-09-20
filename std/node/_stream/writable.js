@@ -239,7 +239,7 @@ class Writable extends Stream {
     }
   }
 
-  get writable () {
+  get writable() {
     const w = this._writableState;
     // w.writable === false means that this is part of a Duplex stream
     // where the writable side was disabled upon construction.
@@ -249,7 +249,7 @@ class Writable extends Stream {
       !w.ending && !w.ended;
   }
 
-  set writable (val) {
+  set writable(val) {
     // Backwards compatible.
     if (this._writableState) {
       this._writableState.writable = !!val;
@@ -260,12 +260,10 @@ class Writable extends Stream {
     return this._writableState ? this._writableState.finished : false;
   }
 
-  
   get writableObjectMode() {
     return this._writableState ? this._writableState.objectMode : false;
   }
 
-  
   get writableBuffer() {
     return this._writableState && this._writableState.getBuffer();
   }
@@ -273,7 +271,7 @@ class Writable extends Stream {
   get writableEnded() {
     return this._writableState ? this._writableState.ending : false;
   }
-  
+
   get writableHighWaterMark() {
     return this._writableState && this._writableState.highWaterMark;
   }
@@ -737,7 +735,7 @@ function finishMaybe(stream, state, sync) {
 }
 
 function finish(stream, state) {
-  console.log("finish called")
+  console.log("finish called");
   state.pendingcb--;
   // TODO (ronag): Unify with needFinish.
   if (state.errorEmitted || state.closeEmitted) {

@@ -175,11 +175,11 @@ Deno.test("Readable stream holds up a big push", async () => {
   const end_executed_expected = 1;
   const end_expected_executions = deferred();
 
-  const str = 'asdfasdfasdfasdfasdf';
+  const str = "asdfasdfasdfasdfasdf";
 
   const r = new Readable({
     highWaterMark: 5,
-    encoding: 'utf8'
+    encoding: "utf8",
   });
 
   let reads = 0;
@@ -207,7 +207,7 @@ Deno.test("Readable stream holds up a big push", async () => {
     _read();
   };
 
-  r.on('end', () => {
+  r.on("end", () => {
     end_executed++;
     if (end_executed == end_executed_expected) {
       end_expected_executions.resolve();
@@ -223,7 +223,7 @@ Deno.test("Readable stream holds up a big push", async () => {
   chunk = r.read();
   assertEquals(chunk, null);
 
-  r.once('readable', () => {
+  r.once("readable", () => {
     // This time, we'll get *all* the remaining data, because
     // it's been added synchronously, as the read WOULD take
     // us below the hwm, and so it triggered a _read() again,
@@ -325,17 +325,17 @@ Deno.test("Readable stream: 'readable' event is emitted but 'read' is not on hig
   const readable_expected_executions = deferred();
 
   const r = new Readable({
-    highWaterMark: 3
+    highWaterMark: 3,
   });
 
   r._read = () => {
-    throw new Error("_read must not be called")
+    throw new Error("_read must not be called");
   };
-  r.push(Buffer.from('blerg'));
+  r.push(Buffer.from("blerg"));
 
-  setTimeout(function() {
+  setTimeout(function () {
     assert(!r._readableState.reading);
-    r.on('readable', () => {
+    r.on("readable", () => {
       readable_executed++;
       if (readable_executed == readable_executed_expected) {
         readable_expected_executions.resolve();
@@ -362,7 +362,7 @@ Deno.test("Readable stream: 'readable' and 'read' events are emitted on highWate
   const read_expected_executions = deferred();
 
   const r = new Readable({
-    highWaterMark: 3
+    highWaterMark: 3,
   });
 
   r._read = () => {
@@ -372,11 +372,11 @@ Deno.test("Readable stream: 'readable' and 'read' events are emitted on highWate
     }
   };
 
-  r.push(Buffer.from('bl'));
+  r.push(Buffer.from("bl"));
 
-  setTimeout(function() {
+  setTimeout(function () {
     assert(r._readableState.reading);
-    r.on('readable', () => {
+    r.on("readable", () => {
       readable_executed++;
       if (readable_executed == readable_executed_expected) {
         readable_expected_executions.resolve();
@@ -406,21 +406,21 @@ Deno.test("Readable stream: 'readable' event is emitted but 'read' is not on hig
   const readable_expected_executions = deferred();
 
   const r = new Readable({
-    highWaterMark: 30
+    highWaterMark: 30,
   });
 
   r._read = () => {
     throw new Error("Must not be executed");
   };
 
-  r.push(Buffer.from('blerg'));
+  r.push(Buffer.from("blerg"));
   //This ends the stream and triggers end
   r.push(null);
 
-  setTimeout(function() {
+  setTimeout(function () {
     // Assert we're testing what we think we are
     assert(!r._readableState.reading);
-    r.on('readable', () => {
+    r.on("readable", () => {
       readable_executed++;
       if (readable_executed == readable_executed_expected) {
         readable_expected_executions.resolve();
@@ -437,19 +437,19 @@ Deno.test("Readable stream: 'readable' event is emitted but 'read' is not on hig
   assertEquals(readable_executed, readable_executed_expected);
 });
 
-Deno.test("Readable stream: 'read' is emitted on empty string pushed in non-object mode", async() => {
+Deno.test("Readable stream: 'read' is emitted on empty string pushed in non-object mode", async () => {
   let end_executed = 0;
   const end_executed_expected = 1;
   const end_expected_executions = deferred();
 
-  const underlyingData = ['', 'x', 'y', '', 'z'];
+  const underlyingData = ["", "x", "y", "", "z"];
   const expected = underlyingData.filter((data) => data);
   const result = [];
 
   const r = new Readable({
-    encoding: 'utf8',
+    encoding: "utf8",
   });
-  r._read = function() {
+  r._read = function () {
     queueMicrotask(() => {
       if (!underlyingData.length) {
         this.push(null);
@@ -459,12 +459,12 @@ Deno.test("Readable stream: 'read' is emitted on empty string pushed in non-obje
     });
   };
 
-  r.on('readable', () => {
+  r.on("readable", () => {
     const data = r.read();
     if (data !== null) result.push(data);
   });
 
-  r.on('end', () => {
+  r.on("end", () => {
     end_executed++;
     if (end_executed == end_executed_expected) {
       end_expected_executions.resolve();
@@ -484,7 +484,7 @@ Deno.test("Readable stream: 'read' is emitted on empty string pushed in non-obje
 Deno.test("Readable stream: listeners can be removed", () => {
   const r = new Readable();
   r._read = () => {};
-  r.on('data', () => {});
+  r.on("data", () => {});
 
   r.removeAllListeners();
 

@@ -75,7 +75,7 @@ function prependListener(emitter, event, fn) {
 }
 
 class ReadableState {
-  constructor(options){
+  constructor(options) {
     // Object stream flag. Used to make read(n) ignore n and to
     // make all the buffer merging and length checks go away.
     this.objectMode = !!(options && options.objectMode);
@@ -220,7 +220,7 @@ class Readable extends Stream {
 
   removeListener(ev, fn) {
     const res = super.removeListener.call(this, ev, fn);
-  
+
     if (ev === "readable") {
       // We need to check if there is someone still listening to
       // readable and reset the state. However this needs to happen
@@ -230,7 +230,7 @@ class Readable extends Stream {
       // effect.
       queueMicrotask(() => updateReadableListening(this));
     }
-  
+
     return res;
   }
 
