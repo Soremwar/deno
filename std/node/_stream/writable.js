@@ -227,6 +227,64 @@ class Writable extends Stream {
       finishMaybe(this, state);
     });
   }
+
+  get destroyed() {
+    return this._writableState ? this._writableState.destroyed : false;
+  }
+
+  set destroyed(value) {
+    // Backward compatibility, the user is explicitly managing destroyed.
+    if (this._writableState) {
+      this._writableState.destroyed = value;
+    }
+  }
+
+  get writable () {
+    const w = this._writableState;
+    // w.writable === false means that this is part of a Duplex stream
+    // where the writable side was disabled upon construction.
+    // Compat. The user might manually disable writable side through
+    // deprecated setter.
+    return !!w && w.writable !== false && !w.destroyed && !w.errored &&
+      !w.ending && !w.ended;
+  }
+
+  set writable (val) {
+    // Backwards compatible.
+    if (this._writableState) {
+      this._writableState.writable = !!val;
+    }
+  }
+
+  get writableFinished() {
+    return this._writableState ? this._writableState.finished : false;
+  }
+
+  
+  get writableObjectMode() {
+    return this._writableState ? this._writableState.objectMode : false;
+  }
+
+  
+  get writableBuffer() {
+    return this._writableState && this._writableState.getBuffer();
+  }
+
+  get writableEnded() {
+    return this._writableState ? this._writableState.ending : false;
+  }
+  
+  get writableHighWaterMark() {
+    return this._writableState && this._writableState.highWaterMark;
+  }
+
+  get writableCorked() {
+    return this._writableState ? this._writableState.corked : 0;
+  }
+
+  get writableLength() {
+    return this._writableState && this._writableState.length;
+  }
 }
 
 // Otherwise people can pipe Writable streams, which is just wrong.
@@ -679,6 +737,7 @@ function finishMaybe(stream, state, sync) {
 }
 
 function finish(stream, state) {
+  console.log("finish called")
   state.pendingcb--;
   // TODO (ronag): Unify with needFinish.
   if (state.errorEmitted || state.closeEmitted) {
@@ -709,80 +768,6 @@ function finish(stream, state) {
   }
 }
 
-Object.defineProperties(Writable.prototype, {
-  destroyed: {
-    get() {
-      return this._writableState ? this._writableState.destroyed : false;
-    },
-    set(value) {
-      // Backward compatibility, the user is explicitly managing destroyed.
-      if (this._writableState) {
-        this._writableState.destroyed = value;
-      }
-    },
-  },
-
-  writable: {
-    get() {
-      const w = this._writableState;
-      // w.writable === false means that this is part of a Duplex stream
-      // where the writable side was disabled upon construction.
-      // Compat. The user might manually disable writable side through
-      // deprecated setter.
-      return !!w && w.writable !== false && !w.destroyed && !w.errored &&
-        !w.ending && !w.ended;
-    },
-    set(val) {
-      // Backwards compatible.
-      if (this._writableState) {
-        this._writableState.writable = !!val;
-      }
-    },
-  },
-
-  writableFinished: {
-    get() {
-      return this._writableState ? this._writableState.finished : false;
-    },
-  },
-
-  writableObjectMode: {
-    get() {
-      return this._writableState ? this._writableState.objectMode : false;
-    },
-  },
-
-  writableBuffer: {
-    get() {
-      return this._writableState && this._writableState.getBuffer();
-    },
-  },
-
-  writableEnded: {
-    get() {
-      return this._writableState ? this._writableState.ending : false;
-    },
-  },
-
-  writableHighWaterMark: {
-    get() {
-      return this._writableState && this._writableState.highWaterMark;
-    },
-  },
-
-  writableCorked: {
-    get() {
-      return this._writableState ? this._writableState.corked : 0;
-    },
-  },
-
-  writableLength: {
-    get() {
-      return this._writableState && this._writableState.length;
-    },
-  },
-});
-
 Writable.prototype.destroy = function (err, cb) {
   const state = this._writableState;
   if (!state.destroyed) {
@@ -803,9 +788,6 @@ Writable.prototype._destroy = function (err, cb) {
 Writable.prototype[captureRejectionSymbol] = function (err) {
   this.destroy(err);
 };
-
-Object.setPrototypeOf(Writable.prototype, Stream.prototype);
-Object.setPrototypeOf(Writable, Stream);
 
 export default Writable;
 export {

@@ -42,6 +42,9 @@ import {
 } from "../string_decoder.ts";
 import createReadableStreamAsyncIterator from "../internal/streams/async_iterator.js";
 import streamFrom from "../internal/streams/from.js";
+import {
+  kPaused,
+} from "../internal/streams/symbols.js";
 
 const {
   ERR_INVALID_ARG_TYPE,
@@ -49,7 +52,6 @@ const {
   ERR_METHOD_NOT_IMPLEMENTED,
   ERR_STREAM_UNSHIFT_AFTER_END_EVENT,
 } = error_codes;
-const kPaused = Symbol("kPaused");
 const { errorOrDestroy } = destroyImpl;
 
 function prependListener(emitter, event, fn) {
@@ -72,91 +74,93 @@ function prependListener(emitter, event, fn) {
   }
 }
 
-function ReadableState(options) {
-  // Object stream flag. Used to make read(n) ignore n and to
-  // make all the buffer merging and length checks go away.
-  this.objectMode = !!(options && options.objectMode);
+class ReadableState {
+  constructor(options){
+    // Object stream flag. Used to make read(n) ignore n and to
+    // make all the buffer merging and length checks go away.
+    this.objectMode = !!(options && options.objectMode);
 
-  // The point at which it stops calling _read() to fill the buffer
-  // Note: 0 is a valid value, means "don't call _read preemptively ever"
-  this.highWaterMark = options
-    ? getHighWaterMark(this, options, "readableHighWaterMark", false)
-    : getDefaultHighWaterMark(false);
+    // The point at which it stops calling _read() to fill the buffer
+    // Note: 0 is a valid value, means "don't call _read preemptively ever"
+    this.highWaterMark = options
+      ? getHighWaterMark(this, options, "readableHighWaterMark", false)
+      : getDefaultHighWaterMark(false);
 
-  // A linked list is used to store data chunks instead of an array because the
-  // linked list can remove elements from the beginning faster than
-  // array.shift().
-  this.buffer = new BufferList();
-  this.length = 0;
-  this.pipes = [];
-  this.flowing = null;
-  this.ended = false;
-  this.endEmitted = false;
-  this.reading = false;
+    // A linked list is used to store data chunks instead of an array because the
+    // linked list can remove elements from the beginning faster than
+    // array.shift().
+    this.buffer = new BufferList();
+    this.length = 0;
+    this.pipes = [];
+    this.flowing = null;
+    this.ended = false;
+    this.endEmitted = false;
+    this.reading = false;
 
-  // Stream is still being constructed and cannot be
-  // destroyed until construction finished or failed.
-  // Async construction is opt in, therefore we start as
-  // constructed.
-  this.constructed = true;
+    // Stream is still being constructed and cannot be
+    // destroyed until construction finished or failed.
+    // Async construction is opt in, therefore we start as
+    // constructed.
+    this.constructed = true;
 
-  // A flag to be able to tell if the event 'readable'/'data' is emitted
-  // immediately, or on a later tick.  We set this to true at first, because
-  // any actions that shouldn't happen until "later" should generally also
-  // not happen before the first read call.
-  this.sync = true;
+    // A flag to be able to tell if the event 'readable'/'data' is emitted
+    // immediately, or on a later tick.  We set this to true at first, because
+    // any actions that shouldn't happen until "later" should generally also
+    // not happen before the first read call.
+    this.sync = true;
 
-  // Whenever we return null, then we set a flag to say
-  // that we're awaiting a 'readable' event emission.
-  this.needReadable = false;
-  this.emittedReadable = false;
-  this.readableListening = false;
-  this.resumeScheduled = false;
-  this[kPaused] = null;
+    // Whenever we return null, then we set a flag to say
+    // that we're awaiting a 'readable' event emission.
+    this.needReadable = false;
+    this.emittedReadable = false;
+    this.readableListening = false;
+    this.resumeScheduled = false;
+    this[kPaused] = null;
 
-  // True if the error was already emitted and should not be thrown again.
-  this.errorEmitted = false;
+    // True if the error was already emitted and should not be thrown again.
+    this.errorEmitted = false;
 
-  // Should close be emitted on destroy. Defaults to true.
-  this.emitClose = !options || options.emitClose !== false;
+    // Should close be emitted on destroy. Defaults to true.
+    this.emitClose = !options || options.emitClose !== false;
 
-  // Should .destroy() be called after 'end' (and potentially 'finish').
-  this.autoDestroy = !options || options.autoDestroy !== false;
+    // Should .destroy() be called after 'end' (and potentially 'finish').
+    this.autoDestroy = !options || options.autoDestroy !== false;
 
-  // Has it been destroyed.
-  this.destroyed = false;
+    // Has it been destroyed.
+    this.destroyed = false;
 
-  // Indicates whether the stream has errored. When true no further
-  // _read calls, 'data' or 'readable' events should occur. This is needed
-  // since when autoDestroy is disabled we need a way to tell whether the
-  // stream has failed.
-  this.errored = null;
+    // Indicates whether the stream has errored. When true no further
+    // _read calls, 'data' or 'readable' events should occur. This is needed
+    // since when autoDestroy is disabled we need a way to tell whether the
+    // stream has failed.
+    this.errored = null;
 
-  // Indicates whether the stream has finished destroying.
-  this.closed = false;
+    // Indicates whether the stream has finished destroying.
+    this.closed = false;
 
-  // True if close has been emitted or would have been emitted
-  // depending on emitClose.
-  this.closeEmitted = false;
+    // True if close has been emitted or would have been emitted
+    // depending on emitClose.
+    this.closeEmitted = false;
 
-  // Crypto is kind of old and crusty.  Historically, its default string
-  // encoding is 'binary' so we have to make this configurable.
-  // Everything else in the universe uses 'utf8', though.
-  this.defaultEncoding = (options && options.defaultEncoding) || "utf8";
+    // Crypto is kind of old and crusty.  Historically, its default string
+    // encoding is 'binary' so we have to make this configurable.
+    // Everything else in the universe uses 'utf8', though.
+    this.defaultEncoding = (options && options.defaultEncoding) || "utf8";
 
-  // Ref the piped dest which we need a drain event on it
-  // type: null | Writable | Set<Writable>.
-  this.awaitDrainWriters = null;
-  this.multiAwaitDrain = false;
+    // Ref the piped dest which we need a drain event on it
+    // type: null | Writable | Set<Writable>.
+    this.awaitDrainWriters = null;
+    this.multiAwaitDrain = false;
 
-  // If true, a maybeReadMore has been scheduled.
-  this.readingMore = false;
+    // If true, a maybeReadMore has been scheduled.
+    this.readingMore = false;
 
-  this.decoder = null;
-  this.encoding = null;
-  if (options && options.encoding) {
-    this.decoder = new StringDecoder(options.encoding);
-    this.encoding = options.encoding;
+    this.decoder = null;
+    this.encoding = null;
+    if (options && options.encoding) {
+      this.decoder = new StringDecoder(options.encoding);
+      this.encoding = options.encoding;
+    }
   }
 }
 
@@ -213,6 +217,24 @@ class Readable extends Stream {
 
     return res;
   }
+
+  removeListener(ev, fn) {
+    const res = super.removeListener.call(this, ev, fn);
+  
+    if (ev === "readable") {
+      // We need to check if there is someone still listening to
+      // readable and reset the state. However this needs to happen
+      // after readable has been emitted but before I/O (nextTick) to
+      // support once('readable', fn) cycles. This means that calling
+      // resume within the same tick will have no
+      // effect.
+      queueMicrotask(() => updateReadableListening(this));
+    }
+  
+    return res;
+  }
+
+  off = this.removeListener;
 }
 
 Readable.prototype.destroy = destroyImpl.destroy;
@@ -868,23 +890,6 @@ Readable.prototype.unpipe = function (dest) {
 
   return this;
 };
-
-Readable.prototype.removeListener = function (ev, fn) {
-  const res = Stream.prototype.removeListener.call(this, ev, fn);
-
-  if (ev === "readable") {
-    // We need to check if there is someone still listening to
-    // readable and reset the state. However this needs to happen
-    // after readable has been emitted but before I/O (nextTick) to
-    // support once('readable', fn) cycles. This means that calling
-    // resume within the same tick will have no
-    // effect.
-    queueMicrotask(() => updateReadableListening(this));
-  }
-
-  return res;
-};
-Readable.prototype.off = Readable.prototype.removeListener;
 
 Readable.prototype.removeAllListeners = function (ev) {
   const res = Stream.prototype.removeAllListeners.apply(this, arguments);
