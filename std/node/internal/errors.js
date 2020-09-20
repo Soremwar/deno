@@ -5,6 +5,10 @@
 import {
   platform,
 } from "../process.ts";
+import {
+  format,
+  inspect,
+} from "./util/inspect.js";
 
 const sep = platform === "win32" ? "\\" : "/";
 
@@ -77,14 +81,6 @@ const maybeOverridePrepareStackTrace = (globalThis, error, trace) => {
 };
 
 let excludedStackFn;
-
-let internalUtilInspect = null;
-async function lazyInternalUtilInspect() {
-  if (!internalUtilInspect) {
-    internalUtilInspect = await import("./util/inspect.js");
-  }
-  return internalUtilInspect;
-}
 
 let buffer;
 function lazyBuffer() {
@@ -204,7 +200,7 @@ class SystemError extends Error {
   }
 
   [Symbol.for("nodejs.util.inspect.custom")](recurseTimes, ctx) {
-    return lazyInternalUtilInspect().inspect(this, {
+    return inspect(this, {
       ...ctx,
       getters: true,
       customInspect: false,
@@ -322,7 +318,7 @@ function getMessage(key, args, self) {
   }
 
   args.unshift(msg);
-  return lazyInternalUtilInspect().format.apply(null, args);
+  return format.apply(null, args);
 }
 // Only use this for integers! Decimal numbers do not work with this function.
 function addNumericalSeparator(val) {
@@ -831,13 +827,11 @@ E("ERR_INVALID_ARG_TYPE", (name, expected, actual) => {
     if (actual.constructor && actual.constructor.name) {
       msg += `. Received an instance of ${actual.constructor.name}`;
     } else {
-      const inspected = lazyInternalUtilInspect()
-        .inspect(actual, { depth: -1 });
+      const inspected = inspect(actual, { depth: -1 });
       msg += `. Received ${inspected}`;
     }
   } else {
-    let inspected = lazyInternalUtilInspect()
-      .inspect(actual, { colors: false });
+    let inspected = inspect(actual, { colors: false });
     if (inspected.length > 25) {
       inspected = `${inspected.slice(0, 25)}...`;
     }
@@ -848,7 +842,7 @@ E("ERR_INVALID_ARG_TYPE", (name, expected, actual) => {
 E(
   "ERR_INVALID_ARG_VALUE",
   (name, value, reason = "is invalid") => {
-    let inspected = lazyInternalUtilInspect().inspect(value);
+    let inspected = inspect(value);
     if (inspected.length > 128) {
       inspected = `${inspected.slice(0, 128)}...`;
     }
@@ -1141,7 +1135,7 @@ E("ERR_OUT_OF_RANGE", (str, range, input, replaceDefaultBoolean = false) => {
     }
     received += "n";
   } else {
-    received = lazyInternalUtilInspect().inspect(input);
+    received = inspect(input);
   }
   msg += ` It must be ${range}. Received ${received}`;
   return msg;
