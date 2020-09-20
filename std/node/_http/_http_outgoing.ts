@@ -1,11 +1,11 @@
-import { captureRejectionSymbol } from "../events.ts"
+import { captureRejectionSymbol } from "../events.ts";
 import { asyncIdSymbol } from "./_http_agent/ts";
 import { checkIsHttpToken } from "./_http_common.ts";
 
-const kOutHeaders = Symbol('kOutHeaders')
-const kNeedDrain = Symbol('kNeedDrain')
-const kCorked = Symbol('corked');
-const crlf_buf = Buffer.from('\r\n');
+const kOutHeaders = Symbol("kOutHeaders");
+const kNeedDrain = Symbol("kNeedDrain");
+const kCorked = Symbol("corked");
+const crlf_buf = Buffer.from("\r\n");
 let utcCache;
 
 function getDefaultHighWaterMark(objectMode?) {
@@ -14,7 +14,7 @@ function getDefaultHighWaterMark(objectMode?) {
 
 function setUnrefTimeout(callback, after) {
   // Type checking identical to setTimeout()
-  if (typeof callback !== 'function') {
+  if (typeof callback !== "function") {
     throw new ERR_INVALID_CALLBACK(callback);
   }
 
@@ -37,79 +37,89 @@ function cache() {
 }
 
 function ObjectCreate(proto, internalSlotsList?) {
-  if (proto !== null && this.Type(proto) !== 'Object') {
-    throw new $TypeError('Assertion failed: proto must be null or an object');
+  if (proto !== null && this.Type(proto) !== "Object") {
+    throw new $TypeError("Assertion failed: proto must be null or an object");
   }
   var slots = arguments.length < 2 ? [] : internalSlotsList;
   if (slots.length > 0) {
-    throw new $SyntaxError('es-abstract does not yet support internal slots');
+    throw new $SyntaxError("es-abstract does not yet support internal slots");
   }
 
   if (proto === null && !$ObjectCreate) {
-    throw new $SyntaxError('native Object.create support is required to create null objects');
+    throw new $SyntaxError(
+      "native Object.create support is required to create null objects",
+    );
   }
 
   return $ObjectCreate(proto);
 }
 
 function isCookieField(s: string): boolean {
-  return s.length === 6 && s.toLowerCase() === 'cookie';
+  return s.length === 6 && s.toLowerCase() === "cookie";
 }
 
 function processHeader(self, state, key, value, validate) {
-  if (validate)
+  if (validate) {
     validateHeaderName(key);
+  }
   if (Array.isArray(value)) {
     if (value.length < 2 || !isCookieField(key)) {
       // Retain for(;;) loop for performance reasons
       // Refs: https://github.com/nodejs/node/pull/30958
-      for (let i = 0; i < value.length; i++)
+      for (let i = 0; i < value.length; i++) {
         storeHeader(self, state, key, value[i], validate);
+      }
       return;
     }
-    value = value.join('; ');
+    value = value.join("; ");
   }
   storeHeader(self, state, key, value, validate);
 }
 
 function onError(msg, err, callback) {
   const triggerAsyncId = msg.socket ? msg.socket[asyncIdSymbol] : undefined;
-  defaultTriggerAsyncIdScope(triggerAsyncId,
+  defaultTriggerAsyncIdScope(
+    triggerAsyncId,
     process.nextTick,
     emitErrorNt,
     msg,
     err,
-    callback);
+    callback,
+  );
 }
 
 function emitErrorNt(msg, err, callback) {
   callback(err);
-  if (typeof msg.emit === 'function' && !msg._closed) {
-    msg.emit('error', err);
+  if (typeof msg.emit === "function" && !msg._closed) {
+    msg.emit("error", err);
   }
 }
 
 function write_(msg, chunk, encoding, callback, fromEnd) {
-  if (typeof callback !== 'function')
+  if (typeof callback !== "function") {
     callback = function () {};
+  }
 
   let len;
   if (chunk === null) {
     throw new ERR_STREAM_NULL_VALUES();
-  } else if (typeof chunk === 'string') {
+  } else if (typeof chunk === "string") {
     len = Buffer.byteLength(chunk, encoding);
   } else if (isUint8Array(chunk)) {
     len = chunk.length;
   } else {
     throw new ERR_INVALID_ARG_TYPE(
-      'chunk', ['string', 'Buffer', 'Uint8Array'], chunk);
+      "chunk",
+      ["string", "Buffer", "Uint8Array"],
+      chunk,
+    );
   }
 
   let err;
   if (msg.finished) {
     err = new ERR_STREAM_WRITE_AFTER_END();
   } else if (msg.destroyed) {
-    err = new ERR_STREAM_DESTROYED('write');
+    err = new ERR_STREAM_DESTROYED("write");
   }
 
   if (err) {
@@ -129,8 +139,10 @@ function write_(msg, chunk, encoding, callback, fromEnd) {
   }
 
   if (!msg._hasBody) {
-    debug('This type of response MUST NOT have a body. ' +
-      'Ignoring write() calls.');
+    debug(
+      "This type of response MUST NOT have a body. " +
+        "Ignoring write() calls.",
+    );
     process.nextTick(callback);
     return true;
   }
@@ -142,7 +154,7 @@ function write_(msg, chunk, encoding, callback, fromEnd) {
 
   let ret;
   if (msg.chunkedEncoding && chunk.length !== 0) {
-    msg._send(len.toString(16), 'latin1', null);
+    msg._send(len.toString(16), "latin1", null);
     msg._send(crlf_buf, null, null);
     msg._send(chunk, encoding, null);
     ret = msg._send(crlf_buf, null, callback);
@@ -150,58 +162,60 @@ function write_(msg, chunk, encoding, callback, fromEnd) {
     ret = msg._send(chunk, encoding, callback);
   }
 
-  debug('write ret = ' + ret);
+  debug("write ret = " + ret);
   return ret;
 }
-
 
 function connectionCorkNT(conn) {
   conn.uncork();
 }
 
 function storeHeader(self, state, key, value, validate) {
-  if (validate)
+  if (validate) {
     validateHeaderValue(key, value);
-  state.header += key + ': ' + value + CRLF;
+  }
+  state.header += key + ": " + value + CRLF;
   matchHeader(self, state, key, value);
 }
 
 function matchHeader(self, state, field, value) {
-  if (field.length < 4 || field.length > 17)
+  if (field.length < 4 || field.length > 17) {
     return;
+  }
   field = field.toLowerCase();
   switch (field) {
-    case 'connection':
+    case "connection":
       state.connection = true;
       self._removedConnection = false;
-      if (RE_CONN_CLOSE.test(value))
+      if (RE_CONN_CLOSE.test(value)) {
         self._last = true;
-      else
+      } else {
         self.shouldKeepAlive = true;
+      }
       break;
-    case 'transfer-encoding':
+    case "transfer-encoding":
       state.te = true;
       self._removedTE = false;
       if (RE_TE_CHUNKED.test(value)) self.chunkedEncoding = true;
       break;
-    case 'content-length':
+    case "content-length":
       state.contLen = true;
       self._removedContLen = false;
       break;
-    case 'date':
-    case 'expect':
-    case 'trailer':
+    case "date":
+    case "expect":
+    case "trailer":
       state[field] = true;
       break;
-    case 'keep-alive':
+    case "keep-alive":
       self._defaultKeepAlive = false;
       break;
   }
 }
 
 const validateHeaderName = hideStackFrames((name) => {
-  if (typeof name !== 'string' || !name || !checkIsHttpToken(name)) {
-    throw new ERR_INVALID_HTTP_TOKEN('Header name', name);
+  if (typeof name !== "string" || !name || !checkIsHttpToken(name)) {
+    throw new ERR_INVALID_HTTP_TOKEN("Header name", name);
   }
 });
 
@@ -211,29 +225,29 @@ const validateHeaderValue = hideStackFrames((name, value) => {
   }
   if (checkInvalidHeaderChar(value)) {
     debug('Header "%s" contains invalid characters', name);
-    throw new ERR_INVALID_CHAR('header content', name);
+    throw new ERR_INVALID_CHAR("header content", name);
   }
 });
 
 function onFinish(outmsg) {
   if (outmsg && outmsg.socket && outmsg.socket._hadError) return;
-  outmsg.emit('finish');
+  outmsg.emit("finish");
 }
 
-const HIGH_WATER_MARK = getDefaultHighWaterMark()
+const HIGH_WATER_MARK = getDefaultHighWaterMark();
 
 export class OutgoingMessage extends Stream {
   // Queue that holds all currently pending data, until the response will be
   // assigned to the socket (until it will its turn in the HTTP pipeline).
-  public outputData: unknown[] = [] // todo replace unknown with actual type
+  public outputData: unknown[] = []; // todo replace unknown with actual type
   // `outputSize` is an approximate measure of how much data is queued on this
   // response. `_onPendingData` will be invoked to update similar global
   // per-connection counter. That counter will be used to pause/unpause the
   // TCP socket and HTTP Parser and thus handle the backpressure.
-  public outputSize: number = 0
-  public writable: boolean = true
+  public outputSize: number = 0;
+  public writable: boolean = true;
   public destroyed: boolean = false;
-  protected _last: boolean = false
+  protected _last: boolean = false;
   public chunkedEncoding: boolean = false;
   public shouldKeepAlive: boolean = true;
   protected _defaultKeepAlive: boolean = true;
@@ -244,13 +258,13 @@ export class OutgoingMessage extends Stream {
   protected _removedTE: boolean = false;
   protected _contentLength = null;
   protected _hasBody = true;
-  protected _trailer = '';
+  protected _trailer = "";
   public finished: boolean = false;
   protected _headerSent: boolean = false;
-  protected _closed: boolean = false
-  public socket: Socket|null = null;
-  protected _header: null|string = null
-  protected _keepAliveTimeout: number = 0
+  protected _closed: boolean = false;
+  public socket: Socket | null = null;
+  protected _header: null | string = null;
+  protected _keepAliveTimeout: number = 0;
   constructor() {
     super();
 
@@ -260,9 +274,9 @@ export class OutgoingMessage extends Stream {
     this._keepAliveTimeout = 0;
   }
 
-  private _onPendingData (amount) {}
+  private _onPendingData(amount) {}
 
-  get writableFinished () {
+  get writableFinished() {
     return (
       this.finished &&
       this.outputSize === 0 &&
@@ -270,31 +284,31 @@ export class OutgoingMessage extends Stream {
     );
   }
 
-  get writableObjectMode () {
-    return false
+  get writableObjectMode() {
+    return false;
   }
 
-  get writableLength () {
+  get writableLength() {
     return this.outputSize + (this.socket ? this.socket.writableLength : 0);
   }
 
-  get writableHighWaterMark () {
+  get writableHighWaterMark() {
     return this.socket ? this.socket.writableHighWaterMark : HIGH_WATER_MARK;
   }
 
-  get writableCorked () {
+  get writableCorked() {
     const corked = this.socket ? this.socket.writableCorked : 0;
     return corked + this[kCorked];
   }
 
-  get _headers () {
+  get _headers() {
     return this.getHeaders();
   }
 
-  set _headers (val: null|{[key: string]: Array<string>}) {
+  set _headers(val: null | { [key: string]: Array<string> }) {
     if (val == null) {
       this[kOutHeaders] = null;
-    } else if (typeof val === 'object') {
+    } else if (typeof val === "object") {
       const headers = this[kOutHeaders] = ObjectCreate(null);
       const keys = Object.keys(val);
       // Retain for(;;) loop for performance reasons
@@ -306,11 +320,11 @@ export class OutgoingMessage extends Stream {
     }
   }
 
-  get connection () {
-    return this.socket
+  get connection() {
+    return this.socket;
   }
 
-  get _headerNames () {
+  get _headerNames() {
     const headers = this[kOutHeaders];
     if (headers !== null) {
       const out = ObjectCreate(null);
@@ -327,29 +341,31 @@ export class OutgoingMessage extends Stream {
     return null;
   }
 
-  set _headerNames (val: {[key: string]: string}) {
-    if (typeof val === 'object' && val !== null) {
+  set _headerNames(val: { [key: string]: string }) {
+    if (typeof val === "object" && val !== null) {
       const headers = this[kOutHeaders];
-      if (!headers)
+      if (!headers) {
         return;
+      }
       const keys = Object.keys(val);
       // Retain for(;;) loop for performance reasons
       // Refs: https://github.com/nodejs/node/pull/30958
       for (let i = 0; i < keys.length; ++i) {
         const header = headers[keys[i]];
-        if (header)
+        if (header) {
           header[0] = val[keys[i]];
+        }
       }
     }
   }
 
-  set connection (val: Socket) {
-    this.socket = val
+  set connection(val: Socket) {
+    this.socket = val;
   }
 
   private _renderHeaders() {
     if (this._header) {
-      throw new ERR_HTTP_HEADERS_SENT('render');
+      throw new ERR_HTTP_HEADERS_SENT("render");
     }
 
     const headersMap = this[kOutHeaders];
@@ -365,44 +381,43 @@ export class OutgoingMessage extends Stream {
       }
     }
     return headers;
-  };
+  }
 
-  public cork () {
+  public cork() {
     if (this.socket) {
       this.socket.cork();
     } else {
       this[kCorked]++;
     }
-  };
+  }
 
-  public uncork () {
+  public uncork() {
     if (this.socket) {
       this.socket.uncork();
     } else if (this[kCorked]) {
       this[kCorked]--;
     }
-  };
+  }
 
   public setHeader(name, value) {
     if (this._header) {
-      throw new ERR_HTTP_HEADERS_SENT('set');
+      throw new ERR_HTTP_HEADERS_SENT("set");
     }
     validateHeaderName(name);
     validateHeaderValue(name, value);
 
     let headers = this[kOutHeaders];
-    if (headers === null)
+    if (headers === null) {
       this[kOutHeaders] = headers = ObjectCreate(null);
+    }
 
     headers[name.toLowerCase()] = [name, value];
-  };
+  }
 
   protected _finish() {
     assert(this.socket);
-    this.emit('prefinish');
-  };
-
-  // This logic is probably a bit confusing. Let me explain a bit:
+    this.emit("prefinish");
+  }// This logic is probably a bit confusing. Let me explain a bit:
   //
   // In both HTTP servers and clients it is possible to queue up several
   // outgoing messages. This is easiest to imagine in the case of a client.
@@ -421,6 +436,7 @@ export class OutgoingMessage extends Stream {
   //
   // This function, outgoingFlush(), is called by both the Server and Client
   // to attempt to flush any pending messages out to the socket.
+
   protected _flush() {
     const socket = this.socket;
 
@@ -433,17 +449,17 @@ export class OutgoingMessage extends Stream {
         this._finish();
       } else if (ret && this[kNeedDrain]) {
         this[kNeedDrain] = false;
-        this.emit('drain');
+        this.emit("drain");
       }
     }
-  };
+  }
 
   public end(chunk, encoding, callback) {
-    if (typeof chunk === 'function') {
+    if (typeof chunk === "function") {
       callback = chunk;
       chunk = null;
       encoding = null;
-    } else if (typeof encoding === 'function') {
+    } else if (typeof encoding === "function") {
       callback = encoding;
       encoding = null;
     }
@@ -455,11 +471,11 @@ export class OutgoingMessage extends Stream {
     if (chunk) {
       write_(this, chunk, encoding, null, true);
     } else if (this.finished) {
-      if (typeof callback === 'function') {
+      if (typeof callback === "function") {
         if (!this.writableFinished) {
-          this.on('finish', callback);
+          this.on("finish", callback);
         } else {
-          callback(new ERR_STREAM_ALREADY_FINISHED('end'));
+          callback(new ERR_STREAM_ALREADY_FINISHED("end"));
         }
       }
       return this;
@@ -468,16 +484,17 @@ export class OutgoingMessage extends Stream {
       this._implicitHeader();
     }
 
-    if (typeof callback === 'function')
-      this.once('finish', callback);
+    if (typeof callback === "function") {
+      this.once("finish", callback);
+    }
 
     const finish = onFinish.bind(undefined, this);
 
     if (this._hasBody && this.chunkedEncoding) {
-      this._send('0\r\n' + this._trailer + '\r\n', 'latin1', finish);
+      this._send("0\r\n" + this._trailer + "\r\n", "latin1", finish);
     } else {
       // Force a flush, HACK.
-      this._send('', 'latin1', finish);
+      this._send("", "latin1", finish);
     }
 
     if (this.socket) {
@@ -491,15 +508,17 @@ export class OutgoingMessage extends Stream {
 
     // There is the first message on the outgoing queue, and we've sent
     // everything to the socket.
-    debug('outgoing message end.');
-    if (this.outputData.length === 0 &&
+    debug("outgoing message end.");
+    if (
+      this.outputData.length === 0 &&
       this.socket &&
-      this.socket._httpMessage === this) {
+      this.socket._httpMessage === this
+    ) {
       this._finish();
     }
 
     return this;
-  };
+  }
 
   private _flushOutput(socket) {
     while (this[kCorked]) {
@@ -508,8 +527,9 @@ export class OutgoingMessage extends Stream {
     }
 
     const outputLength = this.outputData.length;
-    if (outputLength <= 0)
+    if (outputLength <= 0) {
       return undefined;
+    }
 
     const outputData = this.outputData;
     socket.cork();
@@ -527,7 +547,7 @@ export class OutgoingMessage extends Stream {
     this.outputSize = 0;
 
     return ret;
-  };
+  }
 
   public flushHeaders() {
     if (!this._header) {
@@ -535,51 +555,51 @@ export class OutgoingMessage extends Stream {
     }
 
     // Force-flush the headers.
-    this._send('');
-  };
+    this._send("");
+  }
 
   public pipe() {
     // OutgoingMessage should be write-only. Piping from it is disabled.
-    this.emit('error', new ERR_STREAM_CANNOT_PIPE());
-  };
-
+    this.emit("error", new ERR_STREAM_CANNOT_PIPE());
+  }
 
   public getHeader(name: string) {
     const headers = this[kOutHeaders];
-    if (headers === null)
+    if (headers === null) {
       return;
+    }
 
     const entry = headers[name.toLowerCase()];
     return entry && entry[1];
-  };
+  }
 
   public getHeaderNames() {
     return this[kOutHeaders] !== null ? Object.keys(this[kOutHeaders]) : [];
-  };
+  }
 
   public hasHeader(name: string) {
     return this[kOutHeaders] !== null &&
       !!this[kOutHeaders][name.toLowerCase()];
-  };
+  }
 
   public removeHeader(name: string) {
     if (this._header) {
-      throw new ERR_HTTP_HEADERS_SENT('remove');
+      throw new ERR_HTTP_HEADERS_SENT("remove");
     }
 
     const key = name.toLowerCase();
 
     switch (key) {
-      case 'connection':
+      case "connection":
         this._removedConnection = true;
         break;
-      case 'content-length':
+      case "content-length":
         this._removedContLen = true;
         break;
-      case 'transfer-encoding':
+      case "transfer-encoding":
         this._removedTE = true;
         break;
-      case 'date':
+      case "date":
         this.sendDate = false;
         break;
     }
@@ -587,47 +607,47 @@ export class OutgoingMessage extends Stream {
     if (this[kOutHeaders] !== null) {
       delete this[kOutHeaders][key];
     }
-  };
+  }
 
   private _implicitHeader() {
-    throw new ERR_METHOD_NOT_IMPLEMENTED('_implicitHeader()'); // pulled from node, we dont need to implement it
-  };
+    throw new ERR_METHOD_NOT_IMPLEMENTED("_implicitHeader()"); // pulled from node, we dont need to implement it
+  }
 
-  get headersSent () {
+  get headersSent() {
     return !!this._header;
   }
 
-  get writableEnded () {
+  get writableEnded() {
     return this.finished;
   }
 
   public write(chunk, encoding, callback) {
-    if (typeof encoding === 'function') {
+    if (typeof encoding === "function") {
       callback = encoding;
       encoding = null;
     }
 
     const ret = write_(this, chunk, encoding, callback, false);
-    if (!ret)
+    if (!ret) {
       this[kNeedDrain] = true;
+    }
     return ret;
-  };
+  }
 
   public setTimeout(msecs, callback) {
-
     if (callback) {
-      this.on('timeout', callback);
+      this.on("timeout", callback);
     }
 
     if (!this.socket) {
-      this.once('socket', function socketSetTimeoutOnConnect(socket) {
+      this.once("socket", function socketSetTimeoutOnConnect(socket) {
         socket.setTimeout(msecs);
       });
     } else {
       this.socket.setTimeout(msecs);
     }
     return this;
-  };
+  }
 
   public destroy(error) {
     if (this.destroyed) {
@@ -638,28 +658,30 @@ export class OutgoingMessage extends Stream {
     if (this.socket) {
       this.socket.destroy(error);
     } else {
-      this.once('socket', function socketDestroyOnConnect(socket) {
+      this.once("socket", function socketDestroyOnConnect(socket) {
         socket.destroy(error);
       });
     }
 
     return this;
-  };
+  }
 
   private _send(data, encoding?, callback?: (err?: Error) => void) {
     // This is a shameful hack to get the headers and first body chunk onto
     // the same packet. Future versions of Node are going to take care of
     // this at a lower level and in a more general way.
     if (!this._headerSent) {
-      if (typeof data === 'string' &&
-        (encoding === 'utf8' || encoding === 'latin1' || !encoding)) {
+      if (
+        typeof data === "string" &&
+        (encoding === "utf8" || encoding === "latin1" || !encoding)
+      ) {
         data = this._header + data;
       } else {
         const header = this._header;
         this.outputData.unshift({
           data: header,
-          encoding: 'latin1',
-          callback: null
+          encoding: "latin1",
+          callback: null,
         });
         this.outputSize += header.length;
         this._onPendingData(header.length);
@@ -667,10 +689,10 @@ export class OutgoingMessage extends Stream {
       this._headerSent = true;
     }
     return this._writeRaw(data, encoding, callback);
-  };
+  }
 
   public addTrailers(headers: unknown[]) { // todo replace unknown with actual type
-    this._trailer = '';
+    this._trailer = "";
     const keys = Object.keys(headers);
     const isArray = Array.isArray(headers);
     // Retain for(;;) loop for performance reasons
@@ -685,16 +707,16 @@ export class OutgoingMessage extends Stream {
         field = key;
         value = headers[key];
       }
-      if (typeof field !== 'string' || !field || !checkIsHttpToken(field)) {
-        throw new ERR_INVALID_HTTP_TOKEN('Trailer name', field);
+      if (typeof field !== "string" || !field || !checkIsHttpToken(field)) {
+        throw new ERR_INVALID_HTTP_TOKEN("Trailer name", field);
       }
       if (checkInvalidHeaderChar(value)) {
         debug('Trailer "%s" contains invalid characters', field);
-        throw new ERR_INVALID_CHAR('trailer content', field);
+        throw new ERR_INVALID_CHAR("trailer content", field);
       }
-      this._trailer += field + ': ' + value + CRLF;
+      this._trailer += field + ": " + value + CRLF;
     }
-  };
+  }
 
   protected _writeRaw(data, encoding, callback) {
     const conn = this.socket;
@@ -704,7 +726,7 @@ export class OutgoingMessage extends Stream {
       return false;
     }
 
-    if (typeof encoding === 'function') {
+    if (typeof encoding === "function") {
       callback = encoding;
       encoding = null;
     }
@@ -734,7 +756,7 @@ export class OutgoingMessage extends Stream {
       date: false,
       expect: false,
       trailer: false,
-      header: firstLine
+      header: firstLine,
     };
 
     if (headers) {
@@ -760,7 +782,7 @@ export class OutgoingMessage extends Stream {
 
     // Date header
     if (this.sendDate && !state.date) {
-      header += 'Date: ' + utcDate() + CRLF;
+      header += "Date: " + utcDate() + CRLF;
     }
 
     // Force the connection to close when the response is a 204 No Content or
@@ -774,10 +796,14 @@ export class OutgoingMessage extends Stream {
     // It was pointed out that this might confuse reverse proxies to the point
     // of creating security liabilities, so suppress the zero chunk and force
     // the connection to close.
-    if (this.chunkedEncoding && (this.statusCode === 204 ||
-      this.statusCode === 304)) {
-      debug(this.statusCode + ' response should not use chunked encoding,' +
-        ' closing connection.');
+    if (
+      this.chunkedEncoding && (this.statusCode === 204 ||
+        this.statusCode === 304)
+    ) {
+      debug(
+        this.statusCode + " response should not use chunked encoding," +
+          " closing connection.",
+      );
       this.chunkedEncoding = false;
       this.shouldKeepAlive = false;
     }
@@ -790,14 +816,14 @@ export class OutgoingMessage extends Stream {
       const shouldSendKeepAlive = this.shouldKeepAlive &&
         (state.contLen || this.useChunkedEncodingByDefault || this.agent);
       if (shouldSendKeepAlive) {
-        header += 'Connection: keep-alive\r\n';
+        header += "Connection: keep-alive\r\n";
         if (this._keepAliveTimeout && this._defaultKeepAlive) {
           const timeoutSeconds = Math.floor(this._keepAliveTimeout / 1000);
           header += `Keep-Alive: timeout=${timeoutSeconds}\r\n`;
         }
       } else {
         this._last = true;
-        header += 'Connection: close\r\n';
+        header += "Connection: close\r\n";
       }
     }
 
@@ -807,18 +833,20 @@ export class OutgoingMessage extends Stream {
         this.chunkedEncoding = false;
       } else if (!this.useChunkedEncodingByDefault) {
         this._last = true;
-      } else if (!state.trailer &&
+      } else if (
+        !state.trailer &&
         !this._removedContLen &&
-        typeof this._contentLength === 'number') {
-        header += 'Content-Length: ' + this._contentLength + CRLF;
+        typeof this._contentLength === "number"
+      ) {
+        header += "Content-Length: " + this._contentLength + CRLF;
       } else if (!this._removedTE) {
-        header += 'Transfer-Encoding: chunked\r\n';
+        header += "Transfer-Encoding: chunked\r\n";
         this.chunkedEncoding = true;
       } else {
         // We should only be able to get here if both Content-Length and
         // Transfer-Encoding are removed by the user.
         // See: test/parallel/test-http-remove-header-stays-removed.js
-        debug('Both Content-Length and Transfer-Encoding are removed');
+        debug("Both Content-Length and Transfer-Encoding are removed");
       }
     }
 
@@ -835,7 +863,7 @@ export class OutgoingMessage extends Stream {
 
     // Wait until the first body chunk, or close(), is sent to flush,
     // UNLESS we're sending Expect: 100-continue.
-    if (state.expect) this._send('');
+    if (state.expect) this._send("");
   }
 
   public getHeaders() {
@@ -852,9 +880,9 @@ export class OutgoingMessage extends Stream {
       }
     }
     return ret;
-  };
+  }
 
   [captureRejectionSymbol](err, event) {
     this.destroy(err);
-  };
+  }
 }

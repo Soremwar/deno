@@ -76,7 +76,7 @@
 //   removeColors
 // } = require('internal/util');
 
-const customInspectSymbol = Symbol('customInspect');
+const customInspectSymbol = Symbol("customInspect");
 
 // const {
 //   codes: {
@@ -142,7 +142,7 @@ const customInspectSymbol = Symbol('customInspect');
 // );
 
 // https://tc39.es/ecma262/#sec-IsHTMLDDA-internal-slot
-const isUndetectableObject = (v) => typeof v === 'undefined' && v !== undefined;
+const isUndetectableObject = (v) => typeof v === "undefined" && v !== undefined;
 
 // // These options must stay in sync with `getUserOptions`. So if any option will
 // // be added or removed, `getUserOptions` must also be updated accordingly.
@@ -232,7 +232,7 @@ function getUserOptions(ctx, isCrossContext) {
     compact: ctx.compact,
     sorted: ctx.sorted,
     getters: ctx.getters,
-    ...ctx.userOptions
+    ...ctx.userOptions,
   };
 
   // Typically, the target value will be an instance of `Object`. If that is
@@ -243,8 +243,10 @@ function getUserOptions(ctx, isCrossContext) {
   if (isCrossContext) {
     Object.setPrototypeOf(ret, null);
     for (const key of Object.keys(ret)) {
-      if ((typeof ret[key] === 'object' || typeof ret[key] === 'function') &&
-          ret[key] !== null) {
+      if (
+        (typeof ret[key] === "object" || typeof ret[key] === "function") &&
+        ret[key] !== null
+      ) {
         delete ret[key];
       }
     }
@@ -254,7 +256,7 @@ function getUserOptions(ctx, isCrossContext) {
         stylized = `${ctx.stylize(value, flavour)}`;
       } catch {}
 
-      if (typeof stylized !== 'string') return value;
+      if (typeof stylized !== "string") return value;
       // `stylized` is a string as it should be, which is safe to pass along.
       return stylized;
     }, null);
@@ -289,7 +291,7 @@ function inspect(value, opts) {
     breakLength: inspectDefaultOptions.breakLength,
     compact: inspectDefaultOptions.compact,
     sorted: inspectDefaultOptions.sorted,
-    getters: inspectDefaultOptions.getters
+    getters: inspectDefaultOptions.getters,
   };
   if (arguments.length > 1) {
     // Legacy...
@@ -302,7 +304,7 @@ function inspect(value, opts) {
       }
     }
     // Set user-specified options
-    if (typeof opts === 'boolean') {
+    if (typeof opts === "boolean") {
       ctx.showHidden = opts;
     } else if (opts) {
       const optKeys = Object.keys(opts);
@@ -312,7 +314,8 @@ function inspect(value, opts) {
         // functionality.
         if (
           Object.hasOwnProperty(inspectDefaultOptions, key) ||
-          key === 'stylize') {
+          key === "stylize"
+        ) {
           ctx[key] = opts[key];
         } else if (ctx.userOptions === undefined) {
           // This is required to pass through the actual user input.
@@ -727,13 +730,15 @@ inspect.custom = customInspectSymbol;
 // value afterwards again.
 function formatValue(ctx, value, recurseTimes, typedArray) {
   // Primitive types cannot have properties.
-  if (typeof value !== 'object' &&
-      typeof value !== 'function' &&
-      !isUndetectableObject(value)) {
+  if (
+    typeof value !== "object" &&
+    typeof value !== "function" &&
+    !isUndetectableObject(value)
+  ) {
     return formatPrimitive(ctx.stylize, value, ctx);
   }
   if (value === null) {
-    return ctx.stylize('null', 'null');
+    return ctx.stylize("null", "null");
   }
 
   // Memorize the context for custom inspection on proxies.
@@ -743,25 +748,31 @@ function formatValue(ctx, value, recurseTimes, typedArray) {
   // Check that value is an object with an inspect function on it.
   if (ctx.customInspect) {
     const maybeCustom = value[customInspectSymbol];
-    if (typeof maybeCustom === 'function' &&
-        // Filter out the util module, its inspect function is special.
-        maybeCustom !== inspect &&
-        // Also filter out any prototype objects using the circular check.
-        !(value.constructor && value.constructor.prototype === value)) {
+    if (
+      typeof maybeCustom === "function" &&
+      // Filter out the util module, its inspect function is special.
+      maybeCustom !== inspect &&
+      // Also filter out any prototype objects using the circular check.
+      !(value.constructor && value.constructor.prototype === value)
+    ) {
       // This makes sure the recurseTimes are reported as before while using
       // a counter internally.
       const depth = ctx.depth === null ? null : ctx.depth - recurseTimes;
-      const isCrossContext =
-        proxy !== undefined || !(context instanceof Object);
+      const isCrossContext = proxy !== undefined ||
+        !(context instanceof Object);
       const ret = Function.call(
-        maybeCustom, context, depth, getUserOptions(ctx, isCrossContext));
+        maybeCustom,
+        context,
+        depth,
+        getUserOptions(ctx, isCrossContext),
+      );
       // If the custom inspection method returned `this`, don't go into
       // infinite recursion.
       if (ret !== context) {
-        if (typeof ret !== 'string') {
+        if (typeof ret !== "string") {
           return formatValue(ctx, ret, recurseTimes);
         }
-        return ret.replace(/\n/g, `\n${' '.repeat(ctx.indentationLvl)}`);
+        return ret.replace(/\n/g, `\n${" ".repeat(ctx.indentationLvl)}`);
       }
     }
   }
@@ -779,7 +790,7 @@ function formatValue(ctx, value, recurseTimes, typedArray) {
         ctx.circular.set(value, index);
       }
     }
-    return ctx.stylize(`[Circular *${index}]`, 'special');
+    return ctx.stylize(`[Circular *${index}]`, "special");
   }
 
   return formatRaw(ctx, value, recurseTimes, typedArray);
@@ -1364,7 +1375,7 @@ function formatValue(ctx, value, recurseTimes, typedArray) {
 
 function formatNumber(fn, value) {
   // Format -0 as '-0'. Checking `value === -0` won't distinguish 0 from -0.
-  return fn(Object.is(value, -0) ? '-0' : `${value}`, 'number');
+  return fn(Object.is(value, -0) ? "-0" : `${value}`, "number");
 }
 
 // function formatBigInt(fn, value) {
@@ -1804,7 +1815,7 @@ function formatNumber(fn, value) {
 //   return `${braces[0]}${ln}${join(output, `,\n${indentation}  `)} ${braces[1]}`;
 // }
 
-const firstErrorLine = (error) => error.message.split('\n')[0];
+const firstErrorLine = (error) => error.message.split("\n")[0];
 let CIRCULAR_ERROR_MESSAGE;
 function tryStringify(arg) {
   try {
@@ -1813,14 +1824,18 @@ function tryStringify(arg) {
     // Populate the circular error message lazily
     if (!CIRCULAR_ERROR_MESSAGE) {
       try {
-        const a = {}; a.a = a; JSON.stringify(a);
+        const a = {};
+        a.a = a;
+        JSON.stringify(a);
       } catch (err) {
         CIRCULAR_ERROR_MESSAGE = firstErrorLine(err);
       }
     }
-    if (err.name === 'TypeError' &&
-        firstErrorLine(err) === CIRCULAR_ERROR_MESSAGE) {
-      return '[Circular]';
+    if (
+      err.name === "TypeError" &&
+      firstErrorLine(err) === CIRCULAR_ERROR_MESSAGE
+    ) {
+      return "[Circular]";
     }
     throw err;
   }
@@ -1841,10 +1856,10 @@ function format(...args) {
 function formatWithOptionsInternal(inspectOptions, ...args) {
   const first = args[0];
   let a = 0;
-  let str = '';
-  let join = '';
+  let str = "";
+  let join = "";
 
-  if (typeof first === 'string') {
+  if (typeof first === "string") {
     if (args.length === 1) {
       return first;
     }
@@ -1858,12 +1873,12 @@ function formatWithOptionsInternal(inspectOptions, ...args) {
           switch (nextChar) {
             case 115: // 's'
               const tempArg = args[++a];
-              if (typeof tempArg === 'number') {
+              if (typeof tempArg === "number") {
                 tempStr = formatNumber(stylizeNoColor, tempArg);
-              } else if (typeof tempArg === 'bigint') {
+              } else if (typeof tempArg === "bigint") {
                 tempStr = `${tempArg}n`;
               } else if (
-                typeof tempArg !== 'object' ||
+                typeof tempArg !== "object" ||
                 tempArg === null ||
                 !tempArg.toString
               ) {
@@ -1873,7 +1888,7 @@ function formatWithOptionsInternal(inspectOptions, ...args) {
                   ...inspectOptions,
                   compact: 3,
                   colors: false,
-                  depth: 0
+                  depth: 0,
                 });
               }
               break;
@@ -1882,10 +1897,10 @@ function formatWithOptionsInternal(inspectOptions, ...args) {
               break;
             case 100: // 'd'
               const tempNum = args[++a];
-              if (typeof tempNum === 'bigint') {
+              if (typeof tempNum === "bigint") {
                 tempStr = `${tempNum}n`;
-              } else if (typeof tempNum === 'symbol') {
-                tempStr = 'NaN';
+              } else if (typeof tempNum === "symbol") {
+                tempStr = "NaN";
               } else {
                 tempStr = formatNumber(stylizeNoColor, Number(tempNum));
               }
@@ -1898,30 +1913,30 @@ function formatWithOptionsInternal(inspectOptions, ...args) {
                 ...inspectOptions,
                 showHidden: true,
                 showProxy: true,
-                depth: 4
+                depth: 4,
               });
               break;
             case 105: // 'i'
               const tempInteger = args[++a];
-              if (typeof tempInteger === 'bigint') {
+              if (typeof tempInteger === "bigint") {
                 tempStr = `${tempInteger}n`;
-              } else if (typeof tempInteger === 'symbol') {
-                tempStr = 'NaN';
+              } else if (typeof tempInteger === "symbol") {
+                tempStr = "NaN";
               } else {
                 tempStr = formatNumber(stylizeNoColor, parseInt(tempInteger));
               }
               break;
             case 102: // 'f'
               const tempFloat = args[++a];
-              if (typeof tempFloat === 'symbol') {
-                tempStr = 'NaN';
+              if (typeof tempFloat === "symbol") {
+                tempStr = "NaN";
               } else {
                 tempStr = formatNumber(stylizeNoColor, parseFloat(tempFloat));
               }
               break;
             case 99: // 'c'
               a += 1;
-              tempStr = '';
+              tempStr = "";
               break;
             case 37: // '%'
               str += first.slice(lastPos, i);
@@ -1943,7 +1958,7 @@ function formatWithOptionsInternal(inspectOptions, ...args) {
     }
     if (lastPos !== 0) {
       a++;
-      join = ' ';
+      join = " ";
       if (lastPos < first.length) {
         str += first.slice(lastPos);
       }
@@ -1953,8 +1968,8 @@ function formatWithOptionsInternal(inspectOptions, ...args) {
   while (a < args.length) {
     const value = args[a];
     str += join;
-    str += typeof value !== 'string' ? inspect(value, inspectOptions) : value;
-    join = ' ';
+    str += typeof value !== "string" ? inspect(value, inspectOptions) : value;
+    join = " ";
     a++;
   }
   return str;

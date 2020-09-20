@@ -3,17 +3,17 @@
 import {
   ServerRequest,
 } from "../http/server.ts";
-import {Server, ServerResponse} from "./_http/_http_server.ts";
+import { Server, ServerResponse } from "./_http/_http_server.ts";
 import type {
   HTTPOptions,
 } from "../http/server.ts";
 import type { Socket } from "./net.ts";
-import { Socket } from "./net.ts"
-import {NetAgent} from "./_http/net_agent.ts";
-import {Agent} from "./_http/_http_agent";
-import {IncomingMessage} from "./_http/_http_incoming.ts";
-import {OutgoingMessage} from "./_http/_http_outgoing";
-import {checkInvalidHeaderChar, STATUS_CODES} from "./_http/_http_common";
+import { Socket } from "./net.ts";
+import { NetAgent } from "./_http/net_agent.ts";
+import { Agent } from "./_http/_http_agent";
+import { IncomingMessage } from "./_http/_http_incoming.ts";
+import { OutgoingMessage } from "./_http/_http_outgoing";
+import { checkInvalidHeaderChar, STATUS_CODES } from "./_http/_http_common";
 
 const tokenRegExp = /^[\^_`a-zA-Z\-0-9!#$%&'*+.|~]+$/;
 
@@ -119,8 +119,6 @@ class Response {
   }
 }
 
-
-
 export class Http extends NetAgent {
   public METHODS = [
     "ACL",
@@ -166,11 +164,11 @@ export class Http extends NetAgent {
   private _globalAgent: Agent = globalAgent;
 
   public IncomingMessage(socket: Socket): IncomingMessage {
-    return new IncomingMessage(socket)
+    return new IncomingMessage(socket);
   }
 
   public OutgoingMessage(): OutgoingMessage {
-    return new OutgoingMessage()
+    return new OutgoingMessage();
   }
 
   /**
@@ -184,7 +182,7 @@ export class Http extends NetAgent {
   }
 
   public ServerResponse(request: ServerRequest): ServerResponse {
-    return new ServerResponse(request)
+    return new ServerResponse(request);
   }
 
   /**

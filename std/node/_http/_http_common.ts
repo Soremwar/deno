@@ -8,9 +8,9 @@ export function checkIsHttpToken(val) {
   return tokenRegExp.test(val);
 }
 
-export const CRLF = '\r\n'
+export const CRLF = "\r\n";
 
-export const chunkExpression = /(?:^|\W)chunked(?:$|\W)/i
+export const chunkExpression = /(?:^|\W)chunked(?:$|\W)/i;
 
 /**
  * True if val contains an invalid field-vchar

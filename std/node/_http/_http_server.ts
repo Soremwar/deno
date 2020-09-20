@@ -5,13 +5,18 @@ import {
   Server as DenoServer,
   ServerRequest,
 } from "../../http/server.ts";
-import {OutgoingMessage} from "./_http_outgoing";
-import {checkInvalidHeaderChar, chunkExpression, CRLF, STATUS_CODES} from "./_http_common";
-import {assert} from "../../testing/asserts";
+import { OutgoingMessage } from "./_http_outgoing";
+import {
+  checkInvalidHeaderChar,
+  chunkExpression,
+  CRLF,
+  STATUS_CODES,
+} from "./_http_common";
+import { assert } from "../../testing/asserts";
 
-const observerCounts = internalBinding('performance') // TODO(any) Figure out what the value assigned is. https://github.com/nodejs/node/blob/a8971f87d3573ac247110e6afde0dc475fe21264/lib/_http_server.js#L81
-const kServerResponseStatistics = Symbol('ServerResponseStatistics');
-const kOutHeaders = Symbol('kOutHeaders')
+const observerCounts = internalBinding("performance"); // TODO(any) Figure out what the value assigned is. https://github.com/nodejs/node/blob/a8971f87d3573ac247110e6afde0dc475fe21264/lib/_http_server.js#L81
+const kServerResponseStatistics = Symbol("ServerResponseStatistics");
+const kOutHeaders = Symbol("kOutHeaders");
 
 function onServerResponseClose() {
   // EventEmitter.emit makes a copy of the 'close' listeners array before
@@ -35,7 +40,7 @@ function onServerResponseClose() {
   if (this._httpMessage) {
     this._httpMessage.destroyed = true;
     this._httpMessage._closed = true;
-    this._httpMessage.emit('close');
+    this._httpMessage.emit("close");
   }
 }
 
@@ -77,18 +82,17 @@ export class Server {
       this.server.close();
     }
   }
-
 }
 
 export class ServerResponse extends OutgoingMessage {
   public sendDate: boolean = true;
   private _sent100: boolean = false;
   private _expect_continue: boolean = false;
-  public statusCode: number = 200
-  public statusMessage: undefined|string = undefined
+  public statusCode: number = 200;
+  public statusMessage: undefined | string = undefined;
   constructor(req) {
     super();
-    if (req.method === 'HEAD') this._hasBody = false;
+    if (req.method === "HEAD") this._hasBody = false;
 
     if (req.httpVersionMajor < 1 || req.httpVersionMinor < 1) {
       this.useChunkedEncodingByDefault = chunkExpression.test(req.headers.te);
@@ -98,7 +102,7 @@ export class ServerResponse extends OutgoingMessage {
     const httpObserverCount = observerCounts[NODE_PERFORMANCE_ENTRY_TYPE_HTTP];
     if (httpObserverCount > 0) {
       this[kServerResponseStatistics] = {
-        startTime: process.hrtime() // TODO(any) Find a deno replacement for this. `process.hrtime()` returns the following: `[<seconds>, <nanoseconds>]`
+        startTime: process.hrtime(), // TODO(any) Find a deno replacement for this. `process.hrtime()` returns the following: `[<seconds>, <nanoseconds>]`
       };
     }
   }
@@ -109,39 +113,43 @@ export class ServerResponse extends OutgoingMessage {
     if (this[kServerResponseStatistics] !== undefined) {
       emitStatistics(this[kServerResponseStatistics]);
     }
-    this._finish()
-  };
+    this._finish();
+  }
 
   public assignSocket(socket) {
     assert(!socket._httpMessage);
     socket._httpMessage = this;
-    socket.on('close', onServerResponseClose);
+    socket.on("close", onServerResponseClose);
     this.socket = socket;
-    this.emit('socket', socket);
+    this.emit("socket", socket);
     this._flush();
-  };
+  }
 
   public detachSocket(socket) {
     assert(socket._httpMessage === this);
-    socket.removeListener('close', onServerResponseClose);
+    socket.removeListener("close", onServerResponseClose);
     socket._httpMessage = null;
     this.socket = null;
-  };
+  }
 
   public writeContinue(cb: (err?: Error) => void) {
-    this._writeRaw(`HTTP/1.1 100 Continue${CRLF}${CRLF}`, 'ascii', cb);
+    this._writeRaw(`HTTP/1.1 100 Continue${CRLF}${CRLF}`, "ascii", cb);
     this._sent100 = true;
-  };
+  }
 
   public writeProcessing(cb: (err?: Error) => void) {
-    this._writeRaw(`HTTP/1.1 102 Processing${CRLF}${CRLF}`, 'ascii', cb);
-  };
+    this._writeRaw(`HTTP/1.1 102 Processing${CRLF}${CRLF}`, "ascii", cb);
+  }
 
   private _implicitHeader() {
     this.writeHead(this.statusCode);
-  };
+  }
 
-  public writeHead(statusCode: number, reason?: string | {[key: string]: string}, obj?: {[key: string]: string}) {
+  public writeHead(
+    statusCode: number,
+    reason?: string | { [key: string]: string },
+    obj?: { [key: string]: string },
+  ) {
     const originalStatusCode = statusCode;
 
     statusCode |= 0;
@@ -149,14 +157,14 @@ export class ServerResponse extends OutgoingMessage {
       throw new ERR_HTTP_INVALID_STATUS_CODE(originalStatusCode);
     }
 
-
-    if (typeof reason === 'string') {
+    if (typeof reason === "string") {
       // writeHead(statusCode, reasonPhrase[, headers])
       this.statusMessage = reason;
     } else {
       // writeHead(statusCode[, headers])
-      if (!this.statusMessage)
-        this.statusMessage = STATUS_CODES[statusCode] || 'unknown';
+      if (!this.statusMessage) {
+        this.statusMessage = STATUS_CODES[statusCode] || "unknown";
+      }
       obj = reason;
     }
     this.statusCode = statusCode;
@@ -175,7 +183,7 @@ export class ServerResponse extends OutgoingMessage {
         }
       }
       if (k === undefined && this._header) {
-        throw new ERR_HTTP_HEADERS_SENT('render');
+        throw new ERR_HTTP_HEADERS_SENT("render");
       }
       // Only progressive api is used
       headers = this[kOutHeaders];
@@ -184,13 +192,16 @@ export class ServerResponse extends OutgoingMessage {
       headers = obj;
     }
 
-    if (checkInvalidHeaderChar(this.statusMessage))
-      throw new ERR_INVALID_CHAR('statusMessage');
+    if (checkInvalidHeaderChar(this.statusMessage)) {
+      throw new ERR_INVALID_CHAR("statusMessage");
+    }
 
     const statusLine = `HTTP/1.1 ${statusCode} ${this.statusMessage}${CRLF}`;
 
-    if (statusCode === 204 || statusCode === 304 ||
-      (statusCode >= 100 && statusCode <= 199)) {
+    if (
+      statusCode === 204 || statusCode === 304 ||
+      (statusCode >= 100 && statusCode <= 199)
+    ) {
       // RFC 2616, 10.2.5:
       // The 204 response MUST NOT include a message-body, and thus is always
       // terminated by the first empty line after the header fields.
@@ -215,7 +226,7 @@ export class ServerResponse extends OutgoingMessage {
     return this;
   }
 
-  public writeHeader (statusCode, reason, obj) {
-    this.writeHead(statusCode, reason, obj)
+  public writeHeader(statusCode, reason, obj) {
+    this.writeHead(statusCode, reason, obj);
   }
 }

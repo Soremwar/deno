@@ -4,8 +4,8 @@
  * to re-use logic and avoid duplicate code
  */
 
-import { Agent, AgentOptions } from "./_http_agent.ts"
-import {ClientRequest} from "./_http_client.ts";
+import { Agent, AgentOptions } from "./_http_agent.ts";
+import { ClientRequest } from "./_http_client.ts";
 
 export class NetAgent {
   public Agent(options: AgentOptions): Agent {
@@ -24,6 +24,6 @@ export class NetAgent {
   }
 
   public ClientRequest(input: string | URL, options, cb) { // TODO(any) Sort out params
-    return new ClientRequest(input, options, cb)
+    return new ClientRequest(input, options, cb);
   }
 }
