@@ -64,8 +64,8 @@ class Duplex extends Readable implements Writable {
   write: any;
 
   constructor(options: any) {
-    super(options);
-    this.#writable = new Writable(options);
+    super({...options, objectMode: options?.objectMode || options?.readableObjectMode});
+    this.#writable = new Writable({...options, objectMode: options?.objectMode || options.writableObjectMode});
     if (options) {
       if (options.readable === false) {
         this.readable = false;
