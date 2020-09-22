@@ -10,7 +10,7 @@ Deno.test("Duplex stream works normally", () => {
   assert(stream._readableState.objectMode);
   assert(stream._writableState.objectMode);
   assert(stream.allowHalfOpen);
-  assertEquals(stream.listenerCount('end'), 0);
+  assertEquals(stream.listenerCount("end"), 0);
 
   let written;
   let read;
@@ -22,14 +22,14 @@ Deno.test("Duplex stream works normally", () => {
 
   stream._read = () => {};
 
-  stream.on('data', (obj) => {
+  stream.on("data", (obj) => {
     read = obj;
   });
 
   stream.push({ val: 1 });
   stream.end({ val: 2 });
 
-  stream.on('finish', () => {
+  stream.on("finish", () => {
     assertEquals(read.val, 1);
     assertEquals(written.val, 2);
   });
@@ -38,19 +38,19 @@ Deno.test("Duplex stream works normally", () => {
 Deno.test("Duplex stream gets constructed correctly", () => {
   const d1 = new Duplex({
     objectMode: true,
-    highWaterMark: 100
+    highWaterMark: 100,
   });
 
-  assertEquals(d1.writableObjectMode, true);
-  assertEquals(d1.writableHighWaterMark, 100);
   assertEquals(d1.readableObjectMode, true);
   assertEquals(d1.readableHighWaterMark, 100);
+  assertEquals(d1.writableObjectMode, true);
+  assertEquals(d1.writableHighWaterMark, 100);
 
   const d2 = new Duplex({
     readableObjectMode: false,
     readableHighWaterMark: 10,
     writableObjectMode: true,
-    writableHighWaterMark: 100
+    writableHighWaterMark: 100,
   });
 
   assertEquals(d2.writableObjectMode, true);

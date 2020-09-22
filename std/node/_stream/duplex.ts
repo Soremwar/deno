@@ -31,12 +31,16 @@ import {
 } from "../string_decoder.ts";
 import BufferList from "../internal/streams/buffer_list.js";
 import {
-  getHighWaterMark,
-  getDefaultHighWaterMark,
-} from "../internal/streams/state.js";
-import {
   kPaused,
 } from "../internal/streams/symbols.js";
+import {
+  codes as error_codes,
+} from "../internal/errors.js";
+
+const {
+  //@ts-ignore
+  ERR_INVALID_OPT_VALUE,
+} = error_codes;
 
 //@ts-ignore
 class Duplex extends Readable implements Writable {
@@ -58,14 +62,21 @@ class Duplex extends Readable implements Writable {
   writableCorked: any;
   writableEnded: any;
   writableFinished: any;
-  writableHighWaterMark: any;
   writableLength: any;
   writableObjectMode: any;
   write: any;
 
   constructor(options: any) {
-    super({...options, objectMode: options?.objectMode || options?.readableObjectMode});
-    this.#writable = new Writable({...options, objectMode: options?.objectMode || options.writableObjectMode});
+    super({
+      ...options,
+      highWaterMark: options?.highWaterMark ?? options?.readableHighWaterMark,
+      objectMode: options?.objectMode || options?.readableObjectMode,
+    });
+    this.#writable = new Writable({
+      ...options,
+      highWaterMark: options?.highWaterMark ?? options?.writableHighWaterMark,
+      objectMode: options?.objectMode || options.writableObjectMode,
+    });
     if (options) {
       if (options.readable === false) {
         this.readable = false;
@@ -93,10 +104,13 @@ class Duplex extends Readable implements Writable {
     this.writableCorked = this.#writable.writableCorked;
     this.writableEnded = this.#writable.writableEnded;
     this.writableFinished = this.#writable.writableFinished;
-    this.writableHighWaterMark = this.#writable.writableHighWaterMark;
     this.writableLength = this.#writable.writableLength;
     this.writableObjectMode = this.#writable.writableObjectMode;
     this.write = this.#writable.write;
+  }
+
+  get writableHighWaterMark() {
+    return this.#writable.writableHighWaterMark;
   }
 
   on(event: string, listener: any): this {
@@ -172,9 +186,14 @@ class ReadableState {
 
     // The point at which it stops calling _read() to fill the buffer
     // Note: 0 is a valid value, means "don't call _read preemptively ever"
-    this.highWaterMark = options
-      ? getHighWaterMark(this, options, "readableHighWaterMark", true)
-      : getDefaultHighWaterMark(false);
+    this.highWaterMark = options.highWaterMark ??
+      (this.objectMode ? 16 : 16 * 1024);
+
+    if (Number.isInteger(this.highWaterMark) && this.highWaterMark >= 0) {
+      this.highWaterMark = Math.floor(this.highWaterMark);
+    } else {
+      throw new ERR_INVALID_OPT_VALUE("highWaterMark", this.highWaterMark);
+    }
 
     // A linked list is used to store data chunks instead of an array because the
     // linked list can remove elements from the beginning faster than

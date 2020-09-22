@@ -37,10 +37,6 @@ import {
   errorOrDestroy,
 } from "../internal/streams/destroy.js";
 import {
-  getHighWaterMark,
-  getDefaultHighWaterMark,
-} from "../internal/streams/state.js";
-import {
   codes as error_codes,
 } from "../internal/errors.js";
 
@@ -54,6 +50,7 @@ const {
   ERR_STREAM_NULL_VALUES,
   ERR_STREAM_WRITE_AFTER_END,
   ERR_UNKNOWN_ENCODING,
+  ERR_INVALID_OPT_VALUE,
 } = error_codes;
 
 function nop() {}
@@ -68,9 +65,14 @@ function WritableState(options, stream) {
   // The point at which write() starts returning false
   // Note: 0 is a valid value, means that we always return false if
   // the entire buffer is not flushed immediately on write().
-  this.highWaterMark = options
-    ? getHighWaterMark(this, options, "writableHighWaterMark", false)
-    : getDefaultHighWaterMark(false);
+  this.highWaterMark = options.highWaterMark ??
+    (this.objectMode ? 16 : 16 * 1024);
+
+  if (Number.isInteger(this.highWaterMark) && this.highWaterMark >= 0) {
+    this.highWaterMark = Math.floor(this.highWaterMark);
+  } else {
+    throw new ERR_INVALID_OPT_VALUE("highWaterMark", this.highWaterMark);
+  }
 
   // if _final has been called.
   this.finalCalled = false;

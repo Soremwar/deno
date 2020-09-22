@@ -31,10 +31,6 @@ import Buffer from "../buffer.ts";
 import BufferList from "../internal/streams/buffer_list.js";
 import * as destroyImpl from "../internal/streams/destroy.js";
 import {
-  getHighWaterMark,
-  getDefaultHighWaterMark,
-} from "../internal/streams/state.js";
-import {
   codes as error_codes,
 } from "../internal/errors.js";
 import {
@@ -51,6 +47,7 @@ const {
   ERR_STREAM_PUSH_AFTER_EOF,
   ERR_METHOD_NOT_IMPLEMENTED,
   ERR_STREAM_UNSHIFT_AFTER_END_EVENT,
+  ERR_INVALID_OPT_VALUE,
 } = error_codes;
 const { errorOrDestroy } = destroyImpl;
 
@@ -82,9 +79,14 @@ class ReadableState {
 
     // The point at which it stops calling _read() to fill the buffer
     // Note: 0 is a valid value, means "don't call _read preemptively ever"
-    this.highWaterMark = options
-      ? getHighWaterMark(this, options, "readableHighWaterMark", false)
-      : getDefaultHighWaterMark(false);
+    this.highWaterMark = options?.highWaterMark ??
+      (this.objectMode ? 16 : 16 * 1024);
+
+    if (Number.isInteger(this.highWaterMark) && this.highWaterMark >= 0) {
+      this.highWaterMark = Math.floor(this.highWaterMark);
+    } else {
+      throw new ERR_INVALID_OPT_VALUE("highWaterMark", this.highWaterMark);
+    }
 
     // A linked list is used to store data chunks instead of an array because the
     // linked list can remove elements from the beginning faster than
