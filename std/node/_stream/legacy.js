@@ -1,10 +1,10 @@
 //TODO@Soremwar
 //Move from prototypes to classes
-import Buffer from "../../buffer.ts";
-import EventEmitter from "../../events.ts";
+import Buffer from "../buffer.ts";
+import EventEmitter from "../events.ts";
 import {
   types,
-} from "../../util.ts";
+} from "../util.ts";
 
 class Stream extends EventEmitter {
   constructor(options) {

@@ -1,13 +1,13 @@
 // Ported from https://github.com/mafintosh/pump with
 // permission from the author, Mathias Buus (@mafintosh).
 
-import { once } from "../util.js";
+import { once } from "../internal/util.js";
 import {
   destroyer as impl_destroyer,
 } from "./destroy.js";
 import {
   codes as internal_codes,
-} from "../errors.js";
+} from "../internal/errors.js";
 import eos from "./end-of-stream.js";
 import createReadableStreamAsyncIterator from "./async_iterator.js";
 import * as events from "../../events.ts";

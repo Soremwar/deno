@@ -5,8 +5,8 @@
 
 import {
   codes as error_codes,
-} from "../errors.js";
-import { once } from "../util.js";
+} from "../internal/errors.js";
+import { once } from "../internal/util.js";
 
 const {
   ERR_INVALID_ARG_TYPE,

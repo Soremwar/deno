@@ -28,14 +28,14 @@
 import {
   captureRejectionSymbol,
 } from "../events.ts";
-import Stream from "../internal/streams/legacy.js";
+import Stream from "./legacy.js";
 import Buffer from "../buffer.ts";
 import {
   construct,
   destroy,
   undestroy,
   errorOrDestroy,
-} from "../internal/streams/destroy.js";
+} from "./destroy.js";
 import {
   codes as error_codes,
 } from "../internal/errors.js";

@@ -2,7 +2,7 @@
 
 import {
   codes as error_codes,
-} from "../errors.js";
+} from "../internal/errors.js";
 const {
   ERR_MULTIPLE_CALLBACK,
 } = error_codes;

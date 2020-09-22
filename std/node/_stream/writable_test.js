@@ -1,5 +1,5 @@
 import Buffer from "../buffer.ts";
-import finished from "../internal/streams/end-of-stream.js"
+import finished from "./end-of-stream.js"
 import Writable from "../_stream/writable.js";
 import {
   deferred,

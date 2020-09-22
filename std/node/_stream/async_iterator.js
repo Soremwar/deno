@@ -1,5 +1,6 @@
 "use strict";
 
+import Readable from "./readable.js";
 import finished from "./end-of-stream.js";
 import * as destroyImpl from "./destroy.js";
 
@@ -10,8 +11,6 @@ const kEnded = Symbol("ended");
 const kLastPromise = Symbol("lastPromise");
 const kHandlePromise = Symbol("handlePromise");
 const kStream = Symbol("stream");
-
-let Readable;
 
 function createIterResult(value, done) {
   return { value, done };
@@ -142,12 +141,6 @@ const ReadableStreamAsyncIteratorPrototype = Object.setPrototypeOf({
 
 const createReadableStreamAsyncIterator = (stream) => {
   if (typeof stream.read !== "function") {
-    // v1 stream
-
-    if (!Readable) {
-      Readable = require("_stream_readable");
-    }
-
     const src = stream;
     stream = new Readable({ objectMode: true }).wrap(src);
     finished(stream, (err) => destroyImpl.destroyer(src, err));

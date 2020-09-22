@@ -1,7 +1,7 @@
-import Buffer from "../../buffer.ts";
+import Buffer from "../buffer.ts";
 import {
   codes as error_codes,
-} from "../errors.js";
+} from "../internal/errors.js";
 
 const {
   ERR_INVALID_ARG_TYPE,

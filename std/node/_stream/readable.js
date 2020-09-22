@@ -26,21 +26,21 @@
 import {
   captureRejectionSymbol,
 } from "../events.ts";
-import Stream from "../internal/streams/legacy.js";
+import Stream from "./legacy.js";
 import Buffer from "../buffer.ts";
-import BufferList from "../internal/streams/buffer_list.js";
-import * as destroyImpl from "../internal/streams/destroy.js";
+import BufferList from "./buffer_list.js";
+import * as destroyImpl from "./destroy.js";
 import {
   codes as error_codes,
 } from "../internal/errors.js";
 import {
   StringDecoder,
 } from "../string_decoder.ts";
-import createReadableStreamAsyncIterator from "../internal/streams/async_iterator.js";
-import streamFrom from "../internal/streams/from.js";
+import createReadableStreamAsyncIterator from "./async_iterator.js";
+import streamFrom from "./from.js";
 import {
   kPaused,
-} from "../internal/streams/symbols.js";
+} from "./symbols.js";
 
 const {
   ERR_INVALID_ARG_TYPE,

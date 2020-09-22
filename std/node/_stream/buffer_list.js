@@ -2,7 +2,7 @@
 //Investigate/Bring back inspect calls
 //Add types
 
-import Buffer from "../../buffer.ts";
+import Buffer from "../buffer.ts";
 
 export default class BufferList {
   constructor() {
