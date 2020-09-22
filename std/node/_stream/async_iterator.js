@@ -1,7 +1,5 @@
-"use strict";
-
 import Readable from "./readable.js";
-import finished from "./end-of-stream.js";
+import finished from "./end-of-stream.ts";
 import * as destroyImpl from "./destroy.js";
 
 const kLastResolve = Symbol("lastResolve");

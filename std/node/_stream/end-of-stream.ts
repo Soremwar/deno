@@ -1,35 +1,45 @@
 // Ported from https://github.com/mafintosh/end-of-stream with
 // permission from the author, Mathias Buus (@mafintosh).
-
-"use strict";
-
 import {
   codes as error_codes,
 } from "../internal/errors.js";
 import { once } from "../internal/util.js";
+import type Readable from "./readable.js";
+import type Writable from "./writable.js";
 
 const {
+  //@ts-ignore
   ERR_INVALID_ARG_TYPE,
+  //@ts-ignore
   ERR_STREAM_PREMATURE_CLOSE,
 } = error_codes;
 
-function isRequest(stream) {
+type Stream = Readable | Writable;
+
+function isRequest(stream: Stream) {
+  //@ts-ignore
   return stream.setHeader && typeof stream.abort === "function";
 }
 
-function isReadable(stream) {
+function isReadable(stream: Stream) {
+  //@ts-ignore
   return typeof stream.readable === "boolean" ||
+  //@ts-ignore
     typeof stream.readableEnded === "boolean" ||
+    //@ts-ignore
     !!stream._readableState;
 }
 
-function isWritable(stream) {
+function isWritable(stream: Stream) {
+  //@ts-ignore
   return typeof stream.writable === "boolean" ||
+  //@ts-ignore
     typeof stream.writableEnded === "boolean" ||
+  //@ts-ignore
     !!stream._writableState;
 }
 
-function isWritableFinished(stream) {
+function isWritableFinished(stream: Writable) {
   if (stream.writableFinished) return true;
   const wState = stream._writableState;
   if (!wState || wState.errored) return false;
@@ -38,24 +48,48 @@ function isWritableFinished(stream) {
 
 function nop() {}
 
-function isReadableEnded(stream) {
+function isReadableEnded(stream: Readable) {
+  //@ts-ignore
   if (stream.readableEnded) return true;
   const rState = stream._readableState;
   if (!rState || rState.errored) return false;
   return rState.endEmitted || (rState.ended && rState.length === 0);
 }
 
-function eos(stream, opts, callback) {
-  if (arguments.length === 2) {
-    callback = opts;
+interface FinishedOptions {
+  error?: boolean;
+  readable?: boolean;
+  writable?: boolean;
+}
+
+export default function eos(stream: Stream, options: FinishedOptions | null, callback: (err?: Error | null) => void): () => void;
+export default function eos(stream: Stream, callback: (err?: Error | null) => void): () => void;
+
+export default function eos(
+  stream: Stream,
+  x: FinishedOptions | ((err?: Error | null) => void) | null,
+  y?: (err?: Error | null) => void,
+) {
+
+  let opts: FinishedOptions;
+  let callback: (err?: Error | null) => void;
+
+  if (!y) {
+    if (typeof x !== "function") {
+      throw new ERR_INVALID_ARG_TYPE("callback", "function", x);
+    }
     opts = {};
-  } else if (opts == null) {
-    opts = {};
-  } else if (typeof opts !== "object") {
-    throw new ERR_INVALID_ARG_TYPE("opts", "object", opts);
-  }
-  if (typeof callback !== "function") {
-    throw new ERR_INVALID_ARG_TYPE("callback", "function", callback);
+    callback = x;
+  } else {
+    if (!x || Array.isArray(x) || typeof x !== "object") {
+      throw new ERR_INVALID_ARG_TYPE("opts", "object", x);
+    }
+    opts = x;
+
+    if (typeof y !== "function") {
+      throw new ERR_INVALID_ARG_TYPE("callback", "function", y);
+    }
+    callback = y;
   }
 
   callback = once(callback);
@@ -65,11 +99,14 @@ function eos(stream, opts, callback) {
   const writable = opts.writable ||
     (opts.writable !== false && isWritable(stream));
 
+  //@ts-ignore
   const wState = stream._writableState;
+  //@ts-ignore
   const rState = stream._readableState;
   const state = wState || rState;
 
   const onlegacyfinish = () => {
+    //@ts-ignore
     if (!stream.writable) onfinish();
   };
 
@@ -85,6 +122,7 @@ function eos(stream, opts, callback) {
     isWritable(stream) === writable
   );
 
+  //@ts-ignore
   let writableFinished = stream.writableFinished ||
     (wState && wState.finished);
   const onfinish = () => {
@@ -92,12 +130,15 @@ function eos(stream, opts, callback) {
     // Stream should not be destroyed here. If it is that
     // means that user space is doing something differently and
     // we cannot trust willEmitClose.
+    //@ts-ignore
     if (stream.destroyed) willEmitClose = false;
 
+    //@ts-ignore
     if (willEmitClose && (!stream.readable || readable)) return;
     if (!readable || readableEnded) callback.call(stream);
   };
 
+  //@ts-ignore
   let readableEnded = stream.readableEnded ||
     (rState && rState.endEmitted);
   const onend = () => {
@@ -105,23 +146,27 @@ function eos(stream, opts, callback) {
     // Stream should not be destroyed here. If it is that
     // means that user space is doing something differently and
     // we cannot trust willEmitClose.
+    //@ts-ignore
     if (stream.destroyed) willEmitClose = false;
 
+    //@ts-ignore
     if (willEmitClose && (!stream.writable || writable)) return;
     if (!writable || writableFinished) callback.call(stream);
   };
 
-  const onerror = (err) => {
+  const onerror = (err: Error) => {
     callback.call(stream, err);
   };
 
   const onclose = () => {
     if (readable && !readableEnded) {
+      //@ts-ignore
       if (!isReadableEnded(stream)) {
         return callback.call(stream, new ERR_STREAM_PREMATURE_CLOSE());
       }
     }
     if (writable && !writableFinished) {
+      //@ts-ignore
       if (!isWritableFinished(stream)) {
         return callback.call(stream, new ERR_STREAM_PREMATURE_CLOSE());
       }
@@ -130,12 +175,14 @@ function eos(stream, opts, callback) {
   };
 
   const onrequest = () => {
+    //@ts-ignore
     stream.req.on("finish", onfinish);
   };
 
   if (isRequest(stream)) {
     stream.on("complete", onfinish);
     stream.on("abort", onclose);
+    //@ts-ignore
     if (stream.req) onrequest();
     else stream.on("request", onrequest);
   } else if (writable && !wState) { // legacy streams
@@ -144,6 +191,7 @@ function eos(stream, opts, callback) {
   }
 
   // Not all streams will emit 'close' after 'aborted'.
+  //@ts-ignore
   if (typeof stream.aborted === "boolean") {
     stream.on("aborted", onclose);
   }
@@ -158,6 +206,7 @@ function eos(stream, opts, callback) {
     (rState && rState.closed) ||
     (wState && wState.errorEmitted) ||
     (rState && rState.errorEmitted) ||
+    //@ts-ignore
     (rState && stream.req && stream.aborted) ||
     (
       (!writable || (wState && wState.finished)) &&
@@ -184,6 +233,7 @@ function eos(stream, opts, callback) {
     stream.removeListener("complete", onfinish);
     stream.removeListener("abort", onclose);
     stream.removeListener("request", onrequest);
+    //@ts-ignore
     if (stream.req) stream.req.removeListener("finish", onfinish);
     stream.removeListener("end", onlegacyfinish);
     stream.removeListener("close", onlegacyfinish);
@@ -193,5 +243,3 @@ function eos(stream, opts, callback) {
     stream.removeListener("close", onclose);
   };
 }
-
-export default eos;
