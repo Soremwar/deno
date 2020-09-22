@@ -1,4 +1,5 @@
 import Buffer from "../buffer.ts";
+import finished from "../internal/streams/end-of-stream.js"
 import Writable from "../_stream/writable.js";
 import {
   deferred,
@@ -95,4 +96,109 @@ Deno.test("Writable stream writes Uint8Array in object mode", async () => {
   await write_expected_executions;
   clearTimeout(write_timeout);
   assertEquals(write_executed, write_executed_expected);
+});
+
+Deno.test("Writable stream throws on unexpected close", async () => {
+  let finished_executed = 0;
+  const finished_executed_expected = 1;
+  const finished_expected_executions = deferred();
+
+  const writable = new Writable({
+    write: () => {},
+  });
+  writable.writable = false;
+  writable.destroy();
+
+  finished(writable, (err) => {
+    finished_executed++;
+    if (finished_executed == finished_executed_expected) {
+      finished_expected_executions.resolve();
+    }
+    assertEquals(err.code, 'ERR_STREAM_PREMATURE_CLOSE');
+  });
+
+  const finished_timeout = setTimeout(
+    () => finished_expected_executions.reject(),
+    1000,
+  );
+  await finished_expected_executions;
+  clearTimeout(finished_timeout);
+  assertEquals(finished_executed, finished_executed_expected);
+});
+
+Deno.test("Writable stream finishes correctly", async () => {
+  let finished_executed = 0;
+  const finished_executed_expected = 1;
+  const finished_expected_executions = deferred();
+
+  const w = new Writable({
+    write(_chunk, _encoding, cb) {
+      cb();
+    },
+    autoDestroy: false
+  });
+
+  w.end('asd');
+
+  queueMicrotask(() => {
+    finished(w, () => {
+      finished_executed++;
+      if (finished_executed == finished_executed_expected) {
+        finished_expected_executions.resolve();
+      }
+    });
+  });
+
+  const finished_timeout = setTimeout(
+    () => finished_expected_executions.reject(),
+    1000,
+  );
+  await finished_expected_executions;
+  clearTimeout(finished_timeout);
+  assertEquals(finished_executed, finished_executed_expected);
+});
+
+Deno.test("Writable stream finishes correctly after error", async () => {
+  let error_executed = 0;
+  const error_executed_expected = 1;
+  const error_expected_executions = deferred();
+
+  let finished_executed = 0;
+  const finished_executed_expected = 1;
+  const finished_expected_executions = deferred();
+
+  const w = new Writable({
+    write(_chunk, _encoding, cb) {
+      cb(new Error());
+    },
+    autoDestroy: false
+  });
+  w.write('asd');
+  w.on('error', () => {
+    error_executed++;
+    if (error_executed == error_executed_expected) {
+      error_expected_executions.resolve();
+    }
+    finished(w, () => {
+      finished_executed++;
+      if (finished_executed == finished_executed_expected) {
+        finished_expected_executions.resolve();
+      }
+    });
+  });
+
+  const error_timeout = setTimeout(
+    () => error_expected_executions.reject(),
+    1000,
+  );
+  const finished_timeout = setTimeout(
+    () => finished_expected_executions.reject(),
+    1000,
+  );
+  await finished_expected_executions;
+  await error_expected_executions;
+  clearTimeout(finished_timeout);
+  clearTimeout(error_timeout);
+  assertEquals(finished_executed, finished_executed_expected);
+  assertEquals(error_executed, error_executed_expected);
 });
