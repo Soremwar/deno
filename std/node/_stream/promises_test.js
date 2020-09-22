@@ -64,26 +64,26 @@ Deno.test("Promise pipeline works correctly", async () => {
   assertEquals(pipeline_executed, pipeline_executed_expected);
 });
 
-Deno.test("Promise pipeline throws on invalid arguments", async () => {
-  const read = new Readable({
-    read() {},
-  });
+// Deno.test("Promise pipeline throws on invalid arguments", async () => {
+//   const read = new Readable({
+//     read() {},
+//   });
 
-  await pipeline(read, () => {});
+//   await pipeline(read, () => {});
 
-  await assertThrowsAsync(
-    () => pipeline(read, () => {}),
-    Error,
-  );
-  await assertThrowsAsync(
-    () => pipeline(() => {}),
-    Error,
-  );
-  await assertThrowsAsync(
-    () => pipeline(),
-    Error,
-  );
-});
+//   await assertThrowsAsync(
+//     () => pipeline(read, () => {}),
+//     Error,
+//   );
+//   await assertThrowsAsync(
+//     () => pipeline(() => {}),
+//     Error,
+//   );
+//   await assertThrowsAsync(
+//     () => pipeline(),
+//     Error,
+//   );
+// });
 
 Deno.test("Promise pipeline throws on readable destroyed", async () => {
   const read = new Readable({

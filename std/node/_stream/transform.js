@@ -69,96 +69,89 @@ import Duplex from "./duplex.ts";
 const {
   ERR_METHOD_NOT_IMPLEMENTED,
 } = error_codes;
-Object.setPrototypeOf(Transform.prototype, Duplex.prototype);
-Object.setPrototypeOf(Transform, Duplex);
 
 const kCallback = Symbol("kCallback");
 
-export default function Transform(options) {
-  if (!(this instanceof Transform)) {
-    return new Transform(options);
+export default class Transform extends Duplex {
+  constructor(options){
+    super(options);
+    // We have implemented the _read method, and done the other things
+    // that Readable wants before the first _read call, so unset the
+    // sync guard flag.
+    this._readableState.sync = false;
+  
+    this[kCallback] = null;
+  
+    if (options) {
+      if (typeof options.transform === "function") {
+        this._transform = options.transform;
+      }
+  
+      if (typeof options.flush === "function") {
+        this._flush = options.flush;
+      }
+    }
+  
+    // When the writable side finishes, then flush out anything remaining.
+    // Backwards compat. Some Transform streams incorrectly implement _final
+    // instead of or in addition to _flush. By using 'prefinish' instead of
+    // implementing _final we continue supporting this unfortunate use case.
+    this.on("prefinish", function() {
+      if (typeof this._flush === "function" && !this.destroyed) {
+        this._flush((er, data) => {
+          if (er) {
+            this.destroy(er);
+            return;
+          }
+    
+          if (data != null) {
+            this.push(data);
+          }
+          this.push(null);
+        });
+      } else {
+        this.push(null);
+      }
+    });
   }
 
-  Duplex.call(this, options);
-
-  // We have implemented the _read method, and done the other things
-  // that Readable wants before the first _read call, so unset the
-  // sync guard flag.
-  this._readableState.sync = false;
-
-  this[kCallback] = null;
-
-  if (options) {
-    if (typeof options.transform === "function") {
-      this._transform = options.transform;
-    }
-
-    if (typeof options.flush === "function") {
-      this._flush = options.flush;
+  _read() {
+    if (this[kCallback]) {
+      const callback = this[kCallback];
+      this[kCallback] = null;
+      callback();
     }
   }
 
-  // When the writable side finishes, then flush out anything remaining.
-  // Backwards compat. Some Transform streams incorrectly implement _final
-  // instead of or in addition to _flush. By using 'prefinish' instead of
-  // implementing _final we continue supporting this unfortunate use case.
-  this.on("prefinish", prefinish);
-}
+  _transform(chunk, encoding, callback) {
+    throw new ERR_METHOD_NOT_IMPLEMENTED("_transform()");
+  }
 
-function prefinish() {
-  if (typeof this._flush === "function" && !this.destroyed) {
-    this._flush((er, data) => {
-      if (er) {
-        this.destroy(er);
+  _write(chunk, encoding, callback) {
+    const rState = this._readableState;
+    const wState = this._writableState;
+    const length = rState.length;
+  
+    this._transform(chunk, encoding, (err, val) => {
+      if (err) {
+        callback(err);
         return;
       }
-
-      if (data != null) {
-        this.push(data);
+  
+      if (val != null) {
+        this.push(val);
       }
-      this.push(null);
+  
+      if (
+        wState.ended || // Backwards compat.
+        length === rState.length || // Backwards compat.
+        rState.length < rState.highWaterMark ||
+        rState.length === 0
+      ) {
+        callback();
+      } else {
+        this[kCallback] = callback;
+      }
     });
-  } else {
-    this.push(null);
   }
 }
-
-Transform.prototype._transform = function (chunk, encoding, callback) {
-  throw new ERR_METHOD_NOT_IMPLEMENTED("_transform()");
-};
-
-Transform.prototype._write = function (chunk, encoding, callback) {
-  const rState = this._readableState;
-  const wState = this._writableState;
-  const length = rState.length;
-
-  this._transform(chunk, encoding, (err, val) => {
-    if (err) {
-      callback(err);
-      return;
-    }
-
-    if (val != null) {
-      this.push(val);
-    }
-
-    if (
-      wState.ended || // Backwards compat.
-      length === rState.length || // Backwards compat.
-      rState.length < rState.highWaterMark ||
-      rState.length === 0
-    ) {
-      callback();
-    } else {
-      this[kCallback] = callback;
-    }
-  });
-};
-
-Transform.prototype._read = function () {
-  if (this[kCallback]) {
-    const callback = this[kCallback];
-    this[kCallback] = null;
-    callback();
-  }
-};

@@ -172,9 +172,9 @@ function eos(stream, opts, callback) {
     // TODO(ronag): Throw some kind of error? Does it make sense
     // to call finished() on a "finished" stream?
     // TODO(ronag): willEmitClose?
-    //TODO(Soremwar)
-    //God this is a mess
-    //This is a replacement for `process.nextTick(() => callback());`
+    // TODO(Soremwar)
+    // God this is a mess
+    // This is a replacement for `process.nextTick(() => callback());`
     queueMicrotask(callback);
   }
 

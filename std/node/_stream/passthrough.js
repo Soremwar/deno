@@ -25,17 +25,12 @@
 
 import Transform from "./transform.js";
 
-Object.setPrototypeOf(PassThrough.prototype, Transform.prototype);
-Object.setPrototypeOf(PassThrough, Transform);
-
-export default function PassThrough(options) {
-  if (!(this instanceof PassThrough)) {
-    return new PassThrough(options);
+export default class PassThrough extends Transform {
+  constructor(options){
+    super(options);
   }
 
-  Transform.call(this, options);
+  _transform(chunk, _encoding, cb) {
+    cb(null, chunk);
+  }
 }
-
-PassThrough.prototype._transform = function (chunk, _encoding, cb) {
-  cb(null, chunk);
-};

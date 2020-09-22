@@ -114,7 +114,16 @@ class Duplex extends Readable implements Writable {
   }
 
   on(event: string, listener: any): this {
-    if (["drain", "finish", "pipe", "unpipe"].includes(event)) {
+    // This is a mess that I cannot work around
+    // This events need to be emitted downstream to the writable instance
+    // parent we have inside duplex
+    if ([
+      "drain",
+      "finish",
+      "pipe",
+      "prefinish",
+      "unpipe",
+    ].includes(event)) {
       this.#writable.on(event, listener);
     } else {
       super.on(event, listener);
