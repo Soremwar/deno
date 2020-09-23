@@ -1,5 +1,5 @@
 import Buffer from "../buffer.ts";
-import Readable from "../_stream/readable.js";
+import Readable from "../_stream/readable.ts";
 import {
   once,
 } from "../events.ts";

@@ -1,4 +1,4 @@
-import Readable from "./readable.js";
+import Readable from "./readable.ts";
 import finished from "./end-of-stream.ts";
 import * as destroyImpl from "./destroy.js";
 

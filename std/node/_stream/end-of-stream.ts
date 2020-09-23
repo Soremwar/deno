@@ -4,7 +4,7 @@ import {
   codes as error_codes,
 } from "../internal/errors.js";
 import { once } from "../internal/util.js";
-import type Readable from "./readable.js";
+import type Readable from "./readable.ts";
 import type Writable from "./writable.js";
 
 const {
