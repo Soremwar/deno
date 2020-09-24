@@ -61,7 +61,7 @@ function flow(stream) {
   while (state.flowing && stream.read() !== null);
 }
 
-function pipeOnDrain(src, dest) {
+function pipeOnDrain(src: Readable, dest: Writable) {
   return function pipeOnDrainFunctionResult() {
     const state = src._readableState;
 
@@ -1189,7 +1189,6 @@ class Readable extends Stream {
       !r.endEmitted;
   }
   set readable(val: boolean) {
-    // Backwards compat.
     if (this._readableState) {
       this._readableState.readable = val;
     }
@@ -1233,14 +1232,9 @@ class Readable extends Stream {
   }
 
   set destroyed(value: boolean) {
-    // We ignore the value if the stream
-    // has not been initialized yet.
     if (!this._readableState) {
       return;
     }
-
-    // Backward compatibility, the user is explicitly
-    // managing destroyed.
     this._readableState.destroyed = value;
   }
 
