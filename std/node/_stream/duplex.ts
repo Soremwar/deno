@@ -47,8 +47,6 @@ const {
 //@ts-ignore
 class Duplex extends Readable implements Writable {
   allowHalfOpen = true;
-  readable = true;
-  writable = true;
 
   #writable: Writable;
 
@@ -60,6 +58,7 @@ class Duplex extends Readable implements Writable {
   end: any;
   setDefaultEncoding: any;
   uncork: any;
+  writable: boolean;
   writableBuffer: any;
   writableCorked: any;
   writableEnded: any;
@@ -147,6 +146,18 @@ class Duplex extends Readable implements Writable {
     if (this._readableState && this._writableState) {
       this._readableState.destroyed = value;
       this._writableState.destroyed = value;
+    }
+  }
+
+  get readable(): boolean {
+    const r = this._readableState;
+    return !!r && r.readable !== false && !r.destroyed && !r.errorEmitted &&
+      !r.endEmitted;
+  }
+
+  set readable(val: boolean) {
+    if (this._readableState) {
+      this._readableState.readable = val;
     }
   }
 }
