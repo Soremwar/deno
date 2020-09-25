@@ -25,7 +25,7 @@
 import EventEmitter, {
   captureRejectionSymbol,
 } from "../events.ts";
-import Stream from "./legacy.js";
+import Stream from "./stream.ts";
 import Buffer from "../buffer.ts";
 import BufferList from "./buffer_list.js";
 import * as destroyImpl from "./destroy.js";
@@ -542,7 +542,7 @@ class Readable extends Stream {
   _readableState: ReadableState;
 
   constructor(options?: ReadableOptions) {
-    super(options);
+    super();
     if (options) {
       if (typeof options.read === "function") {
         this._read = options.read;

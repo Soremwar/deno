@@ -28,7 +28,7 @@
 import {
   captureRejectionSymbol,
 } from "../events.ts";
-import Stream from "./legacy.js";
+import Stream from "./stream.ts";
 import Buffer from "../buffer.ts";
 import {
   construct,
@@ -562,7 +562,7 @@ class Writable extends Stream {
   _writev?: write_v | null = null;
 
   constructor(options?: WritableOptions) {
-    super(options);
+    super();
     this._writableState = new WritableState(options, this);
 
     if (options) {
@@ -763,8 +763,10 @@ class Writable extends Stream {
     }
   }
 
-  pipe() {
+  //This signature was changed to keep inheritance coherent
+  pipe(dest: Writable, options: {end: boolean}): Writable {
     errorOrDestroy(this, new ERR_STREAM_CANNOT_PIPE());
+    return dest;
   }
 
   // deno-lint-ignore no-explicit-any

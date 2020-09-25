@@ -2,40 +2,27 @@
 //Move from prototypes to classes
 import Buffer from "../buffer.ts";
 import EventEmitter from "../events.ts";
+import type Writable from "./writable.ts";
 import {
   types,
 } from "../util.ts";
 
 class Stream extends EventEmitter {
-  constructor(options) {
-    super(options);
+  constructor() {
+    super();
   }
 
   static _isUint8Array = types.isUint8Array;
-  static _uint8ArrayToBuffer = (chunk) => Buffer.from(chunk);
+  static _uint8ArrayToBuffer = (chunk: Uint8Array) => Buffer.from(chunk);
 
-  pipe(dest, options) {
+  pipe(dest: Writable, options: {end: boolean}) {
+    // deno-lint-ignore no-this-alias
     const source = this;
 
-    function ondata(chunk) {
-      if (dest.writable && dest.write(chunk) === false && source.pause) {
-        source.pause();
-      }
-    }
-
-    source.on("data", ondata);
-
-    function ondrain() {
-      if (source.readable && source.resume) {
-        source.resume();
-      }
-    }
-
-    dest.on("drain", ondrain);
-
-    // If the 'end' option is not supplied, dest.end() will be called when
-    // source gets the 'end' or 'close' events.  Only dest.end() once.
-    if (!dest._isStdio && (!options || options.end !== false)) {
+    //TODO
+    //isStdio exist on stdin || stdout only, which extend from Duplex
+    //if (!dest._isStdio && (options?.end ?? true)) {
+    if (options?.end ?? true) {
       source.on("end", onend);
       source.on("close", onclose);
     }
@@ -56,7 +43,7 @@ class Stream extends EventEmitter {
     }
 
     // Don't leave dangling pipes when there are errors.
-    function onerror(er) {
+    function onerror(this: Stream, er: Error) {
       cleanup();
       if (this.listenerCount("error") === 0) {
         throw er; // Unhandled stream error in pipe.
@@ -68,9 +55,6 @@ class Stream extends EventEmitter {
 
     // Remove all the event listeners that were added.
     function cleanup() {
-      source.removeListener("data", ondata);
-      dest.removeListener("drain", ondrain);
-
       source.removeListener("end", onend);
       source.removeListener("close", onclose);
 
@@ -89,7 +73,6 @@ class Stream extends EventEmitter {
     dest.on("close", cleanup);
     dest.emit("pipe", source);
 
-    // Allow for unix-like usage: A.pipe(B).pipe(C)
     return dest;
   }
 }
