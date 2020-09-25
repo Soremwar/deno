@@ -24,7 +24,7 @@ function isRequest(stream: Stream) {
 function isReadable(stream: Stream) {
   //@ts-ignore
   return typeof stream.readable === "boolean" ||
-  //@ts-ignore
+    //@ts-ignore
     typeof stream.readableEnded === "boolean" ||
     //@ts-ignore
     !!stream._readableState;
@@ -33,9 +33,9 @@ function isReadable(stream: Stream) {
 function isWritable(stream: Stream) {
   //@ts-ignore
   return typeof stream.writable === "boolean" ||
-  //@ts-ignore
+    //@ts-ignore
     typeof stream.writableEnded === "boolean" ||
-  //@ts-ignore
+    //@ts-ignore
     !!stream._writableState;
 }
 
@@ -62,15 +62,21 @@ interface FinishedOptions {
   writable?: boolean;
 }
 
-export default function eos(stream: Stream, options: FinishedOptions | null, callback: (err?: Error | null) => void): () => void;
-export default function eos(stream: Stream, callback: (err?: Error | null) => void): () => void;
+export default function eos(
+  stream: Stream,
+  options: FinishedOptions | null,
+  callback: (err?: Error | null) => void,
+): () => void;
+export default function eos(
+  stream: Stream,
+  callback: (err?: Error | null) => void,
+): () => void;
 
 export default function eos(
   stream: Stream,
   x: FinishedOptions | ((err?: Error | null) => void) | null,
   y?: (err?: Error | null) => void,
 ) {
-
   let opts: FinishedOptions;
   let callback: (err?: Error | null) => void;
 

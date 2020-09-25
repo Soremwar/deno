@@ -1,5 +1,5 @@
 import Buffer from "../buffer.ts";
-import finished from "./end-of-stream.ts"
+import finished from "./end-of-stream.ts";
 import Writable from "../_stream/writable.js";
 import {
   deferred,
@@ -114,7 +114,7 @@ Deno.test("Writable stream throws on unexpected close", async () => {
     if (finished_executed == finished_executed_expected) {
       finished_expected_executions.resolve();
     }
-    assertEquals(err.code, 'ERR_STREAM_PREMATURE_CLOSE');
+    assertEquals(err.code, "ERR_STREAM_PREMATURE_CLOSE");
   });
 
   const finished_timeout = setTimeout(
@@ -135,10 +135,10 @@ Deno.test("Writable stream finishes correctly", async () => {
     write(_chunk, _encoding, cb) {
       cb();
     },
-    autoDestroy: false
+    autoDestroy: false,
   });
 
-  w.end('asd');
+  w.end("asd");
 
   queueMicrotask(() => {
     finished(w, () => {
@@ -171,10 +171,10 @@ Deno.test("Writable stream finishes correctly after error", async () => {
     write(_chunk, _encoding, cb) {
       cb(new Error());
     },
-    autoDestroy: false
+    autoDestroy: false,
   });
-  w.write('asd');
-  w.on('error', () => {
+  w.write("asd");
+  w.on("error", () => {
     error_executed++;
     if (error_executed == error_executed_expected) {
       error_expected_executions.resolve();

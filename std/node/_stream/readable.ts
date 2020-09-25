@@ -22,7 +22,7 @@
 // DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 // USE OR OTHER DEALINGS IN THE SOFTWARE.
-import {
+import EventEmitter, {
   captureRejectionSymbol,
 } from "../events.ts";
 import Stream from "./legacy.js";
@@ -56,7 +56,7 @@ const {
 } = error_codes;
 const { errorOrDestroy } = destroyImpl;
 
-function flow(stream) {
+function flow(stream: Readable) {
   const state = stream._readableState;
   while (state.flowing && stream.read() !== null);
 }
@@ -71,11 +71,12 @@ function pipeOnDrain(src: Readable, dest: Writable) {
     if (state.awaitDrainWriters === dest) {
       state.awaitDrainWriters = null;
     } else if (state.multiAwaitDrain) {
-      state.awaitDrainWriters.delete(dest);
+      (state.awaitDrainWriters as Set<Writable>).delete(dest);
     }
 
     if (
-      (!state.awaitDrainWriters || state.awaitDrainWriters.size === 0) &&
+      (!state.awaitDrainWriters ||
+        (state.awaitDrainWriters as Set<Writable>).size === 0) &&
       src.listenerCount("data")
     ) {
       state.flowing = true;
@@ -84,7 +85,7 @@ function pipeOnDrain(src: Readable, dest: Writable) {
   };
 }
 
-function updateReadableListening(self) {
+function updateReadableListening(self: Readable) {
   const state = self._readableState;
   state.readableListening = self.listenerCount("readable") > 0;
 
@@ -101,18 +102,18 @@ function updateReadableListening(self) {
   }
 }
 
-function nReadingNextTick(self) {
+function nReadingNextTick(self: Readable) {
   self.read(0);
 }
 
-function resume(stream, state) {
+function resume(stream: Readable, state: ReadableState) {
   if (!state.resumeScheduled) {
     state.resumeScheduled = true;
     queueMicrotask(() => resume_(stream, state));
   }
 }
 
-function resume_(stream, state) {
+function resume_(stream: Readable, state: ReadableState) {
   if (!state.reading) {
     stream.read(0);
   }
@@ -125,34 +126,29 @@ function resume_(stream, state) {
   }
 }
 
-function readableAddChunk(stream, chunk, encoding, addToFront) {
+function readableAddChunk(
+  stream: Readable,
+  chunk: string | Buffer | Uint8Array | null,
+  encoding: undefined | string = undefined,
+  addToFront: boolean,
+) {
   const state = stream._readableState;
+  let used_encoding = encoding;
 
   let err;
   if (!state.objectMode) {
     if (typeof chunk === "string") {
-      encoding = encoding || state.defaultEncoding;
-      if (state.encoding !== encoding) {
+      used_encoding = encoding || state.defaultEncoding;
+      if (state.encoding !== used_encoding) {
         if (addToFront && state.encoding) {
-          // When unshifting, if state.encoding is set, we have to save
-          // the string in the BufferList with the state encoding.
-          chunk = Buffer.from(chunk, encoding).toString(state.encoding);
+          chunk = Buffer.from(chunk, used_encoding).toString(state.encoding);
         } else {
-          chunk = Buffer.from(chunk, encoding);
-          encoding = "";
+          chunk = Buffer.from(chunk, used_encoding);
+          used_encoding = "";
         }
       }
-    } else if (chunk instanceof Buffer) {
-      encoding = "";
-    } else if (Stream._isUint8Array(chunk)) {
-      chunk = Stream._uint8ArrayToBuffer(chunk);
-      encoding = "";
-    } else if (chunk != null) {
-      err = new ERR_INVALID_ARG_TYPE(
-        "chunk",
-        ["string", "Buffer", "Uint8Array"],
-        chunk,
-      );
+    } else if (chunk instanceof Uint8Array) {
+      chunk = Buffer.from(chunk);
     }
   }
 
@@ -161,7 +157,7 @@ function readableAddChunk(stream, chunk, encoding, addToFront) {
   } else if (chunk === null) {
     state.reading = false;
     onEofChunk(stream, state);
-  } else if (state.objectMode || (chunk && chunk.length > 0)) {
+  } else if (state.objectMode || (chunk.length > 0)) {
     if (addToFront) {
       if (state.endEmitted) {
         errorOrDestroy(stream, new ERR_STREAM_UNSHIFT_AFTER_END_EVENT());
@@ -174,8 +170,10 @@ function readableAddChunk(stream, chunk, encoding, addToFront) {
       return false;
     } else {
       state.reading = false;
-      if (state.decoder && !encoding) {
-        chunk = state.decoder.write(chunk);
+      if (state.decoder && !used_encoding) {
+        //TODO(Soremwar)
+        //I don't think this cast is right
+        chunk = state.decoder.write(Buffer.from(chunk as Uint8Array));
         if (state.objectMode || chunk.length !== 0) {
           addChunk(stream, state, chunk, false);
         } else {
@@ -197,12 +195,17 @@ function readableAddChunk(stream, chunk, encoding, addToFront) {
     (state.length < state.highWaterMark || state.length === 0);
 }
 
-function addChunk(stream, state, chunk, addToFront) {
+function addChunk(
+  stream: Readable,
+  state: ReadableState,
+  chunk: string | Buffer | Uint8Array,
+  addToFront: boolean,
+) {
   if (state.flowing && state.length === 0 && !state.sync) {
     // Use the guard to avoid creating `Set()` repeatedly
     // when we have multiple pipes.
     if (state.multiAwaitDrain) {
-      state.awaitDrainWriters.clear();
+      (state.awaitDrainWriters as Set<Writable>).clear();
     } else {
       state.awaitDrainWriters = null;
     }
@@ -223,7 +226,12 @@ function addChunk(stream, state, chunk, addToFront) {
   maybeReadMore(stream, state);
 }
 
-function prependListener(emitter, event, fn) {
+function prependListener(
+  emitter: EventEmitter,
+  event: string,
+  // deno-lint-ignore no-explicit-any
+  fn: (...args: any[]) => any,
+) {
   // Sadly this is not cacheable as some libraries bundle their own
   // event emitter implementation with them.
   if (typeof emitter.prependListener === "function") {
@@ -233,13 +241,17 @@ function prependListener(emitter, event, fn) {
   // This is a hack to make sure that our error handler is attached before any
   // userland ones.  NEVER DO THIS. This is here only because this code needs
   // to continue to work with older versions of Node.js that do not include
-  // the prependListener() method. The goal is to eventually remove this hack.
-  if (!emitter._events || !emitter._events[event]) {
-    emitter.on(event, fn);
-  } else if (Array.isArray(emitter._events[event])) {
-    emitter._events[event].unshift(fn);
+  //the prependListener() method. The goal is to eventually remove this hack.
+  // TODO(Soremwar)
+  // Burn it with fire
+  //@ts-ignore
+  if (emitter._events.get(event)?.length) {
+    //@ts-ignore
+    const listeners = [fn, ...emitter._events.get(event)];
+    //@ts-ignore
+    emitter._events.set(event, listeners);
   } else {
-    emitter._events[event] = [fn, emitter._events[event]];
+    emitter.on(event, fn);
   }
 }
 
@@ -247,7 +259,7 @@ function prependListener(emitter, event, fn) {
 // Length is the combined lengths of all the buffers in the list.
 // This function is designed to be inlinable, so please take care when making
 // changes to the function body.
-function fromList(n, state) {
+function fromList(n: number, state: ReadableState) {
   // nothing buffered.
   if (state.length === 0) {
     return null;
@@ -274,7 +286,7 @@ function fromList(n, state) {
   return ret;
 }
 
-function endReadable(stream) {
+function endReadable(stream: Readable) {
   const state = stream._readableState;
 
   if (!state.endEmitted) {
@@ -283,7 +295,7 @@ function endReadable(stream) {
   }
 }
 
-function endReadableNT(state, stream) {
+function endReadableNT(state: ReadableState, stream: Readable) {
   // Check that we didn't get one last unshift.
   if (
     !state.errorEmitted && !state.closeEmitted &&
@@ -292,37 +304,15 @@ function endReadableNT(state, stream) {
     state.endEmitted = true;
     stream.emit("end");
 
-    if (stream.writable && stream.allowHalfOpen === false) {
-      queueMicrotask(() => endWritableNT(state, stream));
-    } else if (state.autoDestroy) {
-      // In case of duplex streams we need a way to detect
-      // if the writable side is ready for autoDestroy as well.
-      const wState = stream._writableState;
-      const autoDestroy = !wState || (
-        wState.autoDestroy &&
-        // We don't expect the writable to ever 'finish'
-        // if writable is explicitly set to false.
-        (wState.finished || wState.writable === false)
-      );
-
-      if (autoDestroy) {
-        stream.destroy();
-      }
+    if (state.autoDestroy) {
+      stream.destroy();
     }
-  }
-}
-
-function endWritableNT(state, stream) {
-  const writable = stream.writable && !stream.writableEnded &&
-    !stream.destroyed;
-  if (writable) {
-    stream.end();
   }
 }
 
 // Don't raise the hwm > 1GB.
 const MAX_HWM = 0x40000000;
-function computeNewHighWaterMark(n) {
+function computeNewHighWaterMark(n: number) {
   if (n >= MAX_HWM) {
     // TODO(ronag): Throw ERR_VALUE_OUT_OF_RANGE.
     n = MAX_HWM;
@@ -342,7 +332,7 @@ function computeNewHighWaterMark(n) {
 
 // This function is designed to be inlinable, so please take care when making
 // changes to the function body.
-function howMuchToRead(n, state) {
+function howMuchToRead(n: number, state: ReadableState) {
   if (n <= 0 || (state.length === 0 && state.ended)) {
     return 0;
   }
@@ -362,7 +352,7 @@ function howMuchToRead(n, state) {
   return state.ended ? state.length : 0;
 }
 
-function onEofChunk(stream, state) {
+function onEofChunk(stream: Readable, state: ReadableState) {
   if (state.ended) return;
   if (state.decoder) {
     const chunk = state.decoder.end();
@@ -391,7 +381,7 @@ function onEofChunk(stream, state) {
 // Don't emit readable right away in sync mode, because this can trigger
 // another read() call => stack overflow.  This way, it might trigger
 // a nextTick recursion warning, but that's not so bad.
-function emitReadable(stream) {
+function emitReadable(stream: Readable) {
   const state = stream._readableState;
   state.needReadable = false;
   if (!state.emittedReadable) {
@@ -400,7 +390,7 @@ function emitReadable(stream) {
   }
 }
 
-function emitReadable_(stream) {
+function emitReadable_(stream: Readable) {
   const state = stream._readableState;
   if (!state.destroyed && !state.errored && (state.length || state.ended)) {
     stream.emit("readable");
@@ -425,14 +415,14 @@ function emitReadable_(stream) {
 // it's in progress.
 // However, if we're not ended, or reading, and the length < hwm,
 // then go ahead and try to read some more preemptively.
-function maybeReadMore(stream, state) {
+function maybeReadMore(stream: Readable, state: ReadableState) {
   if (!state.readingMore && state.constructed) {
     state.readingMore = true;
     queueMicrotask(() => maybeReadMore_(stream, state));
   }
 }
 
-function maybeReadMore_(stream, state) {
+function maybeReadMore_(stream: Readable, state: ReadableState) {
   // Attempt to read more data if we should.
   //
   // The conditions for reading more data are (one of):
@@ -473,7 +463,9 @@ function maybeReadMore_(stream, state) {
 
 interface ReadableOptions {
   highWaterMark?: number;
-  encoding?: BufferEncoding;
+  //TODO(Soremwar)
+  //Import available encodings
+  encoding?: string;
   objectMode?: boolean;
   read?(this: Readable, size: number): void;
   destroy?(
@@ -490,7 +482,7 @@ interface ReadableOptions {
 
 class ReadableState {
   [kPaused]: boolean | null = null;
-  awaitDrainWriters: Set<boolean> | null = null;
+  awaitDrainWriters: Writable | Set<Writable> | null = null;
   buffer = new BufferList();
   closed = false;
   closeEmitted = false;
@@ -511,7 +503,8 @@ class ReadableState {
   multiAwaitDrain = false;
   needReadable = false;
   objectMode: boolean;
-  pipes = [];
+  pipes: Writable[] = [];
+  readable = true;
   readableListening = false;
   reading = false;
   readingMore = false;
@@ -567,6 +560,7 @@ class Readable extends Stream {
   }
 
   static from(
+    // deno-lint-ignore no-explicit-any
     iterable: Iterable<any> | AsyncIterable<any>,
     opts?: ReadableOptions,
   ): Readable {
@@ -650,7 +644,9 @@ class Readable extends Stream {
     // if we need a readable event, then we need to do some reading.
     let doRead = state.needReadable;
     // If we currently have less than the highWaterMark, then also read some.
-    if (state.length === 0 || state.length - n < state.highWaterMark) {
+    if (
+      state.length === 0 || state.length - (n as number) < state.highWaterMark
+    ) {
       doRead = true;
     }
 
@@ -680,8 +676,8 @@ class Readable extends Stream {
     }
 
     let ret;
-    if (n > 0) {
-      ret = fromList(n, state);
+    if ((n as number) > 0) {
+      ret = fromList((n as number), state);
     } else {
       ret = null;
     }
@@ -690,9 +686,9 @@ class Readable extends Stream {
       state.needReadable = state.length <= state.highWaterMark;
       n = 0;
     } else {
-      state.length -= n;
-      if (state.multiAwaitDrain && state.awaitDrainWriters) {
-        state.awaitDrainWriters.clear();
+      state.length -= n as number;
+      if (state.multiAwaitDrain) {
+        (state.awaitDrainWriters as Set<Writable>).clear();
       } else {
         state.awaitDrainWriters = null;
       }
@@ -726,7 +722,10 @@ class Readable extends Stream {
     throw new ERR_METHOD_NOT_IMPLEMENTED("_read()");
   }
 
+  //TODO(Soremwar)
+  //Should be duplex
   pipe<T extends Writable>(dest: T, pipeOpts?: { end?: boolean }): T {
+    // deno-lint-ignore no-this-alias
     const src = this;
     const state = this._readableState;
 
@@ -734,7 +733,7 @@ class Readable extends Stream {
       if (!state.multiAwaitDrain) {
         state.multiAwaitDrain = true;
         state.awaitDrainWriters = new Set(
-          state.awaitDrainWriters ? [state.awaitDrainWriters] : [],
+          state.awaitDrainWriters ? [state.awaitDrainWriters as Writable] : [],
         );
       }
     }
@@ -747,18 +746,18 @@ class Readable extends Stream {
     //Part of doEnd condition
     //In  node, output is a writable Stream
     // &&
-    // dest !== Deno.stdout &&
-    // dest !== Deno.stderr
+    // dest !== stdout &&
+    // dest !== stderr
 
     const endFn = doEnd ? onend : unpipe;
     if (state.endEmitted) {
       queueMicrotask(endFn);
     } else {
-      src.once("end", endFn);
+      this.once("end", endFn);
     }
 
     dest.on("unpipe", onunpipe);
-    function onunpipe(readable, unpipeInfo) {
+    function onunpipe(readable: Readable, unpipeInfo: { hasUnpiped: boolean }) {
       if (readable === src) {
         if (unpipeInfo && unpipeInfo.hasUnpiped === false) {
           unpipeInfo.hasUnpiped = true;
@@ -771,7 +770,7 @@ class Readable extends Stream {
       dest.end();
     }
 
-    let ondrain;
+    let ondrain: () => void;
 
     let cleanedUp = false;
     function cleanup() {
@@ -802,8 +801,9 @@ class Readable extends Stream {
       }
     }
 
-    src.on("data", ondata);
-    function ondata(chunk) {
+    this.on("data", ondata);
+    // deno-lint-ignore no-explicit-any
+    function ondata(chunk: any) {
       const ret = dest.write(chunk);
       if (ret === false) {
         // If the user unpiped during `dest.write()`, it is possible
@@ -815,7 +815,7 @@ class Readable extends Stream {
             state.awaitDrainWriters = dest;
             state.multiAwaitDrain = false;
           } else if (state.pipes.length > 1 && state.pipes.includes(dest)) {
-            state.awaitDrainWriters.add(dest);
+            (state.awaitDrainWriters as Set<Writable>).add(dest);
           }
           src.pause();
         }
@@ -832,11 +832,13 @@ class Readable extends Stream {
 
     // If the dest has an error, then stop piping into it.
     // However, don't suppress the throwing behavior for this.
-    function onerror(er) {
+    function onerror(er: Error) {
       unpipe();
       dest.removeListener("error", onerror);
       if (dest.listenerCount("error") === 0) {
-        const s = dest._writableState || dest._readableState;
+        //TODO(Soremwar)
+        //Should be const s = dest._writableState || dest._readableState;
+        const s = dest._writableState;
         if (s && !s.errorEmitted) {
           // User incorrectly emitted 'error' directly on the stream.
           errorOrDestroy(dest, er);
@@ -866,11 +868,11 @@ class Readable extends Stream {
     }
 
     // Tell the dest that it's being piped to.
-    dest.emit("pipe", src);
+    dest.emit("pipe", this);
 
     // Start the flow if it hasn't been started already.
     if (!state.flowing) {
-      src.resume();
+      this.resume();
     }
 
     return dest;
@@ -907,15 +909,19 @@ class Readable extends Stream {
     event: "close" | "end" | "pause" | "readable" | "resume",
     listener: () => void,
   ): this;
+  // deno-lint-ignore no-explicit-any
   on(event: "data", listener: (chunk: any) => void): this;
   on(event: "error", listener: (err: Error) => void): this;
+  // deno-lint-ignore no-explicit-any
   on(event: string | symbol, listener: (...args: any[]) => void): this;
   on(
     ev: string | symbol,
     fn:
       | (() => void)
+      // deno-lint-ignore no-explicit-any
       | ((chunk: any) => void)
       | ((err: Error) => void)
+      // deno-lint-ignore no-explicit-any
       | ((...args: any[]) => void),
   ) {
     const res = super.on.call(this, ev, fn);
@@ -950,18 +956,22 @@ class Readable extends Stream {
     event: "close" | "end" | "pause" | "readable" | "resume",
     listener: () => void,
   ): this;
+  // deno-lint-ignore no-explicit-any
   removeListener(event: "data", listener: (chunk: any) => void): this;
   removeListener(event: "error", listener: (err: Error) => void): this;
   removeListener(
     event: string | symbol,
+    // deno-lint-ignore no-explicit-any
     listener: (...args: any[]) => void,
   ): this;
   removeListener(
     ev: string | symbol,
     fn:
       | (() => void)
+      // deno-lint-ignore no-explicit-any
       | ((chunk: any) => void)
       | ((err: Error) => void)
+      // deno-lint-ignore no-explicit-any
       | ((...args: any[]) => void),
   ) {
     const res = super.removeListener.call(this, ev, fn);
@@ -996,10 +1006,12 @@ class Readable extends Stream {
 
   //TODO(Soremwar)
   //Same deal, string => encodings
+  // deno-lint-ignore no-explicit-any
   push(chunk: any, encoding?: string): boolean {
     return readableAddChunk(this, chunk, encoding, false);
   }
 
+  // deno-lint-ignore no-explicit-any
   unshift(chunk: any, encoding?: string): boolean {
     return readableAddChunk(this, chunk, encoding, true);
   }
@@ -1128,11 +1140,16 @@ class Readable extends Stream {
       }
     });
 
+    //TODO(Soremwar)
+    //There must be a clean way to implement this on TypeScript
     // Proxy all the other methods. Important when wrapping filters and duplexes.
     for (const i in stream) {
+      //@ts-ignore
       if (this[i] === undefined && typeof stream[i] === "function") {
+        //@ts-ignore
         this[i] = function methodWrap(method) {
           return function methodWrapReturnFunction() {
+            //@ts-ignore
             return stream[method].apply(stream, arguments);
           };
         }(i);
@@ -1144,22 +1161,18 @@ class Readable extends Stream {
     });
 
     stream.on("close", () => {
-      // TODO(ronag): Update readable state?
       this.emit("close");
     });
 
     stream.on("destroy", () => {
-      // TODO(ronag): this.destroy()?
       this.emit("destroy");
     });
 
     stream.on("pause", () => {
-      // TODO(ronag): this.pause()?
       this.emit("pause");
     });
 
     stream.on("resume", () => {
-      // TODO(ronag): this.resume()?
       this.emit("resume");
     });
 
@@ -1180,13 +1193,10 @@ class Readable extends Stream {
   }
 
   get readable(): boolean {
-    const r = this._readableState;
-    // r.readable === false means that this is part of a Duplex stream
-    // where the readable side was disabled upon construction.
-    // Compat. The user might manually disable readable side through
-    // deprecated setter.
-    return !!r && r.readable !== false && !r.destroyed && !r.errorEmitted &&
-      !r.endEmitted;
+    return this._readableState?.readable &&
+      !this._readableState?.destroyed &&
+      !this._readableState?.errorEmitted &&
+      !this._readableState?.endEmitted;
   }
   set readable(val: boolean) {
     if (this._readableState) {

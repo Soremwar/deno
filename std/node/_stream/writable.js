@@ -386,7 +386,7 @@ function callFinal(stream, state) {
 }
 
 class WritableState {
-  constructor(options, stream){
+  constructor(options, stream) {
     // Object stream flag to indicate whether or not this stream
     // contains buffers or objects.
     this.objectMode = !!options?.objectMode;
@@ -624,7 +624,7 @@ class Writable extends Stream {
     this.destroy(err);
   }
 
-  _destroy (err, cb) {
+  _destroy(err, cb) {
     cb(err);
   }
 
@@ -642,7 +642,7 @@ class Writable extends Stream {
 
   end(chunk, encoding, cb) {
     const state = this._writableState;
-  
+
     if (typeof chunk === "function") {
       cb = chunk;
       chunk = null;
@@ -651,17 +651,17 @@ class Writable extends Stream {
       cb = encoding;
       encoding = null;
     }
-  
+
     if (chunk !== null && chunk !== undefined) {
       this.write(chunk, encoding);
     }
-  
+
     // .end() fully uncorks.
     if (state.corked) {
       state.corked = 1;
       this.uncork();
     }
-  
+
     // This is forgiving in terms of unnecessary calls to end() and can hide
     // logic errors. However, usually such errors are harmless and causing a
     // hard error can be disproportionately destructive. It is not always
@@ -676,7 +676,7 @@ class Writable extends Stream {
     } else if (state.destroyed) {
       err = new ERR_STREAM_DESTROYED("end");
     }
-  
+
     if (typeof cb === "function") {
       if (err || state.finished) {
         //TODO(Soremwar)
@@ -687,7 +687,7 @@ class Writable extends Stream {
         state[kOnFinished].push(cb);
       }
     }
-  
+
     return this;
   }
 
@@ -697,9 +697,8 @@ class Writable extends Stream {
     } else {
       throw new ERR_METHOD_NOT_IMPLEMENTED("_write()");
     }
-  };
+  } // Otherwise people can pipe Writable streams, which is just wrong.
 
-  // Otherwise people can pipe Writable streams, which is just wrong.
   pipe() {
     errorOrDestroy(this, new ERR_STREAM_CANNOT_PIPE());
   }
