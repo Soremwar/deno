@@ -36,7 +36,7 @@ import {
   StringDecoder,
 } from "../string_decoder.ts";
 import createReadableStreamAsyncIterator from "./async_iterator.js";
-import streamFrom from "./from.js";
+import streamFrom from "./from.ts";
 import {
   kPaused,
 } from "./symbols.js";
@@ -461,7 +461,7 @@ function maybeReadMore_(stream: Readable, state: ReadableState) {
   state.readingMore = false;
 }
 
-interface ReadableOptions {
+export interface ReadableOptions {
   highWaterMark?: number;
   //TODO(Soremwar)
   //Import available encodings
@@ -564,7 +564,7 @@ class Readable extends Stream {
     iterable: Iterable<any> | AsyncIterable<any>,
     opts?: ReadableOptions,
   ): Readable {
-    return streamFrom(Readable, iterable, opts);
+    return streamFrom(iterable, opts);
   }
 
   static ReadableState = ReadableState;

@@ -1,15 +1,29 @@
 import Buffer from "../buffer.ts";
+import Readable from "./readable.ts";
+import type {
+  ReadableOptions,
+} from "./readable.ts";
 import {
   codes as error_codes,
 } from "../internal/errors.js";
 
 const {
+  //@ts-ignore
   ERR_INVALID_ARG_TYPE,
+  //@ts-ignore
   ERR_STREAM_NULL_VALUES,
 } = error_codes;
 
-export default function from(Readable, iterable, opts) {
-  let iterator;
+export default function from(
+  // deno-lint-ignore no-explicit-any
+  iterable: Iterable<any> | AsyncIterable<any>,
+  opts?: ReadableOptions,
+) {
+  let iterator:
+    // deno-lint-ignore no-explicit-any
+    | Iterator<any, any, undefined>
+    // deno-lint-ignore no-explicit-any
+    | AsyncIterator<any, any, undefined>;
   if (typeof iterable === "string" || iterable instanceof Buffer) {
     return new Readable({
       objectMode: true,
@@ -21,10 +35,12 @@ export default function from(Readable, iterable, opts) {
     });
   }
 
-  if (iterable && iterable[Symbol.asyncIterator]) {
-    iterator = iterable[Symbol.asyncIterator]();
-  } else if (iterable && iterable[Symbol.iterator]) {
-    iterator = iterable[Symbol.iterator]();
+  if (Symbol.asyncIterator in iterable) {
+    // deno-lint-ignore no-explicit-any
+    iterator = (iterable as AsyncIterable<any>)[Symbol.asyncIterator]();
+  } else if (Symbol.iterator in iterable) {
+    // deno-lint-ignore no-explicit-any
+    iterator = (iterable as Iterable<any>)[Symbol.iterator]();
   } else {
     throw new ERR_INVALID_ARG_TYPE("iterable", ["Iterable"], iterable);
   }

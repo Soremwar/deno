@@ -764,7 +764,7 @@ class Writable extends Stream {
   }
 
   //This signature was changed to keep inheritance coherent
-  pipe(dest: Writable, options: {end: boolean}): Writable {
+  pipe(dest: Writable, options: { end: boolean }): Writable {
     errorOrDestroy(this, new ERR_STREAM_CANNOT_PIPE());
     return dest;
   }
