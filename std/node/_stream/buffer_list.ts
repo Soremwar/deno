@@ -4,17 +4,23 @@
 
 import Buffer from "../buffer.ts";
 
+type BufferListItem = {data: Buffer | string | Uint8Array, next: BufferListItem | null};
+
 export default class BufferList {
+  head: BufferListItem | null = null;
+  tail: BufferListItem | null = null;
+  length: number;
+
   constructor() {
     this.head = null;
     this.tail = null;
     this.length = 0;
   }
 
-  push(v) {
+  push(v: Buffer | string | Uint8Array) {
     const entry = { data: v, next: null };
     if (this.length > 0) {
-      this.tail.next = entry;
+      (this.tail as BufferListItem).next = entry;
     } else {
       this.head = entry;
     }
@@ -22,7 +28,7 @@ export default class BufferList {
     ++this.length;
   }
 
-  unshift(v) {
+  unshift(v: Buffer | string | Uint8Array) {
     const entry = { data: v, next: this.head };
     if (this.length === 0) {
       this.tail = entry;
@@ -35,11 +41,11 @@ export default class BufferList {
     if (this.length === 0) {
       return;
     }
-    const ret = this.head.data;
+    const ret = (this.head as BufferListItem).data;
     if (this.length === 1) {
       this.head = this.tail = null;
     } else {
-      this.head = this.head.next;
+      this.head = (this.head as BufferListItem).next;
     }
     --this.length;
     return ret;
@@ -50,11 +56,11 @@ export default class BufferList {
     this.length = 0;
   }
 
-  join(s) {
+  join(s: string) {
     if (this.length === 0) {
       return "";
     }
-    let p = this.head;
+    let p: BufferListItem | null = (this.head as BufferListItem);
     let ret = "" + p.data;
     while (p = p.next) {
       ret += s + p.data;
@@ -62,7 +68,7 @@ export default class BufferList {
     return ret;
   }
 
-  concat(n) {
+  concat(n: number) {
     if (this.length === 0) {
       return Buffer.alloc(0);
     }
@@ -70,7 +76,7 @@ export default class BufferList {
     let p = this.head;
     let i = 0;
     while (p) {
-      ret.set(p.data, i);
+      ret.set(p.data as Buffer, i);
       i += p.data.length;
       p = p.next;
     }
@@ -78,12 +84,12 @@ export default class BufferList {
   }
 
   // Consumes a specified amount of bytes or characters from the buffered data.
-  consume(n, hasStrings) {
-    const data = this.head.data;
+  consume(n: number, hasStrings: boolean) {
+    const data = (this.head as BufferListItem).data;
     if (n < data.length) {
       // `slice` is the same for buffers and strings.
       const slice = data.slice(0, n);
-      this.head.data = data.slice(n);
+      (this.head as BufferListItem).data = data.slice(n);
       return slice;
     }
     if (n === data.length) {
@@ -95,7 +101,7 @@ export default class BufferList {
   }
 
   first() {
-    return this.head.data;
+    return (this.head as BufferListItem).data;
   }
 
   *[Symbol.iterator]() {
@@ -105,9 +111,9 @@ export default class BufferList {
   }
 
   // Consumes a specified amount of characters from the buffered data.
-  _getString(n) {
+  _getString(n: number) {
     let ret = "";
-    let p = this.head;
+    let p: BufferListItem | null = (this.head as BufferListItem);
     let c = 0;
     do {
       const str = p.data;
@@ -137,13 +143,13 @@ export default class BufferList {
   }
 
   // Consumes a specified amount of bytes from the buffered data.
-  _getBuffer(n) {
+  _getBuffer(n: number) {
     const ret = Buffer.allocUnsafe(n);
     const retLen = n;
-    let p = this.head;
+    let p: BufferListItem | null = (this.head as BufferListItem);
     let c = 0;
     do {
-      const buf = p.data;
+      const buf = p.data as Buffer;
       if (n > buf.length) {
         ret.set(buf, retLen - n);
         n -= buf.length;

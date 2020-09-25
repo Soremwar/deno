@@ -27,7 +27,7 @@ import EventEmitter, {
 } from "../events.ts";
 import Stream from "./stream.ts";
 import Buffer from "../buffer.ts";
-import BufferList from "./buffer_list.js";
+import BufferList from "./buffer_list.ts";
 import * as destroyImpl from "./destroy.js";
 import {
   codes as error_codes,
@@ -280,7 +280,7 @@ function fromList(n: number, state: ReadableState) {
     state.buffer.clear();
   } else {
     // read part of list.
-    ret = state.buffer.consume(n, state.decoder);
+    ret = state.buffer.consume(n, !!state.decoder);
   }
 
   return ret;
@@ -895,7 +895,7 @@ class Readable extends Stream {
     // Iterate over current buffer to convert already stored Buffers:
     let content = "";
     for (const data of buffer) {
-      content += decoder.write(data);
+      content += decoder.write(data as Buffer);
     }
     buffer.clear();
     if (content !== "") {
