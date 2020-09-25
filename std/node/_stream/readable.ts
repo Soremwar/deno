@@ -28,7 +28,6 @@ import EventEmitter, {
 import Stream from "./stream.ts";
 import Buffer from "../buffer.ts";
 import BufferList from "./buffer_list.ts";
-import * as destroyImpl from "./destroy.js";
 import {
   codes as error_codes,
 } from "../internal/errors.js";
@@ -38,9 +37,14 @@ import {
 import createReadableStreamAsyncIterator from "./async_iterator.js";
 import streamFrom from "./from.ts";
 import {
+  kConstruct,
+  kDestroy,
   kPaused,
 } from "./symbols.js";
 import type Writable from "./writable.ts";
+import {
+  errorOrDestroy as errorOrDestroyDuplex,
+} from "./writable.ts";
 
 const {
   //@ts-ignore
@@ -53,8 +57,109 @@ const {
   ERR_STREAM_UNSHIFT_AFTER_END_EVENT,
   //@ts-ignore
   ERR_INVALID_OPT_VALUE,
+  //@ts-ignore
+  ERR_MULTIPLE_CALLBACK,
 } = error_codes;
-const { errorOrDestroy } = destroyImpl;
+
+function construct(stream: Readable, cb: () => void) {
+  const r = stream._readableState;
+
+  if (!stream._construct) {
+    return;
+  }
+
+  stream.once(kConstruct, cb);
+
+  r.constructed = false;
+
+  queueMicrotask(() => {
+    let called = false;
+    stream._construct?.((err?: Error) => {
+      r.constructed = true;
+
+      if (called) {
+        err = new ERR_MULTIPLE_CALLBACK();
+      } else {
+        called = true;
+      }
+
+      if (r.destroyed) {
+        stream.emit(kDestroy, err);
+      } else if (err) {
+        errorOrDestroy(stream, err, true);
+      } else {
+        queueMicrotask(() => stream.emit(kConstruct));
+      }
+    });
+  });
+}
+
+function _destroy(self: Readable, err?: Error, cb?: (error?: Error | null) => void) {
+  self._destroy(err || null, (err) => {
+    const r = (self as Readable)._readableState;
+
+    if (err) {
+      // Avoid V8 leak, https://github.com/nodejs/node/pull/34103#issuecomment-652002364
+      err.stack;
+
+      if (!r.errored) {
+        r.errored = err;
+      }
+    }
+
+    r.closed = true;
+
+    if (typeof cb === "function") {
+      cb(err);
+    }
+
+    if (err) {
+      queueMicrotask(() => {
+        if(!r.errorEmitted){
+          r.errorEmitted = true;
+          self.emit("error", err);
+        }
+        r.closeEmitted = true;
+        self.emit("close");
+      });
+    } else {
+      queueMicrotask(() => {
+        r.closeEmitted = true;
+        self.emit("close");
+      });
+    }
+  });
+}
+
+function errorOrDestroy(stream: Readable, err: Error, sync = false) {
+  const r = stream._readableState;
+
+  if (r.destroyed) {
+    return stream;
+  }
+
+  if (r.autoDestroy) {
+    stream.destroy(err);
+  } else if (err) {
+    // Avoid V8 leak, https://github.com/nodejs/node/pull/34103#issuecomment-652002364
+    err.stack;
+
+    if (!r.errored) {
+      r.errored = err;
+    }
+    if (sync) {
+      queueMicrotask(() => {
+        if(!r.errorEmitted){
+          r.errorEmitted = true;
+          stream.emit("error", err);
+        }
+      });
+    } else if(!r.errorEmitted){
+      r.errorEmitted = true;
+      stream.emit("error", err);
+    }
+  }
+}
 
 function flow(stream: Readable) {
   const state = stream._readableState;
@@ -462,22 +567,23 @@ function maybeReadMore_(stream: Readable, state: ReadableState) {
 }
 
 export interface ReadableOptions {
-  highWaterMark?: number;
+  autoDestroy?: boolean;
+  construct?: () => void,
   //TODO(Soremwar)
   //Import available encodings
-  encoding?: string;
-  objectMode?: boolean;
-  read?(this: Readable, size: number): void;
+  defaultEncoding?: string;
   destroy?(
     this: Readable,
     error: Error | null,
     callback: (error: Error | null) => void,
   ): void;
-  autoDestroy?: boolean;
   emitClose?: boolean;
   //TODO(Soremwar)
   //Import available encodings
-  defaultEncoding?: string;
+  encoding?: string;
+  highWaterMark?: number;
+  objectMode?: boolean;
+  read?(this: Readable, size: number): void;
 }
 
 class ReadableState {
@@ -495,7 +601,7 @@ class ReadableState {
   encoding: string | null = null;
   ended = false;
   endEmitted = false;
-  errored = null;
+  errored: Error | null = null;
   errorEmitted = false;
   flowing: boolean | null = null;
   highWaterMark: number;
@@ -539,6 +645,7 @@ class ReadableState {
 }
 
 class Readable extends Stream {
+  _construct?: (cb: (error?: Error) => void) => void;
   _readableState: ReadableState;
 
   constructor(options?: ReadableOptions) {
@@ -547,14 +654,16 @@ class Readable extends Stream {
       if (typeof options.read === "function") {
         this._read = options.read;
       }
-
       if (typeof options.destroy === "function") {
         this._destroy = options.destroy;
+      }
+      if (typeof options.construct === "function") {
+        this._construct = options.construct;
       }
     }
     this._readableState = new ReadableState(options);
 
-    destroyImpl.construct(this, () => {
+    construct(this, () => {
       maybeReadMore(this, this._readableState);
     });
   }
@@ -841,7 +950,7 @@ class Readable extends Stream {
         const s = dest._writableState;
         if (s && !s.errorEmitted) {
           // User incorrectly emitted 'error' directly on the stream.
-          errorOrDestroy(dest, er);
+          errorOrDestroyDuplex(dest, er);
         } else {
           dest.emit("error", er);
         }
@@ -991,8 +1100,53 @@ class Readable extends Stream {
 
   off = this.removeListener;
 
-  destroy = destroyImpl.destroy;
-  _undestroy = destroyImpl.undestroy;
+  destroy(err?: Error, cb?: () => void) {
+    const r = this._readableState;
+  
+    if (r.destroyed) {
+      if (typeof cb === "function") {
+        cb();
+      }
+  
+      return this;
+    }
+  
+    if (err) {
+      // Avoid V8 leak, https://github.com/nodejs/node/pull/34103#issuecomment-652002364
+      err.stack;
+
+      if (!r.errored) {
+        r.errored = err;
+      }
+    }
+
+    r.destroyed = true;
+  
+    // If still constructing then defer calling _destroy.
+    if (!r.constructed) {
+      this.once(kDestroy, (er: Error) => {
+        _destroy(this, err || er, cb);
+      });
+    } else {
+      _destroy(this, err, cb);
+    }
+  
+    return this;
+  }
+
+  _undestroy(){
+    const r = this._readableState;
+    r.constructed = true;
+    r.closed = false;
+    r.closeEmitted = false;
+    r.destroyed = false;
+    r.errored = null;
+    r.errorEmitted = false;
+    r.reading = false;
+    r.ended = false;
+    r.endEmitted = false;
+  }
+  
   _destroy(
     error: Error | null,
     callback: (error?: Error | null) => void,
