@@ -8,10 +8,10 @@ import {
 import {
   codes as internal_codes,
 } from "../internal/errors.js";
-import eos from "./end-of-stream.js";
+import eos from "./end-of-stream.ts";
 import createReadableStreamAsyncIterator from "./async_iterator.js";
-import * as events from "../../events.ts";
-import PassThrough from "../../_stream/passthrough.js";
+import * as events from "../events.ts";
+import PassThrough from "./passthrough.js";
 
 const {
   ERR_INVALID_ARG_TYPE,
