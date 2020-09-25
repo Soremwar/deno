@@ -66,7 +66,7 @@ const {
 function nop() {}
 
 const errorMe = (...args: any[]) => {};
-export {errorMe as errorOrDestroy}
+export { errorMe as errorOrDestroy };
 
 //TODO
 //Bring in encodings

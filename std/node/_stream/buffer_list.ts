@@ -4,7 +4,10 @@
 
 import Buffer from "../buffer.ts";
 
-type BufferListItem = {data: Buffer | string | Uint8Array, next: BufferListItem | null};
+type BufferListItem = {
+  data: Buffer | string | Uint8Array;
+  next: BufferListItem | null;
+};
 
 export default class BufferList {
   head: BufferListItem | null = null;

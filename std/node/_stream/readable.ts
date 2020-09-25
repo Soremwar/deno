@@ -94,7 +94,11 @@ function construct(stream: Readable, cb: () => void) {
   });
 }
 
-function _destroy(self: Readable, err?: Error, cb?: (error?: Error | null) => void) {
+function _destroy(
+  self: Readable,
+  err?: Error,
+  cb?: (error?: Error | null) => void,
+) {
   self._destroy(err || null, (err) => {
     const r = (self as Readable)._readableState;
 
@@ -115,7 +119,7 @@ function _destroy(self: Readable, err?: Error, cb?: (error?: Error | null) => vo
 
     if (err) {
       queueMicrotask(() => {
-        if(!r.errorEmitted){
+        if (!r.errorEmitted) {
           r.errorEmitted = true;
           self.emit("error", err);
         }
@@ -149,12 +153,12 @@ function errorOrDestroy(stream: Readable, err: Error, sync = false) {
     }
     if (sync) {
       queueMicrotask(() => {
-        if(!r.errorEmitted){
+        if (!r.errorEmitted) {
           r.errorEmitted = true;
           stream.emit("error", err);
         }
       });
-    } else if(!r.errorEmitted){
+    } else if (!r.errorEmitted) {
       r.errorEmitted = true;
       stream.emit("error", err);
     }
@@ -568,7 +572,7 @@ function maybeReadMore_(stream: Readable, state: ReadableState) {
 
 export interface ReadableOptions {
   autoDestroy?: boolean;
-  construct?: () => void,
+  construct?: () => void;
   //TODO(Soremwar)
   //Import available encodings
   defaultEncoding?: string;
@@ -1102,15 +1106,15 @@ class Readable extends Stream {
 
   destroy(err?: Error, cb?: () => void) {
     const r = this._readableState;
-  
+
     if (r.destroyed) {
       if (typeof cb === "function") {
         cb();
       }
-  
+
       return this;
     }
-  
+
     if (err) {
       // Avoid V8 leak, https://github.com/nodejs/node/pull/34103#issuecomment-652002364
       err.stack;
@@ -1121,7 +1125,7 @@ class Readable extends Stream {
     }
 
     r.destroyed = true;
-  
+
     // If still constructing then defer calling _destroy.
     if (!r.constructed) {
       this.once(kDestroy, (er: Error) => {
@@ -1130,11 +1134,11 @@ class Readable extends Stream {
     } else {
       _destroy(this, err, cb);
     }
-  
+
     return this;
   }
 
-  _undestroy(){
+  _undestroy() {
     const r = this._readableState;
     r.constructed = true;
     r.closed = false;
@@ -1146,7 +1150,7 @@ class Readable extends Stream {
     r.ended = false;
     r.endEmitted = false;
   }
-  
+
   _destroy(
     error: Error | null,
     callback: (error?: Error | null) => void,
