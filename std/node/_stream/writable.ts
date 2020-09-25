@@ -41,26 +41,57 @@ import {
 } from "../internal/errors.js";
 
 const {
+  //@ts-ignore
   ERR_INVALID_ARG_TYPE,
+  //@ts-ignore
   ERR_METHOD_NOT_IMPLEMENTED,
+  //@ts-ignore
   ERR_MULTIPLE_CALLBACK,
+  //@ts-ignore
   ERR_STREAM_CANNOT_PIPE,
+  //@ts-ignore
   ERR_STREAM_DESTROYED,
+  //@ts-ignore
   ERR_STREAM_ALREADY_FINISHED,
+  //@ts-ignore
   ERR_STREAM_NULL_VALUES,
+  //@ts-ignore
   ERR_STREAM_WRITE_AFTER_END,
+  //@ts-ignore
   ERR_UNKNOWN_ENCODING,
+  //@ts-ignore
   ERR_INVALID_OPT_VALUE,
 } = error_codes;
 
 function nop() {}
 
+//TODO
+//Bring in encodings
+type write_v = (
+  // deno-lint-ignore no-explicit-any
+  chunks: Array<{ chunk: any; encoding: string }>,
+  callback: (error?: Error | null) => void,
+) => void;
+
+type AfterWriteTick = {
+  cb: (error?: Error) => void;
+  count: number;
+  state: WritableState;
+  stream: Writable;
+};
+
 const kOnFinished = Symbol("kOnFinished");
 
-// If we're already writing something, then just put this
-// in the queue, and wait our turn.  Otherwise, call _write
-// If we return false, then we need a drain event, so set that flag.
-function writeOrBuffer(stream, state, chunk, encoding, callback) {
+//TODO
+//Bring encodings in
+function writeOrBuffer(
+  stream: Writable,
+  state: WritableState,
+  // deno-lint-ignore no-explicit-any
+  chunk: any,
+  encoding: string,
+  callback: (error: Error) => void,
+) {
   const len = state.objectMode ? 1 : chunk.length;
 
   state.length += len;
@@ -94,7 +125,18 @@ function writeOrBuffer(stream, state, chunk, encoding, callback) {
   return ret && !state.errored && !state.destroyed;
 }
 
-function doWrite(stream, state, writev, len, chunk, encoding, cb) {
+//TODO
+//Bring encodings in
+function doWrite(
+  stream: Writable,
+  state: WritableState,
+  writev: boolean,
+  len: number,
+  // deno-lint-ignore no-explicit-any
+  chunk: any,
+  encoding: string,
+  cb: (error: Error) => void,
+) {
   state.writelen = len;
   state.writecb = cb;
   state.writing = true;
@@ -102,14 +144,19 @@ function doWrite(stream, state, writev, len, chunk, encoding, cb) {
   if (state.destroyed) {
     state.onwrite(new ERR_STREAM_DESTROYED("write"));
   } else if (writev) {
-    stream._writev(chunk, state.onwrite);
+    (stream._writev as unknown as write_v)(chunk, state.onwrite);
   } else {
     stream._write(chunk, encoding, state.onwrite);
   }
   state.sync = false;
 }
 
-function onwriteError(stream, state, er, cb) {
+function onwriteError(
+  stream: Writable,
+  state: WritableState,
+  er: Error,
+  cb: (error: Error) => void,
+) {
   --state.pendingcb;
 
   cb(er);
@@ -122,7 +169,7 @@ function onwriteError(stream, state, er, cb) {
   errorOrDestroy(stream, er);
 }
 
-function onwrite(stream, er) {
+function onwrite(stream: Writable, er?: Error | null) {
   const state = stream._writableState;
   const sync = state.sync;
   const cb = state.writecb;
@@ -143,12 +190,6 @@ function onwrite(stream, er) {
 
     if (!state.errored) {
       state.errored = er;
-    }
-
-    // In case of duplex streams we need to notify the readable side of the
-    // error.
-    if (stream._readableState && !stream._readableState.errored) {
-      stream._readableState.errored = er;
     }
 
     if (sync) {
@@ -175,24 +216,41 @@ function onwrite(stream, er) {
       ) {
         state.afterWriteTickInfo.count++;
       } else {
-        state.afterWriteTickInfo = { count: 1, cb, stream, state };
+        state.afterWriteTickInfo = {
+          count: 1,
+          cb: (cb as (error?: Error) => void),
+          stream,
+          state,
+        };
         //TODO(Soremwar)
         //This replaces `process.nextTick(afterWriteTick, state.afterWriteTickInfo);`
         //Check if this is a reliable replace
-        queueMicrotask(() => afterWriteTick(state.afterWriteTickInfo));
+        queueMicrotask(() =>
+          afterWriteTick(state.afterWriteTickInfo as AfterWriteTick)
+        );
       }
     } else {
-      afterWrite(stream, state, 1, cb);
+      afterWrite(stream, state, 1, cb as (error?: Error) => void);
     }
   }
 }
 
-function afterWriteTick({ stream, state, count, cb }) {
+function afterWriteTick({
+  cb,
+  count,
+  state,
+  stream,
+}: AfterWriteTick) {
   state.afterWriteTickInfo = null;
   return afterWrite(stream, state, count, cb);
 }
 
-function afterWrite(stream, state, count, cb) {
+function afterWrite(
+  stream: Writable,
+  state: WritableState,
+  count: number,
+  cb: (error?: Error) => void,
+) {
   const needDrain = !state.ending && !stream.destroyed && state.length === 0 &&
     state.needDrain;
   if (needDrain) {
@@ -213,7 +271,7 @@ function afterWrite(stream, state, count, cb) {
 }
 
 // If there's something in the buffer waiting, then invoke callbacks.
-function errorBuffer(state) {
+function errorBuffer(state: WritableState) {
   if (state.writing) {
     return;
   }
@@ -233,7 +291,7 @@ function errorBuffer(state) {
 }
 
 // If there's something in the buffer waiting, then process it.
-function clearBuffer(stream, state) {
+function clearBuffer(stream: Writable, state: WritableState) {
   if (
     state.corked ||
     state.bufferProcessing ||
@@ -256,7 +314,7 @@ function clearBuffer(stream, state) {
   if (bufferedLength > 1 && stream._writev) {
     state.pendingcb -= bufferedLength - 1;
 
-    const callback = state.allNoop ? nop : (err) => {
+    const callback = state.allNoop ? nop : (err: Error) => {
       for (let n = i; n < buffered.length; ++n) {
         buffered[n].callback(err);
       }
@@ -264,7 +322,10 @@ function clearBuffer(stream, state) {
     // Make a copy of `buffered` if it's going to be used by `callback` above,
     // since `doWrite` will mutate the array.
     const chunks = state.allNoop && i === 0 ? buffered : buffered.slice(i);
-    chunks.allBuffers = state.allBuffers;
+
+    //TODO(Soremwar)
+    //I cannot figure this out at
+    //chunks.allBuffers = state.allBuffers;
 
     doWrite(stream, state, true, state.length, chunks, "", callback);
 
@@ -272,7 +333,9 @@ function clearBuffer(stream, state) {
   } else {
     do {
       const { chunk, encoding, callback } = buffered[i];
-      buffered[i++] = null;
+      //TODO(Soremwar)
+      //Cant figure this out either
+      //buffered[i++] = null;
       const len = objectMode ? 1 : chunk.length;
       doWrite(stream, state, false, len, chunk, encoding, callback);
     } while (i < buffered.length && !state.writing);
@@ -289,7 +352,7 @@ function clearBuffer(stream, state) {
   state.bufferProcessing = false;
 }
 
-function finish(stream, state) {
+function finish(stream: Writable, state: WritableState) {
   state.pendingcb--;
   // TODO (ronag): Unify with needFinish.
   if (state.errorEmitted || state.closeEmitted) {
@@ -305,22 +368,11 @@ function finish(stream, state) {
   stream.emit("finish");
 
   if (state.autoDestroy) {
-    // In case of duplex streams we need a way to detect
-    // if the readable side is ready for autoDestroy as well.
-    const rState = stream._readableState;
-    const autoDestroy = !rState || (
-      rState.autoDestroy &&
-      // We don't expect the readable to ever 'end'
-      // if readable is explicitly set to false.
-      (rState.endEmitted || rState.readable === false)
-    );
-    if (autoDestroy) {
-      stream.destroy();
-    }
+    stream.destroy();
   }
 }
 
-function finishMaybe(stream, state, sync) {
+function finishMaybe(stream: Writable, state: WritableState, sync?: boolean) {
   if (needFinish(state)) {
     prefinish(stream, state);
     if (state.pendingcb === 0 && needFinish(state)) {
@@ -337,11 +389,34 @@ function finishMaybe(stream, state, sync) {
   }
 }
 
-function prefinish(stream, state) {
+function prefinish(stream: Writable, state: WritableState) {
   if (!state.prefinished && !state.finalCalled) {
     if (typeof stream._final === "function" && !state.destroyed) {
       state.finalCalled = true;
-      callFinal(stream, state);
+
+      state.sync = true;
+      state.pendingcb++;
+      stream._final((err) => {
+        state.pendingcb--;
+        if (err) {
+          for (const callback of state[kOnFinished].splice(0)) {
+            callback(err);
+          }
+          errorOrDestroy(stream, err, state.sync);
+        } else if (needFinish(state)) {
+          state.prefinished = true;
+          stream.emit("prefinish");
+          // Backwards compat. Don't check state.sync here.
+          // Some streams assume 'finish' will be emitted
+          // asynchronously relative to _final callback.
+          state.pendingcb++;
+          //TODO(Soremwar)
+          //This replaces `process.nextTick(finish, stream, state);`
+          //Check if this is a reliable replace
+          queueMicrotask(() => finish(stream, state));
+        }
+      });
+      state.sync = false;
     } else {
       state.prefinished = true;
       stream.emit("prefinish");
@@ -349,7 +424,7 @@ function prefinish(stream, state) {
   }
 }
 
-function needFinish(state) {
+function needFinish(state: WritableState) {
   return (state.ending &&
     state.constructed &&
     state.length === 0 &&
@@ -359,42 +434,88 @@ function needFinish(state) {
     !state.writing);
 }
 
-function callFinal(stream, state) {
-  state.sync = true;
-  state.pendingcb++;
-  stream._final((err) => {
-    state.pendingcb--;
-    if (err) {
-      for (const callback of state[kOnFinished].splice(0)) {
-        callback(err);
-      }
-      errorOrDestroy(stream, err, state.sync);
-    } else if (needFinish(state)) {
-      state.prefinished = true;
-      stream.emit("prefinish");
-      // Backwards compat. Don't check state.sync here.
-      // Some streams assume 'finish' will be emitted
-      // asynchronously relative to _final callback.
-      state.pendingcb++;
-      //TODO(Soremwar)
-      //This replaces `process.nextTick(finish, stream, state);`
-      //Check if this is a reliable replace
-      queueMicrotask(() => finish(stream, state));
-    }
-  });
-  state.sync = false;
+interface WritableOptions {
+  autoDestroy?: boolean;
+  decodeStrings?: boolean;
+  //TODO
+  //Bring encodings in
+  defaultEncoding?: string;
+  destroy?(
+    this: Writable,
+    error: Error | null,
+    callback: (error: Error | null) => void,
+  ): void;
+  emitClose?: boolean;
+  final?(this: Writable, callback: (error?: Error | null) => void): void;
+  highWaterMark?: number;
+  objectMode?: boolean;
+  //TODO
+  //Bring encodings in
+  write?(
+    this: Writable,
+    // deno-lint-ignore no-explicit-any
+    chunk: any,
+    encoding: string,
+    callback: (error?: Error | null) => void,
+  ): void;
+  //TODO
+  //Bring encodings in
+  writev?(
+    this: Writable,
+    // deno-lint-ignore no-explicit-any
+    chunks: Array<{ chunk: any; encoding: string }>,
+    callback: (error?: Error | null) => void,
+  ): void;
 }
 
 class WritableState {
-  constructor(options, stream) {
-    // Object stream flag to indicate whether or not this stream
-    // contains buffers or objects.
+  [kOnFinished]: Array<(error?: Error) => void> = [];
+  afterWriteTickInfo: null | AfterWriteTick = null;
+  allBuffers = true;
+  allNoop = true;
+  autoDestroy: boolean;
+  //TODO
+  //Bring in encodings
+  buffered: Array<{
+    allBuffers?: boolean;
+    // deno-lint-ignore no-explicit-any
+    chunk: any;
+    encoding: string;
+    callback: (error: Error) => void;
+  }> = [];
+  bufferedIndex = 0;
+  bufferProcessing = false;
+  closed = false;
+  closeEmitted = false;
+  constructed: boolean;
+  corked = 0;
+  decodeStrings: boolean;
+  defaultEncoding: string;
+  destroyed = false;
+  emitClose: boolean;
+  ended = false;
+  ending = false;
+  errored: Error | null = null;
+  errorEmitted = false;
+  finalCalled = false;
+  finished = false;
+  highWaterMark: number;
+  length = 0;
+  needDrain = false;
+  objectMode: boolean;
+  onwrite: (error?: Error | null) => void;
+  pendingcb = 0;
+  prefinished = false;
+  sync = true;
+  writecb: null | ((error: Error) => void) = null;
+  writable = true;
+  writelen = 0;
+  writing = false;
+
+  constructor(options: WritableOptions | undefined, stream: Writable) {
     this.objectMode = !!options?.objectMode;
 
-    // The point at which write() starts returning false
-    // Note: 0 is a valid value, means that we always return false if
-    // the entire buffer is not flushed immediately on write().
-    this.highWaterMark = options.highWaterMark ??
+    this.highWaterMark = options?.highWaterMark ??
       (this.objectMode ? 16 : 16 * 1024);
 
     if (Number.isInteger(this.highWaterMark) && this.highWaterMark >= 0) {
@@ -403,129 +524,44 @@ class WritableState {
       throw new ERR_INVALID_OPT_VALUE("highWaterMark", this.highWaterMark);
     }
 
-    // if _final has been called.
-    this.finalCalled = false;
+    this.decodeStrings = !options?.decodeStrings === false;
 
-    // drain event flag.
-    this.needDrain = false;
-    // At the start of calling end()
-    this.ending = false;
-    // When end() has been called, and returned.
-    this.ended = false;
-    // When 'finish' is emitted.
-    this.finished = false;
+    this.defaultEncoding = options?.defaultEncoding || "utf8";
 
-    // Has it been destroyed
-    this.destroyed = false;
-
-    // Should we decode strings into buffers before passing to _write?
-    // this is here so that some node-core streams can optimize string
-    // handling at a lower level.
-    const noDecode = !!(options && options.decodeStrings === false);
-    this.decodeStrings = !noDecode;
-
-    // Crypto is kind of old and crusty.  Historically, its default string
-    // encoding is 'binary' so we have to make this configurable.
-    // Everything else in the universe uses 'utf8', though.
-    this.defaultEncoding = (options && options.defaultEncoding) || "utf8";
-
-    // Not an actual buffer we keep track of, but a measurement
-    // of how much we're waiting to get pushed to some underlying
-    // socket or file.
-    this.length = 0;
-
-    // A flag to see when we're in the middle of a write.
-    this.writing = false;
-
-    // When true all writes will be buffered until .uncork() call.
-    this.corked = 0;
-
-    // A flag to be able to tell if the onwrite cb is called immediately,
-    // or on a later tick.  We set this to true at first, because any
-    // actions that shouldn't happen until "later" should generally also
-    // not happen before the first write call.
-    this.sync = true;
-
-    // A flag to know if we're processing previously buffered items, which
-    // may call the _write() callback in the same tick, so that we don't
-    // end up in an overlapped onwrite situation.
-    this.bufferProcessing = false;
-
-    // The callback that's passed to _write(chunk, cb).
     this.onwrite = onwrite.bind(undefined, stream);
-
-    // The callback that the user supplies to write(chunk, encoding, cb).
-    this.writecb = null;
-
-    // The amount that is being written when _write is called.
-    this.writelen = 0;
-
-    // Storage for data passed to the afterWrite() callback in case of
-    // synchronous _write() completion.
-    this.afterWriteTickInfo = null;
 
     resetBuffer(this);
 
-    // Number of pending user-supplied write callbacks
-    // this must be 0 before 'finish' can be emitted.
-    this.pendingcb = 0;
-
-    // Stream is still being constructed and cannot be
-    // destroyed until construction finished or failed.
-    // Async construction is opt in, therefore we start as
-    // constructed.
+    this.emitClose = options?.emitClose ?? true;
+    this.autoDestroy = options?.autoDestroy ?? true;
     this.constructed = true;
+  }
 
-    // Emit prefinish if the only thing we're waiting for is _write cbs
-    // This is relevant for synchronous Transform streams.
-    this.prefinished = false;
+  getBuffer() {
+    return this.buffered.slice(this.bufferedIndex);
+  }
 
-    // True if the error was already emitted and should not be thrown again.
-    this.errorEmitted = false;
-
-    // Should close be emitted on destroy. Defaults to true.
-    this.emitClose = !options || options.emitClose !== false;
-
-    // Should .destroy() be called after 'finish' (and potentially 'end').
-    this.autoDestroy = !options || options.autoDestroy !== false;
-
-    // Indicates whether the stream has errored. When true all write() calls
-    // should return false. This is needed since when autoDestroy
-    // is disabled we need a way to tell whether the stream has failed.
-    this.errored = null;
-
-    // Indicates whether the stream has finished destroying.
-    this.closed = false;
-
-    // True if close has been emitted or would have been emitted
-    // depending on emitClose.
-    this.closeEmitted = false;
-
-    this[kOnFinished] = [];
+  get bufferedRequestCount() {
+    return this.buffered.length - this.bufferedIndex;
   }
 }
 
-function resetBuffer(state) {
+function resetBuffer(state: WritableState) {
   state.buffered = [];
   state.bufferedIndex = 0;
   state.allBuffers = true;
   state.allNoop = true;
 }
 
-WritableState.prototype.getBuffer = function getBuffer() {
-  return this.buffered.slice(this.bufferedIndex);
-};
-
-Object.defineProperty(WritableState.prototype, "bufferedRequestCount", {
-  get() {
-    return this.buffered.length - this.bufferedIndex;
-  },
-});
-
 class Writable extends Stream {
-  _writev = null;
+  _final?: (
+    this: Writable,
+    callback: (error?: Error | null | undefined) => void,
+  ) => void;
+  _writableState: WritableState;
+  _writev?: write_v | null = null;
 
-  constructor(options) {
+  constructor(options?: WritableOptions) {
     super(options);
     this._writableState = new WritableState(options, this);
 
@@ -545,10 +581,6 @@ class Writable extends Stream {
       if (typeof options.final === "function") {
         this._final = options.final;
       }
-
-      if (typeof options.construct === "function") {
-        this._construct = options.construct;
-      }
     }
 
     construct(this, () => {
@@ -561,6 +593,12 @@ class Writable extends Stream {
       finishMaybe(this, state);
     });
   }
+
+  [captureRejectionSymbol](err?: Error) {
+    this.destroy(err);
+  }
+
+  static WritableState = WritableState;
 
   get destroyed() {
     return this._writableState ? this._writableState.destroyed : false;
@@ -575,12 +613,7 @@ class Writable extends Stream {
 
   get writable() {
     const w = this._writableState;
-    // w.writable === false means that this is part of a Duplex stream
-    // where the writable side was disabled upon construction.
-    // Compat. The user might manually disable writable side through
-    // deprecated setter.
-    return !!w && w.writable !== false && !w.destroyed && !w.errored &&
-      !w.ending && !w.ended;
+    return !w.destroyed && !w.errored && !w.ending && !w.ended;
   }
 
   set writable(val) {
@@ -620,15 +653,11 @@ class Writable extends Stream {
 
   _undestroy = undestroy;
 
-  [captureRejectionSymbol](err) {
-    this.destroy(err);
-  }
-
-  _destroy(err, cb) {
+  _destroy(err: Error | null, cb: (error?: Error | null) => void) {
     cb(err);
   }
 
-  destroy(err, cb) {
+  destroy(err?: Error, cb?: () => void) {
     const state = this._writableState;
     if (!state.destroyed) {
       //TODO(Soremwar)
@@ -640,16 +669,42 @@ class Writable extends Stream {
     return this;
   }
 
-  end(chunk, encoding, cb) {
-    const state = this._writableState;
+  end(cb?: () => void): void;
+  // deno-lint-ignore no-explicit-any
+  end(chunk: any, cb?: () => void): void;
+  //TODO
+  //Bring in encodings
+  // deno-lint-ignore no-explicit-any
+  end(chunk: any, encoding: string, cb?: () => void): void;
 
-    if (typeof chunk === "function") {
-      cb = chunk;
+  end(
+    // deno-lint-ignore no-explicit-any
+    x?: any | (() => void),
+    //TODO
+    //Bring in encodings
+    y?: string | (() => void),
+    z?: () => void,
+  ) {
+    const state = this._writableState;
+    // deno-lint-ignore no-explicit-any
+    let chunk: any | null;
+    //TODO
+    //Bring in encodings
+    let encoding: string | null;
+    let cb: undefined | ((error?: Error) => void);
+
+    if (typeof x === "function") {
       chunk = null;
       encoding = null;
-    } else if (typeof encoding === "function") {
-      cb = encoding;
+      cb = x;
+    } else if (typeof y === "function") {
+      chunk = x;
       encoding = null;
+      cb = y;
+    } else {
+      chunk = x;
+      encoding = y as string;
+      cb = z;
     }
 
     if (chunk !== null && chunk !== undefined) {
@@ -666,7 +721,7 @@ class Writable extends Stream {
     // logic errors. However, usually such errors are harmless and causing a
     // hard error can be disproportionately destructive. It is not always
     // trivial for the user to determine whether end() needs to be called or not.
-    let err;
+    let err: Error | undefined;
     if (!state.errored && !state.ending) {
       state.ending = true;
       finishMaybe(this, state, true);
@@ -682,7 +737,9 @@ class Writable extends Stream {
         //TODO(Soremwar)
         //This replaces `process.nextTick(cb, err);`
         //Check if this is a reliable replace
-        queueMicrotask(() => cb(err));
+        queueMicrotask(() => {
+          (cb as (error?: Error | undefined) => void)(err);
+        });
       } else {
         state[kOnFinished].push(cb);
       }
@@ -691,32 +748,65 @@ class Writable extends Stream {
     return this;
   }
 
-  _write(chunk, encoding, cb) {
+  //TODO
+  //Bring in encodings
+  _write(
+    // deno-lint-ignore no-explicit-any
+    chunk: any,
+    encoding: string,
+    cb: (error?: Error | null) => void,
+  ): void {
     if (this._writev) {
       this._writev([{ chunk, encoding }], cb);
     } else {
       throw new ERR_METHOD_NOT_IMPLEMENTED("_write()");
     }
-  } // Otherwise people can pipe Writable streams, which is just wrong.
+  }
 
   pipe() {
     errorOrDestroy(this, new ERR_STREAM_CANNOT_PIPE());
   }
 
-  write(chunk, encoding, cb) {
-    const state = this._writableState;
+  // deno-lint-ignore no-explicit-any
+  write(chunk: any, cb?: (error: Error | null | undefined) => void): boolean;
+  //TODO
+  //Bring in encodings
+  write(
+    // deno-lint-ignore no-explicit-any
+    chunk: any,
+    encoding: string | null,
+    cb?: (error: Error | null | undefined) => void,
+  ): boolean;
 
-    if (typeof encoding === "function") {
-      cb = encoding;
+  //TODO
+  //Bring in encodings
+  write(
+    // deno-lint-ignore no-explicit-any
+    chunk: any,
+    x?: string | null | ((error: Error | null | undefined) => void),
+    y?: ((error: Error | null | undefined) => void),
+  ) {
+    const state = this._writableState;
+    //TODO
+    //Bring in encodings
+    let encoding: string;
+    let cb: (error?: Error | null) => void;
+
+    if (typeof x === "function") {
+      cb = x;
       encoding = state.defaultEncoding;
     } else {
-      if (!encoding) {
+      if (!x) {
         encoding = state.defaultEncoding;
-      } else if (encoding !== "buffer" && !Buffer.isEncoding(encoding)) {
-        throw new ERR_UNKNOWN_ENCODING(encoding);
+      } else if (x !== "buffer" && !Buffer.isEncoding(x)) {
+        throw new ERR_UNKNOWN_ENCODING(x);
+      } else {
+        encoding = x;
       }
-      if (typeof cb !== "function") {
+      if (typeof y !== "function") {
         cb = nop;
+      } else {
+        cb = y;
       }
     }
 
@@ -742,7 +832,7 @@ class Writable extends Stream {
       }
     }
 
-    let err;
+    let err: Error | undefined;
     if (state.ending) {
       err = new ERR_STREAM_WRITE_AFTER_END();
     } else if (state.destroyed) {
@@ -777,7 +867,9 @@ class Writable extends Stream {
     }
   }
 
-  setDefaultEncoding(encoding) {
+  //TODO
+  //Bring allowed encodings
+  setDefaultEncoding(encoding: string) {
     // node::ParseEncoding() requires lower case.
     if (typeof encoding === "string") {
       encoding = encoding.toLowerCase();
@@ -789,8 +881,6 @@ class Writable extends Stream {
     return this;
   }
 }
-
-Writable.WritableState = WritableState;
 
 export default Writable;
 export {

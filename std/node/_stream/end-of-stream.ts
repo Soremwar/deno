@@ -5,7 +5,7 @@ import {
 } from "../internal/errors.js";
 import { once } from "../internal/util.js";
 import type Readable from "./readable.ts";
-import type Writable from "./writable.js";
+import type Writable from "./writable.ts";
 
 const {
   //@ts-ignore

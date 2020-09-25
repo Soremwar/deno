@@ -40,7 +40,7 @@ import streamFrom from "./from.js";
 import {
   kPaused,
 } from "./symbols.js";
-import type Writable from "./writable.js";
+import type Writable from "./writable.ts";
 
 const {
   //@ts-ignore

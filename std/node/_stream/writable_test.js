@@ -1,6 +1,6 @@
 import Buffer from "../buffer.ts";
 import finished from "./end-of-stream.ts";
-import Writable from "../_stream/writable.js";
+import Writable from "../_stream/writable.ts";
 import {
   deferred,
 } from "../../async/mod.ts";
@@ -8,6 +8,7 @@ import {
   assert,
   assertEquals,
   assertStrictEquals,
+  assertThrows,
 } from "../../testing/asserts.ts";
 
 Deno.test("Writable stream writes correctly", async () => {
@@ -201,4 +202,9 @@ Deno.test("Writable stream finishes correctly after error", async () => {
   clearTimeout(error_timeout);
   assertEquals(finished_executed, finished_executed_expected);
   assertEquals(error_executed, error_executed_expected);
+});
+
+Deno.test("Writable stream fails on 'write' null value", () => {
+  const writable = new Writable();
+  assertThrows(() => writable.write(null));
 });
