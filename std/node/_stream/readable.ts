@@ -44,7 +44,7 @@ import {
 import type Writable from "./writable.ts";
 import {
   errorOrDestroy as errorOrDestroyDuplex,
-} from "./writable.ts";
+} from "./duplex.ts";
 
 const {
   //@ts-ignore
@@ -124,12 +124,16 @@ function _destroy(
           self.emit("error", err);
         }
         r.closeEmitted = true;
-        self.emit("close");
+        if (r.emitClose) {
+          self.emit("close");
+        }
       });
     } else {
       queueMicrotask(() => {
         r.closeEmitted = true;
-        self.emit("close");
+        if (r.emitClose) {
+          self.emit("close");
+        }
       });
     }
   });

@@ -1,5 +1,3 @@
-//TODO@Soremwar
-//Typescript
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,17 +23,15 @@
 // Implement an async ._write(chunk, encoding, cb), and it'll handle all
 // the drain event emission and buffering.
 
+import Buffer from "../buffer.ts";
+import Stream from "./stream.ts";
 import {
   captureRejectionSymbol,
 } from "../events.ts";
-import Stream from "./stream.ts";
-import Buffer from "../buffer.ts";
 import {
-  construct,
-  destroy,
-  undestroy,
-  errorOrDestroy,
-} from "./destroy.js";
+  kConstruct,
+  kDestroy,
+} from "./symbols.js";
 import {
   codes as error_codes,
 } from "../internal/errors.js";
@@ -65,9 +61,6 @@ const {
 
 function nop() {}
 
-const errorMe = (...args: any[]) => {};
-export { errorMe as errorOrDestroy };
-
 //TODO
 //Bring in encodings
 type write_v = (
@@ -84,6 +77,157 @@ type AfterWriteTick = {
 };
 
 const kOnFinished = Symbol("kOnFinished");
+
+////////////////////////////////////////////
+
+function destroy(this: Writable, err?: Error, cb?: () => void) {
+  const w = this._writableState;
+
+  if (w.destroyed) {
+    if (typeof cb === "function") {
+      cb();
+    }
+
+    return this;
+  }
+
+  if (err) {
+    // Avoid V8 leak, https://github.com/nodejs/node/pull/34103#issuecomment-652002364
+    err.stack;
+
+    if (!w.errored) {
+      w.errored = err;
+    }
+  }
+
+  w.destroyed = true;
+
+  // If still constructing then defer calling _destroy.
+  if (!w.constructed) {
+    this.once(kDestroy, (er) => {
+      _destroy(this, err || er, cb);
+    });
+  } else {
+    _destroy(this, err, cb);
+  }
+
+  return this;
+}
+
+function _destroy(
+  self: Writable,
+  err?: Error,
+  cb?: (error?: Error | null) => void,
+) {
+  self._destroy(err || null, (err) => {
+    const w = self._writableState;
+
+    if (err) {
+      // Avoid V8 leak, https://github.com/nodejs/node/pull/34103#issuecomment-652002364
+      err.stack;
+
+      if (!w.errored) {
+        w.errored = err;
+      }
+    }
+
+    w.closed = true;
+
+    if (typeof cb === "function") {
+      cb(err);
+    }
+
+    if (err) {
+      queueMicrotask(() => {
+        if (!w.errorEmitted) {
+          w.errorEmitted = true;
+          self.emit("error", err);
+        }
+        w.closeEmitted = true;
+        if (w.emitClose) {
+          self.emit("close");
+        }
+      });
+    } else {
+      queueMicrotask(() => {
+        w.closeEmitted = true;
+        if (w.emitClose) {
+          self.emit("close");
+        }
+      });
+    }
+  });
+}
+
+function errorOrDestroy(stream: Writable, err: Error, sync = false) {
+  const w = stream._writableState;
+
+  if (w.destroyed) {
+    return stream;
+  }
+
+  if (w.autoDestroy) {
+    stream.destroy(err);
+  } else if (err) {
+    // Avoid V8 leak, https://github.com/nodejs/node/pull/34103#issuecomment-652002364
+    err.stack;
+
+    if (!w.errored) {
+      w.errored = err;
+    }
+    if (sync) {
+      queueMicrotask(() => {
+        if (w.errorEmitted) {
+          return;
+        }
+        w.errorEmitted = true;
+        stream.emit("error", err);
+      });
+    } else {
+      if (w.errorEmitted) {
+        return;
+      }
+      w.errorEmitted = true;
+      stream.emit("error", err);
+    }
+  }
+}
+
+function construct(stream: Writable, cb: (error: Error) => void) {
+  if (!stream._construct) {
+    return;
+  }
+
+  stream.once(kConstruct, cb);
+  const w = stream._writableState;
+
+  w.constructed = false;
+
+  queueMicrotask(() => {
+    let called = false;
+    stream._construct?.((err) => {
+      w.constructed = true;
+
+      if (called) {
+        err = new ERR_MULTIPLE_CALLBACK();
+      } else {
+        called = true;
+      }
+
+      if (w.destroyed) {
+        stream.emit(kDestroy, err);
+      } else if (err) {
+        errorOrDestroy(stream, err, true);
+      } else {
+        queueMicrotask(() => {
+          stream.emit(kConstruct);
+        });
+      }
+    });
+  });
+}
+
+///////////////////////////////////////////
 
 //TODO
 //Bring encodings in
@@ -557,6 +701,7 @@ function resetBuffer(state: WritableState) {
 }
 
 class Writable extends Stream {
+  _construct?: (cb: (error?: Error) => void) => void;
   _final?: (
     this: Writable,
     callback: (error?: Error | null | undefined) => void,
@@ -654,7 +799,20 @@ class Writable extends Stream {
     return this._writableState && this._writableState.length;
   }
 
-  _undestroy = undestroy;
+  _undestroy() {
+    const w = this._writableState;
+    w.constructed = true;
+    w.destroyed = false;
+    w.closed = false;
+    w.closeEmitted = false;
+    w.errored = null;
+    w.errorEmitted = false;
+    w.ended = false;
+    w.ending = false;
+    w.finalCalled = false;
+    w.prefinished = false;
+    w.finished = false;
+  }
 
   _destroy(err: Error | null, cb: (error?: Error | null) => void) {
     cb(err);
