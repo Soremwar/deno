@@ -52,10 +52,6 @@ function wrapForNext(lastPromise: Promise<any>, iter: any) {
   };
 }
 
-const AsyncIteratorPrototype = Object.getPrototypeOf(
-  Object.getPrototypeOf(async function* () {}).prototype,
-);
-
 function finish(self: any, err?: Error) {
   return new Promise((resolve, reject) => {
     const stream = self[kStream];
@@ -72,10 +68,57 @@ function finish(self: any, err?: Error) {
   });
 }
 
-const ReadableStreamAsyncIteratorPrototype = Object.setPrototypeOf({
+const AsyncIteratorPrototype = Object.getPrototypeOf(
+  Object.getPrototypeOf(async function* () {}).prototype,
+);
+
+// deno-lint-ignore no-explicit-any
+class ReadableStreamAsyncIterator implements AsyncIterableIterator<any> {
+  [kEnded]: boolean;
+  [kError]: Error | null = null;
+  [kHandlePromise] = (
+    // deno-lint-ignore no-explicit-any
+    resolve: (value: any) => void,
+    // deno-lint-ignore no-explicit-any
+    reject: (value: any) => void,
+  ) => {
+    const data = this[kStream].read();
+    if (data) {
+      this[kLastPromise] = null;
+      this[kLastResolve] = null;
+      this[kLastReject] = null;
+      resolve(createIterResult(data, false));
+    } else {
+      this[kLastResolve] = resolve;
+      this[kLastReject] = reject;
+    }
+  };
+  // deno-lint-ignore no-explicit-any
+  [kLastPromise]: null | Promise<any>;
+  // deno-lint-ignore no-explicit-any
+  [kLastReject]: null | ((value: any) => void) = null;
+  // deno-lint-ignore no-explicit-any
+  [kLastResolve]: null | ((value: any) => void) = null;
+  [kStream]: Readable;
+  [Symbol.asyncIterator] = AsyncIteratorPrototype[Symbol.asyncIterator];
+
+  constructor(stream: Readable){
+    this[kEnded] = stream.readableEnded || stream._readableState.endEmitted;
+    this[kStream] = stream;
+    Object.defineProperties(this, {
+      [kEnded]: {configurable: false, enumerable: false, writable: true},
+      [kError]: {configurable: false, enumerable: false, writable: true},
+      [kHandlePromise]: {configurable: false, enumerable: false, writable: true},
+      [kLastPromise]: {configurable: false, enumerable: false, writable: true},
+      [kLastReject]: {configurable: false, enumerable: false, writable: true},
+      [kLastResolve]: {configurable: false, enumerable: false, writable: true},
+      [kStream]: {configurable: false, enumerable: false, writable: true},
+    });
+  }
+
   get stream() {
     return this[kStream];
-  },
+  }
 
   next() {
     // If we have detected an error in the meanwhile
@@ -130,60 +173,29 @@ const ReadableStreamAsyncIteratorPrototype = Object.setPrototypeOf({
     this[kLastPromise] = promise;
 
     return promise;
-  },
+  }
 
-  return() {
+  return(): Promise<any> {
     return finish(this);
-  },
+  }
 
-  throw(err: Error) {
+  throw(err: Error): Promise<any> {
     return finish(this, err);
-  },
-}, AsyncIteratorPrototype);
+  }
+}
 
-const createReadableStreamAsyncIterator = (stream: Stream) => {
-  //@ts-ignore
+//TODO
+//Should be all implementation of Stream
+const createReadableStreamAsyncIterator = (stream: any) => {
   if (typeof stream.read !== "function") {
     const src = stream;
-    //TODO
-    //Looks like wrap should work with any kind of streams
-    //@ts-ignore
     stream = new Readable({ objectMode: true }).wrap(src);
-    //@ts-ignore
     finished(stream, (err) => destroyImpl.destroyer(src, err));
   }
 
-  const iterator = Object.create(ReadableStreamAsyncIteratorPrototype, {
-    [kStream]: { value: stream, writable: true },
-    [kLastResolve]: { value: null, writable: true },
-    [kLastReject]: { value: null, writable: true },
-    [kError]: { value: null, writable: true },
-    [kEnded]: {
-      //@ts-ignore
-      value: stream.readableEnded || stream._readableState.endEmitted,
-      writable: true,
-    },
-    // The function passed to new Promise is cached so we avoid allocating a new
-    // closure at every run.
-    [kHandlePromise]: {
-      value: (resolve: (value: any) => void, reject: (value: any) => void) => {
-        const data = iterator[kStream].read();
-        if (data) {
-          iterator[kLastPromise] = null;
-          iterator[kLastResolve] = null;
-          iterator[kLastReject] = null;
-          resolve(createIterResult(data, false));
-        } else {
-          iterator[kLastResolve] = resolve;
-          iterator[kLastReject] = reject;
-        }
-      },
-      writable: true,
-    },
-  });
+  const iterator = new ReadableStreamAsyncIterator(stream);
   iterator[kLastPromise] = null;
 
-  //@ts-ignore
   finished(stream, { writable: false }, (err) => {
     //@ts-ignore
     if (err && err.code !== "ERR_STREAM_PREMATURE_CLOSE") {

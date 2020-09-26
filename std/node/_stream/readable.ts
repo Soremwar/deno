@@ -1268,7 +1268,7 @@ class Readable extends Stream {
   // This is *not* part of the readable stream interface.
   // It is an ugly unfortunate mess of history.
 
-  wrap(stream: Readable): this {
+  wrap(stream: Stream): this {
     const state = this._readableState;
     let paused = false;
 
@@ -1298,6 +1298,9 @@ class Readable extends Stream {
       const ret = this.push(chunk);
       if (!ret) {
         paused = true;
+        //TODO
+        //By the time this is triggered, stream will be a readable stream
+        //@ts-ignore
         stream.pause();
       }
     });
@@ -1343,6 +1346,9 @@ class Readable extends Stream {
     this._read = (n) => {
       if (paused) {
         paused = false;
+        //TODO
+        //By the time this is triggered, stream will be a readable stream
+        //@ts-ignore
         stream.resume();
       }
     };
