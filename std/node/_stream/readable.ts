@@ -34,7 +34,7 @@ import {
 import {
   StringDecoder,
 } from "../string_decoder.ts";
-import createReadableStreamAsyncIterator from "./async_iterator.js";
+import createReadableStreamAsyncIterator from "./async_iterator.ts";
 import streamFrom from "./from.ts";
 import {
   kConstruct,

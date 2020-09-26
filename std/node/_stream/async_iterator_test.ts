@@ -1,6 +1,6 @@
 import Readable from "./readable.ts";
 import Stream from "./stream.ts";
-import toReadableAsyncIterator from "./async_iterator.js";
+import toReadableAsyncIterator from "./async_iterator.ts";
 import {
   deferred,
 } from "../../async/mod.ts";

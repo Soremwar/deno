@@ -1,5 +1,6 @@
-import Readable from "./readable.ts";
 import finished from "./end-of-stream.ts";
+import Readable from "./readable.ts";
+import type Stream from "./stream.ts";
 import * as destroyImpl from "./destroy.js";
 
 const kLastResolve = Symbol("lastResolve");
@@ -10,11 +11,12 @@ const kLastPromise = Symbol("lastPromise");
 const kHandlePromise = Symbol("handlePromise");
 const kStream = Symbol("stream");
 
-function createIterResult(value, done) {
+// deno-lint-ignore no-explicit-any
+function createIterResult(value: any, done: boolean): IteratorResult<any> {
   return { value, done };
 }
 
-function readAndResolve(iter) {
+function readAndResolve(iter: any) {
   const resolve = iter[kLastResolve];
   if (resolve !== null) {
     const data = iter[kStream].read();
@@ -28,7 +30,7 @@ function readAndResolve(iter) {
   }
 }
 
-function onReadable(iter) {
+function onReadable(iter: any) {
   // We wait for the next tick, because it might
   // emit an error with `process.nextTick()`.
   //TODO
@@ -37,8 +39,8 @@ function onReadable(iter) {
   queueMicrotask(() => readAndResolve(iter));
 }
 
-function wrapForNext(lastPromise, iter) {
-  return (resolve, reject) => {
+function wrapForNext(lastPromise: Promise<any>, iter: any) {
+  return (resolve: (value: any) => void, reject: (value: any) => void) => {
     lastPromise.then(() => {
       if (iter[kEnded]) {
         resolve(createIterResult(undefined, true));
@@ -54,11 +56,12 @@ const AsyncIteratorPrototype = Object.getPrototypeOf(
   Object.getPrototypeOf(async function* () {}).prototype,
 );
 
-function finish(self, err) {
+function finish(self: any, err?: Error) {
   return new Promise((resolve, reject) => {
     const stream = self[kStream];
 
     finished(stream, (err) => {
+      //@ts-ignore
       if (err && err.code !== "ERR_STREAM_PREMATURE_CLOSE") {
         reject(err);
       } else {
@@ -94,6 +97,7 @@ const ReadableStreamAsyncIteratorPrototype = Object.setPrototypeOf({
           resolve(createIterResult(undefined, true));
         } else {
           finished(this[kStream], (err) => {
+            //@ts-ignore
             if (err && err.code !== "ERR_STREAM_PREMATURE_CLOSE") {
               reject(err);
             } else {
@@ -132,15 +136,20 @@ const ReadableStreamAsyncIteratorPrototype = Object.setPrototypeOf({
     return finish(this);
   },
 
-  throw(err) {
+  throw(err: Error) {
     return finish(this, err);
   },
 }, AsyncIteratorPrototype);
 
-const createReadableStreamAsyncIterator = (stream) => {
+const createReadableStreamAsyncIterator = (stream: Stream) => {
+  //@ts-ignore
   if (typeof stream.read !== "function") {
     const src = stream;
+    //TODO
+    //Looks like wrap should work with any kind of streams
+    //@ts-ignore
     stream = new Readable({ objectMode: true }).wrap(src);
+    //@ts-ignore
     finished(stream, (err) => destroyImpl.destroyer(src, err));
   }
 
@@ -150,13 +159,14 @@ const createReadableStreamAsyncIterator = (stream) => {
     [kLastReject]: { value: null, writable: true },
     [kError]: { value: null, writable: true },
     [kEnded]: {
+      //@ts-ignore
       value: stream.readableEnded || stream._readableState.endEmitted,
       writable: true,
     },
     // The function passed to new Promise is cached so we avoid allocating a new
     // closure at every run.
     [kHandlePromise]: {
-      value: (resolve, reject) => {
+      value: (resolve: (value: any) => void, reject: (value: any) => void) => {
         const data = iterator[kStream].read();
         if (data) {
           iterator[kLastPromise] = null;
@@ -173,7 +183,9 @@ const createReadableStreamAsyncIterator = (stream) => {
   });
   iterator[kLastPromise] = null;
 
+  //@ts-ignore
   finished(stream, { writable: false }, (err) => {
+    //@ts-ignore
     if (err && err.code !== "ERR_STREAM_PREMATURE_CLOSE") {
       const reject = iterator[kLastReject];
       // Reject if we are waiting for data in the Promise returned by next() and
