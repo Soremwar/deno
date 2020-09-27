@@ -1233,10 +1233,11 @@ export class ERR_INVALID_BUFFER_SIZE extends NodeRangeError {
   }
 }
 export class ERR_INVALID_CALLBACK extends NodeTypeError {
-  constructor(){
+  // deno-lint-ignore no-explicit-any
+  constructor(object: {[key: string]: any}){
     super(
       "ERR_INVALID_CALLBACK",
-      `Callback must be a function. Received %O`,
+      `Callback must be a function. Received ${JSON.stringify(object)}`,
     );
   }
 }
@@ -1713,10 +1714,10 @@ export class ERR_SOCKET_DGRAM_NOT_RUNNING extends NodeError {
   }
 }
 export class ERR_SRI_PARSE extends NodeSyntaxError {
-  constructor(){
+  constructor(name: string, char: string, position: number){
     super(
       "ERR_SRI_PARSE",
-      `Subresource Integrity string %j had an unexpected %j at position %d`,
+      `Subresource Integrity string ${name} had an unexpected ${char} at position ${position}`,
     );
   }
 }
@@ -1833,18 +1834,18 @@ export class ERR_TLS_INVALID_STATE extends NodeError {
   }
 }
 export class ERR_TLS_INVALID_PROTOCOL_VERSION extends NodeTypeError {
-  constructor(x: string){
+  constructor(protocol: string, x: string){
     super(
       "ERR_TLS_INVALID_PROTOCOL_VERSION",
-      `%j is not a valid ${x} TLS protocol version`,
+      `${protocol} is not a valid ${x} TLS protocol version`,
     );
   }
 }
 export class ERR_TLS_PROTOCOL_VERSION_CONFLICT extends NodeTypeError {
-  constructor(){
+  constructor(prev_protocol: string, protocol: string){
     super(
       "ERR_TLS_PROTOCOL_VERSION_CONFLICT",
-      `TLS protocol version %j conflicts with secureProtocol %j`,
+      `TLS protocol version ${prev_protocol} conflicts with secureProtocol ${protocol}`,
     );
   }
 }
