@@ -20,19 +20,36 @@
 // DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 // USE OR OTHER DEALINGS IN THE SOFTWARE.
+/************ NOT IMPLEMENTED
+* ERR_INVALID_ARG_TYPE
+* ERR_INVALID_ARG_VALUE
+* ERR_INVALID_MODULE_SPECIFIER
+* ERR_INVALID_PACKAGE_TARGET
+* ERR_INVALID_URL_SCHEME
+* ERR_MANIFEST_ASSERT_INTEGRITY
+* ERR_MISSING_ARGS
+* ERR_MODULE_NOT_FOUND
+* ERR_OUT_OF_RANGE
+* ERR_PACKAGE_PATH_NOT_EXPORTED
+* ERR_QUICSESSION_VERSION_NEGOTIATION
+* ERR_REQUIRE_ESM
+* ERR_SOCKET_BAD_PORT
+* ERR_TLS_CERT_ALTNAME_INVALID
+* ERR_UNHANDLED_ERROR
+* ERR_WORKER_INVALID_EXEC_ARGV
+* ERR_WORKER_PATH
+* ERR_QUIC_ERROR
+* ERR_SOCKET_BUFFER_SIZE //System error, shouldn't ever happen inside Deno
+* ERR_SYSTEM_ERROR //System error, shouldn't ever happen inside Deno
+* ERR_TTY_INIT_FAILED //System error, shouldn't ever happen inside Deno
+* ERR_INVALID_PACKAGE_CONFIG // package.json stuff, probably useless
+*************/
 
 import { unreachable } from "../testing/asserts.ts";
 
-// It will do so until we'll have Node errors completely ported (#5944):
-
-// Ref: https://github.com/nodejs/node/blob/50d28d4b3a616b04537feff014aa70437f064e30/lib/internal/errors.js#L251
-// Ref: https://github.com/nodejs/node/blob/50d28d4b3a616b04537feff014aa70437f064e30/lib/internal/errors.js#L299
-// Ref: https://github.com/nodejs/node/blob/50d28d4b3a616b04537feff014aa70437f064e30/lib/internal/errors.js#L325
-// Ref: https://github.com/nodejs/node/blob/50d28d4b3a616b04537feff014aa70437f064e30/lib/internal/errors.js#L943
-
 /**
  * All error instances in Node have additional methods and properties
- * This class is meant to be extended by these instances abstracting native JS error instances
+ * This export class is meant to be extended by these instances abstracting native JS error instances
  */
 class NodeErrorAbstraction extends Error {
   code: string;
@@ -57,9 +74,17 @@ class NodeError extends NodeErrorAbstraction {
   }
 }
 
+class NodeSyntaxError extends NodeErrorAbstraction implements SyntaxError {
+  constructor(code: string, message: string){
+    super(SyntaxError.prototype.name, code, message);
+    Object.setPrototypeOf(this, SyntaxError.prototype);
+  }
+}
+
 class NodeRangeError extends NodeErrorAbstraction {
   constructor(code: string, message: string){
     super(RangeError.prototype.name, code, message);
+    Object.setPrototypeOf(this, RangeError.prototype);
   }
 }
 
@@ -70,7 +95,14 @@ class NodeTypeError extends NodeErrorAbstraction implements TypeError {
   }
 }
 
-class ERR_INVALID_ARG_TYPE extends NodeTypeError {
+class NodeURIError extends NodeErrorAbstraction implements URIError {
+  constructor(code: string, message: string){
+    super(URIError.prototype.name, code, message);
+    Object.setPrototypeOf(this, URIError.prototype);
+  }
+}
+
+export class ERR_INVALID_ARG_TYPE extends NodeTypeError {
   constructor(a1: string, a2: string, a3: unknown) {
     super(
       "ERR_INVALID_ARG_TYPE",
@@ -79,43 +111,43 @@ class ERR_INVALID_ARG_TYPE extends NodeTypeError {
   }
 }
 
-class ERR_AMBIGUOUS_ARGUMENT extends NodeTypeError {
+export class ERR_AMBIGUOUS_ARGUMENT extends NodeTypeError {
   constructor(){
     super("ERR_AMBIGUOUS_ARGUMENT", 'The "%s" argument is ambiguous. %s');
   }
 }
 
-class ERR_ARG_NOT_ITERABLE extends NodeTypeError {
+export class ERR_ARG_NOT_ITERABLE extends NodeTypeError {
   constructor(){
     super("ERR_ARG_NOT_ITERABLE", "%s must be iterable");
   }
 }
 
-class ERR_ASSERTION extends NodeError {
+export class ERR_ASSERTION extends NodeError {
   constructor(){
     super("ERR_ASSERTION", "%s");
   }
 }
 
-class ERR_ASYNC_CALLBACK extends NodeTypeError {
+export class ERR_ASYNC_CALLBACK extends NodeTypeError {
   constructor(){
     super("ERR_ASYNC_CALLBACK", "%s must be a function");
   }
 }
 
-class ERR_ASYNC_TYPE extends NodeTypeError {
+export class ERR_ASYNC_TYPE extends NodeTypeError {
   constructor(){
     super("ERR_ASYNC_TYPE", 'Invalid name for async "type": %s');
   }
 }
 
-class ERR_BROTLI_INVALID_PARAM extends NodeRangeError {
+export class ERR_BROTLI_INVALID_PARAM extends NodeRangeError {
   constructor(){
     super("ERR_BROTLI_INVALID_PARAM", "%s is not a valid Brotli parameter");
   }
 }
 
-class ERR_BUFFER_OUT_OF_BOUNDS extends NodeRangeError {
+export class ERR_BUFFER_OUT_OF_BOUNDS extends NodeRangeError {
   constructor(name?: string){
     super(
       "ERR_BUFFER_OUT_OF_BOUNDS",
@@ -124,7 +156,7 @@ class ERR_BUFFER_OUT_OF_BOUNDS extends NodeRangeError {
   }
 }
 
-class ERR_BUFFER_TOO_LARGE extends NodeRangeError {
+export class ERR_BUFFER_TOO_LARGE extends NodeRangeError {
   constructor(){
     super(
       "ERR_BUFFER_TOO_LARGE",
@@ -133,7 +165,7 @@ class ERR_BUFFER_TOO_LARGE extends NodeRangeError {
   }
 }
 
-class ERR_CANNOT_WATCH_SIGINT extends NodeError {
+export class ERR_CANNOT_WATCH_SIGINT extends NodeError {
   constructor(){
     super(
       "ERR_CANNOT_WATCH_SIGINT",
@@ -142,7 +174,7 @@ class ERR_CANNOT_WATCH_SIGINT extends NodeError {
   }
 }
 
-class ERR_CHILD_CLOSED_BEFORE_REPLY extends NodeError {
+export class ERR_CHILD_CLOSED_BEFORE_REPLY extends NodeError {
   constructor(){
     super(
       "ERR_CHILD_CLOSED_BEFORE_REPLY",
@@ -151,7 +183,7 @@ class ERR_CHILD_CLOSED_BEFORE_REPLY extends NodeError {
   }
 }
 
-class ERR_CHILD_PROCESS_IPC_REQUIRED extends NodeError {
+export class ERR_CHILD_PROCESS_IPC_REQUIRED extends NodeError {
   constructor(){
     super(
       "ERR_CHILD_PROCESS_IPC_REQUIRED",
@@ -160,7 +192,7 @@ class ERR_CHILD_PROCESS_IPC_REQUIRED extends NodeError {
   }
 }
 
-class ERR_CHILD_PROCESS_STDIO_MAXBUFFER extends NodeRangeError {
+export class ERR_CHILD_PROCESS_STDIO_MAXBUFFER extends NodeRangeError {
   constructor(){
     super(
       "ERR_CHILD_PROCESS_STDIO_MAXBUFFER",
@@ -169,7 +201,7 @@ class ERR_CHILD_PROCESS_STDIO_MAXBUFFER extends NodeRangeError {
   }
 }
 
-class ERR_CONSOLE_WRITABLE_STREAM extends NodeTypeError {
+export class ERR_CONSOLE_WRITABLE_STREAM extends NodeTypeError {
   constructor(){
     super(
       "ERR_CONSOLE_WRITABLE_STREAM",
@@ -178,7 +210,7 @@ class ERR_CONSOLE_WRITABLE_STREAM extends NodeTypeError {
   }
 }
 
-class ERR_CONTEXT_NOT_INITIALIZED extends NodeError {
+export class ERR_CONTEXT_NOT_INITIALIZED extends NodeError {
   constructor(){
     super(
       "ERR_CONTEXT_NOT_INITIALIZED",
@@ -187,7 +219,7 @@ class ERR_CONTEXT_NOT_INITIALIZED extends NodeError {
   }
 }
 
-class ERR_CPU_USAGE extends NodeError {
+export class ERR_CPU_USAGE extends NodeError {
   constructor(){
     super(
       "ERR_CPU_USAGE",
@@ -196,7 +228,7 @@ class ERR_CPU_USAGE extends NodeError {
   }
 }
 
-class ERR_CRYPTO_CUSTOM_ENGINE_NOT_SUPPORTED extends NodeError {
+export class ERR_CRYPTO_CUSTOM_ENGINE_NOT_SUPPORTED extends NodeError {
   constructor(){
     super(
       "ERR_CRYPTO_CUSTOM_ENGINE_NOT_SUPPORTED",
@@ -205,1102 +237,211 @@ class ERR_CRYPTO_CUSTOM_ENGINE_NOT_SUPPORTED extends NodeError {
   }
 }
 
-E("ERR_CRYPTO_ECDH_INVALID_FORMAT", "Invalid ECDH format: %s", TypeError);
-E(
-  "ERR_CRYPTO_ECDH_INVALID_PUBLIC_KEY",
-  "Public key is not valid for specified curve",
-  Error,
-);
-E("ERR_CRYPTO_ENGINE_UNKNOWN", 'Engine "%s" was not found', Error);
-E(
-  "ERR_CRYPTO_FIPS_FORCED",
-  "Cannot set FIPS mode, it was forced with --force-fips at startup.",
-  Error,
-);
-E(
-  "ERR_CRYPTO_FIPS_UNAVAILABLE",
-  "Cannot set FIPS mode in a non-FIPS build.",
-  Error,
-);
-E("ERR_CRYPTO_HASH_FINALIZED", "Digest already called", Error);
-E("ERR_CRYPTO_HASH_UPDATE_FAILED", "Hash update failed", Error);
-E("ERR_CRYPTO_INCOMPATIBLE_KEY", "Incompatible %s: %s", Error);
-E(
-  "ERR_CRYPTO_INCOMPATIBLE_KEY_OPTIONS",
-  "The selected key encoding %s %s.",
-  Error,
-);
-E("ERR_CRYPTO_INVALID_DIGEST", "Invalid digest: %s", TypeError);
-E(
-  "ERR_CRYPTO_INVALID_KEY_OBJECT_TYPE",
-  "Invalid key object type %s, expected %s.",
-  TypeError,
-);
-E("ERR_CRYPTO_INVALID_STATE", "Invalid state for operation %s", Error);
-E("ERR_CRYPTO_PBKDF2_ERROR", "PBKDF2 error", Error);
-E("ERR_CRYPTO_SCRYPT_INVALID_PARAMETER", "Invalid scrypt parameter", Error);
-E("ERR_CRYPTO_SCRYPT_NOT_SUPPORTED", "Scrypt algorithm not supported", Error);
-// Switch to TypeError. The current implementation does not seem right.
-E("ERR_CRYPTO_SIGN_KEY_REQUIRED", "No key provided to sign", Error);
-E("ERR_DIR_CLOSED", "Directory handle was closed", Error);
-E(
-  "ERR_DIR_CONCURRENT_OPERATION",
-  "Cannot do synchronous work on directory handle with concurrent " +
-    "asynchronous operations",
-  Error,
-);
-E(
-  "ERR_DNS_SET_SERVERS_FAILED",
-  'c-ares failed to set servers: "%s" [%s]',
-  Error,
-);
-E(
-  "ERR_DOMAIN_CALLBACK_NOT_AVAILABLE",
-  "A callback was registered through " +
-    "process.setUncaughtExceptionCaptureCallback(), which is mutually " +
-    "exclusive with using the `domain` module",
-  Error,
-);
-E(
-  "ERR_DOMAIN_CANNOT_SET_UNCAUGHT_EXCEPTION_CAPTURE",
-  "The `domain` module is in use, which is mutually exclusive with calling " +
-    "process.setUncaughtExceptionCaptureCallback()",
-  Error,
-);
-E("ERR_ENCODING_INVALID_ENCODED_DATA", function (encoding, ret) {
-  this.errno = ret;
-  return `The encoded data was not valid for encoding ${encoding}`;
-}, TypeError);
-E(
-  "ERR_ENCODING_NOT_SUPPORTED",
-  'The "%s" encoding is not supported',
-  RangeError,
-);
-E("ERR_EVAL_ESM_CANNOT_PRINT", "--print cannot be used with ESM input", Error);
-E("ERR_EVENT_RECURSION", 'The event "%s" is already being dispatched', Error);
-E("ERR_FALSY_VALUE_REJECTION", function (reason) {
-  this.reason = reason;
-  return "Promise was rejected with falsy value";
-}, Error);
-E(
-  "ERR_FEATURE_UNAVAILABLE_ON_PLATFORM",
-  "The feature %s is unavailable on the current platform" +
-    ", which is being used to run Node.js",
-  TypeError,
-);
-E("ERR_FS_FILE_TOO_LARGE", "File size (%s) is greater than 2 GB", RangeError);
-E(
-  "ERR_FS_INVALID_SYMLINK_TYPE",
-  'Symlink type must be one of "dir", "file", or "junction". Received "%s"',
-  Error,
-); // Switch to TypeError. The current implementation does not seem right
-E(
-  "ERR_HTTP2_ALTSVC_INVALID_ORIGIN",
-  "HTTP/2 ALTSVC frames require a valid origin",
-  TypeError,
-);
-E(
-  "ERR_HTTP2_ALTSVC_LENGTH",
-  "HTTP/2 ALTSVC frames are limited to 16382 bytes",
-  TypeError,
-);
-E(
-  "ERR_HTTP2_CONNECT_AUTHORITY",
-  ":authority header is required for CONNECT requests",
-  Error,
-);
-E(
-  "ERR_HTTP2_CONNECT_PATH",
-  "The :path header is forbidden for CONNECT requests",
-  Error,
-);
-E(
-  "ERR_HTTP2_CONNECT_SCHEME",
-  "The :scheme header is forbidden for CONNECT requests",
-  Error,
-);
-E(
-  "ERR_HTTP2_GOAWAY_SESSION",
-  "New streams cannot be created after receiving a GOAWAY",
-  Error,
-);
-E(
-  "ERR_HTTP2_HEADERS_AFTER_RESPOND",
-  "Cannot specify additional headers after response initiated",
-  Error,
-);
-E("ERR_HTTP2_HEADERS_SENT", "Response has already been initiated.", Error);
-E(
-  "ERR_HTTP2_HEADER_SINGLE_VALUE",
-  'Header field "%s" must only have a single value',
-  TypeError,
-);
-E(
-  "ERR_HTTP2_INFO_STATUS_NOT_ALLOWED",
-  "Informational status codes cannot be used",
-  RangeError,
-);
-E(
-  "ERR_HTTP2_INVALID_CONNECTION_HEADERS",
-  'HTTP/1 Connection specific headers are forbidden: "%s"',
-  TypeError,
-);
-E(
-  "ERR_HTTP2_INVALID_HEADER_VALUE",
-  'Invalid value "%s" for header "%s"',
-  TypeError,
-);
-E(
-  "ERR_HTTP2_INVALID_INFO_STATUS",
-  "Invalid informational status code: %s",
-  RangeError,
-);
-E(
-  "ERR_HTTP2_INVALID_ORIGIN",
-  "HTTP/2 ORIGIN frames require a valid origin",
-  TypeError,
-);
-E(
-  "ERR_HTTP2_INVALID_PACKED_SETTINGS_LENGTH",
-  "Packed settings length must be a multiple of six",
-  RangeError,
-);
-E(
-  "ERR_HTTP2_INVALID_PSEUDOHEADER",
-  '"%s" is an invalid pseudoheader or is used incorrectly',
-  TypeError,
-);
-E("ERR_HTTP2_INVALID_SESSION", "The session has been destroyed", Error);
-E(
-  "ERR_HTTP2_INVALID_SETTING_VALUE",
-  // Using default arguments here is important so the arguments are not counted
-  // towards `Function#length`.
-  function (name, actual, min = undefined, max = undefined) {
-    this.actual = actual;
-    if (min !== undefined) {
-      this.min = min;
-      this.max = max;
-    }
-    return `Invalid value for setting "${name}": ${actual}`;
-  },
-  TypeError,
-  RangeError,
-);
-E("ERR_HTTP2_INVALID_STREAM", "The stream has been destroyed", Error);
-E(
-  "ERR_HTTP2_MAX_PENDING_SETTINGS_ACK",
-  "Maximum number of pending settings acknowledgements",
-  Error,
-);
-E(
-  "ERR_HTTP2_NESTED_PUSH",
-  "A push stream cannot initiate another push stream.",
-  Error,
-);
-E(
-  "ERR_HTTP2_NO_SOCKET_MANIPULATION",
-  "HTTP/2 sockets should not be directly manipulated (e.g. read and written)",
-  Error,
-);
-E(
-  "ERR_HTTP2_ORIGIN_LENGTH",
-  "HTTP/2 ORIGIN frames are limited to 16382 bytes",
-  TypeError,
-);
-E(
-  "ERR_HTTP2_OUT_OF_STREAMS",
-  "No stream ID is available because maximum stream ID has been reached",
-  Error,
-);
-E(
-  "ERR_HTTP2_PAYLOAD_FORBIDDEN",
-  "Responses with %s status must not have a payload",
-  Error,
-);
-E("ERR_HTTP2_PING_CANCEL", "HTTP2 ping cancelled", Error);
-E("ERR_HTTP2_PING_LENGTH", "HTTP2 ping payload must be 8 bytes", RangeError);
-E(
-  "ERR_HTTP2_PSEUDOHEADER_NOT_ALLOWED",
-  "Cannot set HTTP/2 pseudo-headers",
-  TypeError,
-);
-E("ERR_HTTP2_PUSH_DISABLED", "HTTP/2 client has disabled push streams", Error);
-E("ERR_HTTP2_SEND_FILE", "Directories cannot be sent", Error);
-E(
-  "ERR_HTTP2_SEND_FILE_NOSEEK",
-  "Offset or length can only be specified for regular files",
-  Error,
-);
-E("ERR_HTTP2_SESSION_ERROR", "Session closed with error code %s", Error);
-E("ERR_HTTP2_SETTINGS_CANCEL", "HTTP2 session settings canceled", Error);
-E(
-  "ERR_HTTP2_SOCKET_BOUND",
-  "The socket is already bound to an Http2Session",
-  Error,
-);
-E(
-  "ERR_HTTP2_SOCKET_UNBOUND",
-  "The socket has been disconnected from the Http2Session",
-  Error,
-);
-E(
-  "ERR_HTTP2_STATUS_101",
-  "HTTP status code 101 (Switching Protocols) is forbidden in HTTP/2",
-  Error,
-);
-E("ERR_HTTP2_STATUS_INVALID", "Invalid status code: %s", RangeError);
-E("ERR_HTTP2_STREAM_CANCEL", function (error) {
-  let msg = "The pending stream has been canceled";
-  if (error) {
-    this.cause = error;
-    if (typeof error.message === "string") {
-      msg += ` (caused by: ${error.message})`;
-    }
-  }
-  return msg;
-}, Error);
-E("ERR_HTTP2_STREAM_ERROR", "Stream closed with error code %s", Error);
-E(
-  "ERR_HTTP2_STREAM_SELF_DEPENDENCY",
-  "A stream cannot depend on itself",
-  Error,
-);
-E(
-  "ERR_HTTP2_TRAILERS_ALREADY_SENT",
-  "Trailing headers have already been sent",
-  Error,
-);
-E(
-  "ERR_HTTP2_TRAILERS_NOT_READY",
-  "Trailing headers cannot be sent until after the wantTrailers event is " +
-    "emitted",
-  Error,
-);
-E("ERR_HTTP2_UNSUPPORTED_PROTOCOL", 'protocol "%s" is unsupported.', Error);
-E(
-  "ERR_HTTP_HEADERS_SENT",
-  "Cannot %s headers after they are sent to the client",
-  Error,
-);
-E(
-  "ERR_HTTP_INVALID_HEADER_VALUE",
-  'Invalid value "%s" for header "%s"',
-  TypeError,
-);
-E("ERR_HTTP_INVALID_STATUS_CODE", "Invalid status code: %s", RangeError);
-E(
-  "ERR_HTTP_SOCKET_ENCODING",
-  "Changing the socket encoding is not allowed per RFC7230 Section 3.",
-  Error,
-);
-E(
-  "ERR_HTTP_TRAILER_INVALID",
-  "Trailers are invalid with this transfer encoding",
-  Error,
-);
-E(
-  "ERR_INCOMPATIBLE_OPTION_PAIR",
-  'Option "%s" cannot be used in combination with option "%s"',
-  TypeError,
-);
-E(
-  "ERR_INPUT_TYPE_NOT_ALLOWED",
-  "--input-type can only be used with string " +
-    "input via --eval, --print, or STDIN",
-  Error,
-);
-E(
-  "ERR_INSPECTOR_ALREADY_ACTIVATED",
-  "Inspector is already activated. Close it with inspector.close() " +
-    "before activating it again.",
-  Error,
-);
-E("ERR_INSPECTOR_ALREADY_CONNECTED", "%s is already connected", Error);
-E("ERR_INSPECTOR_CLOSED", "Session was closed", Error);
-E("ERR_INSPECTOR_COMMAND", "Inspector error %d: %s", Error);
-E("ERR_INSPECTOR_NOT_ACTIVE", "Inspector is not active", Error);
-E("ERR_INSPECTOR_NOT_AVAILABLE", "Inspector is not available", Error);
-E("ERR_INSPECTOR_NOT_CONNECTED", "Session is not connected", Error);
-E("ERR_INSPECTOR_NOT_WORKER", "Current thread is not a worker", Error);
-E("ERR_INTERNAL_ASSERTION", (message) => {
-  const suffix = "This is caused by either a bug in Node.js " +
-    "or incorrect usage of Node.js internals.\n" +
-    "Please open an issue with this stack trace at " +
-    "https://github.com/nodejs/node/issues\n";
-  return message === undefined ? suffix : `${message}\n${suffix}`;
-}, Error);
-E("ERR_INVALID_ADDRESS_FAMILY", function (addressType, host, port) {
-  this.host = host;
-  this.port = port;
-  return `Invalid address family: ${addressType} ${host}:${port}`;
-}, RangeError);
-E("ERR_INVALID_ARG_TYPE", (name, expected, actual) => {
-  if (typeof name !== "string") {
-    throw new codes.ERR_INTERNAL_ASSERTION(
-      "'name' must be a string",
+export class ERR_CRYPTO_ECDH_INVALID_FORMAT extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_CRYPTO_ECDH_INVALID_FORMAT",
+      "Invalid ECDH format: %s",
     );
   }
+}
 
-  let msg = "The ";
-  if (name.endsWith(" argument")) {
-    // For cases like 'first argument'
-    msg += `${name} `;
-  } else {
-    const type = name.includes(".") ? "property" : "argument";
-    msg += `"${name}" ${type} `;
-  }
-  msg += "must be ";
-
-  const types = [];
-  const instances = [];
-  const other = [];
-
-  for (const value of expected) {
-    if (typeof value !== "string") {
-      throw new codes.ERR_INTERNAL_ASSERTION(
-        "All expected entries have to be of type string",
-      );
-    }
-    if (kTypes.includes(value)) {
-      types.push(value.toLowerCase());
-    } else if (classRegExp.test(value)) {
-      instances.push(value);
-    } else {
-      if (value === "object") {
-        throw new codes.ERR_INTERNAL_ASSERTION(
-          'The value "object" should be written as "Object"',
-        );
-      }
-      other.push(value);
-    }
-  }
-
-  // Special handle `object` in case other instances are allowed to outline
-  // the differences between each other.
-  if (instances.length > 0) {
-    const pos = types.indexOf("object");
-    if (pos !== -1) {
-      types.splice(pos, 1);
-      instances.push("Object");
-    }
-  }
-
-  if (types.length > 0) {
-    if (types.length > 2) {
-      const last = types.pop();
-      msg += `one of type ${types.join(", ")}, or ${last}`;
-    } else if (types.length === 2) {
-      msg += `one of type ${types[0]} or ${types[1]}`;
-    } else {
-      msg += `of type ${types[0]}`;
-    }
-    if (instances.length > 0 || other.length > 0) {
-      msg += " or ";
-    }
-  }
-
-  if (instances.length > 0) {
-    if (instances.length > 2) {
-      const last = instances.pop();
-      msg += `an instance of ${instances.join(", ")}, or ${last}`;
-    } else {
-      msg += `an instance of ${instances[0]}`;
-      if (instances.length === 2) {
-        msg += ` or ${instances[1]}`;
-      }
-    }
-    if (other.length > 0) {
-      msg += " or ";
-    }
-  }
-
-  if (other.length > 0) {
-    if (other.length > 2) {
-      const last = other.pop();
-      msg += `one of ${other.join(", ")}, or ${last}`;
-    } else if (other.length === 2) {
-      msg += `one of ${other[0]} or ${other[1]}`;
-    } else {
-      if (other[0].toLowerCase() !== other[0]) {
-        msg += "an ";
-      }
-      msg += `${other[0]}`;
-    }
-  }
-
-  if (actual == null) {
-    msg += `. Received ${actual}`;
-  } else if (typeof actual === "function" && actual.name) {
-    msg += `. Received function ${actual.name}`;
-  } else if (typeof actual === "object") {
-    if (actual.constructor && actual.constructor.name) {
-      msg += `. Received an instance of ${actual.constructor.name}`;
-    } else {
-      const inspected = inspect(actual, { depth: -1 });
-      msg += `. Received ${inspected}`;
-    }
-  } else {
-    let inspected = inspect(actual, { colors: false });
-    if (inspected.length > 25) {
-      inspected = `${inspected.slice(0, 25)}...`;
-    }
-    msg += `. Received type ${typeof actual} (${inspected})`;
-  }
-  return msg;
-}, TypeError);
-E(
-  "ERR_INVALID_ARG_VALUE",
-  (name, value, reason = "is invalid") => {
-    let inspected = inspect(value);
-    if (inspected.length > 128) {
-      inspected = `${inspected.slice(0, 128)}...`;
-    }
-    return `The argument '${name}' ${reason}. Received ${inspected}`;
-  },
-  TypeError,
-  RangeError,
-);
-E("ERR_INVALID_ASYNC_ID", "Invalid %s value: %s", RangeError);
-E(
-  "ERR_INVALID_BUFFER_SIZE",
-  "Buffer size must be a multiple of %s",
-  RangeError,
-);
-E(
-  "ERR_INVALID_CALLBACK",
-  "Callback must be a function. Received %O",
-  TypeError,
-);
-E(
-  "ERR_INVALID_CHAR", // Using a default argument here is important so the argument is not counted
-  // towards `Function#length`.
-  (name, field = undefined) => {
-    let msg = `Invalid character in ${name}`;
-    if (field !== undefined) {
-      msg += ` ["${field}"]`;
-    }
-    return msg;
-  },
-  TypeError,
-);
-E(
-  "ERR_INVALID_CURSOR_POS",
-  "Cannot set cursor row without setting its column",
-  TypeError,
-);
-E("ERR_INVALID_FD", '"fd" must be a positive integer: %s', RangeError);
-E("ERR_INVALID_FD_TYPE", "Unsupported fd type: %s", TypeError);
-E(
-  "ERR_INVALID_FILE_URL_HOST",
-  'File URL host must be "localhost" or empty on %s',
-  TypeError,
-);
-E("ERR_INVALID_FILE_URL_PATH", "File URL path %s", TypeError);
-E("ERR_INVALID_HANDLE_TYPE", "This handle type cannot be sent", TypeError);
-E("ERR_INVALID_HTTP_TOKEN", '%s must be a valid HTTP token ["%s"]', TypeError);
-E("ERR_INVALID_IP_ADDRESS", "Invalid IP address: %s", TypeError);
-E("ERR_INVALID_MODULE_SPECIFIER", (pkgPath, subpath, base = undefined) => {
-  if (subpath === undefined) {
-    return `Invalid package name '${pkgPath}' imported from ${base}`;
-  } else if (base === undefined) {
-    if (subpath === ".") throw new codes.ERR_INTERNAL_ASSERTION();
-    return `Package subpath '${subpath}' is not a valid module request for ` +
-      `the "exports" resolution of ${pkgPath}${sep}package.json`;
-  }
-  return `Package subpath '${subpath}' is not a valid module request for ` +
-    `the "exports" resolution of ${pkgPath} imported from ${base}`;
-}, TypeError);
-E(
-  "ERR_INVALID_OPT_VALUE",
-  (name, value) =>
-    `The value "${String(value)}" is invalid for option "${name}"`,
-  TypeError,
-  RangeError,
-);
-E(
-  "ERR_INVALID_OPT_VALUE_ENCODING",
-  'The value "%s" is invalid for option "encoding"',
-  TypeError,
-);
-E("ERR_INVALID_PACKAGE_CONFIG", (path, message, hasMessage = true) => {
-  if (hasMessage) {
-    return `Invalid package config ${path}${sep}package.json, ${message}`;
-  }
-  return `Invalid JSON in ${path} imported from ${message}`;
-}, Error);
-E(
-  "ERR_INVALID_PACKAGE_TARGET",
-  (pkgPath, key, subpath, target, base = undefined) => {
-    const relError = typeof target === "string" &&
-      target.length && !String.prototype.startsWith(target, "./");
-    if (key === null) {
-      if (subpath !== "") {
-        return `Invalid "exports" target ${JSON.stringify(target)} defined ` +
-          `for '${subpath}' in the package config ${pkgPath} imported from ` +
-          `${base}.${relError ? '; targets must start with "./"' : ""}`;
-      }
-      return `Invalid "exports" main target ${target} defined in the ` +
-        `package config ${pkgPath} imported from ${base}${
-          relError ? '; targets must start with "./"' : ""
-        }`;
-    } else if (key === ".") {
-      return `Invalid "exports" main target ${
-        JSON.stringify(target)
-      } defined ` +
-        `in the package config ${pkgPath}${sep}package.json${
-          relError ? '; targets must start with "./"' : ""
-        }`;
-    } else if (relError) {
-      return `Invalid "exports" target ${JSON.stringify(target)} defined for '${
-        String.prototype.slice(key, 0, -subpath.length || key.length)
-      }' in the ` +
-        `package config ${pkgPath}${sep}package.json; ` +
-        'targets must start with "./"';
-    }
-    return `Invalid "exports" target ${JSON.stringify(target)} defined for '${
-      String.prototype.slice(key, 0, -subpath.length || key.length)
-    }' in the ` +
-      `package config ${pkgPath}${sep}package.json`;
-  },
-  Error,
-);
-E(
-  "ERR_INVALID_PERFORMANCE_MARK",
-  'The "%s" performance mark has not been set',
-  Error,
-);
-E(
-  "ERR_INVALID_PROTOCOL",
-  'Protocol "%s" not supported. Expected "%s"',
-  TypeError,
-);
-E(
-  "ERR_INVALID_REPL_EVAL_CONFIG",
-  'Cannot specify both "breakEvalOnSigint" and "eval" for REPL',
-  TypeError,
-);
-E("ERR_INVALID_REPL_INPUT", "%s", TypeError);
-E("ERR_INVALID_RETURN_PROPERTY", (input, name, prop, value) => {
-  return `Expected a valid ${input} to be returned for the "${prop}" from the` +
-    ` "${name}" function but got ${value}.`;
-}, TypeError);
-E("ERR_INVALID_RETURN_PROPERTY_VALUE", (input, name, prop, value) => {
-  let type;
-  if (value && value.constructor && value.constructor.name) {
-    type = `instance of ${value.constructor.name}`;
-  } else {
-    type = `type ${typeof value}`;
-  }
-  return `Expected ${input} to be returned for the "${prop}" from the` +
-    ` "${name}" function but got ${type}.`;
-}, TypeError);
-E("ERR_INVALID_RETURN_VALUE", (input, name, value) => {
-  let type;
-  if (value && value.constructor && value.constructor.name) {
-    type = `instance of ${value.constructor.name}`;
-  } else {
-    type = `type ${typeof value}`;
-  }
-  return `Expected ${input} to be returned from the "${name}"` +
-    ` function but got ${type}.`;
-}, TypeError);
-E(
-  "ERR_INVALID_SYNC_FORK_INPUT",
-  "Asynchronous forks do not support " +
-    "Buffer, TypedArray, DataView or string input: %s",
-  TypeError,
-);
-E("ERR_INVALID_THIS", 'Value of "this" must be of type %s', TypeError);
-E("ERR_INVALID_TUPLE", "%s must be an iterable %s tuple", TypeError);
-E("ERR_INVALID_URI", "URI malformed", URIError);
-E("ERR_INVALID_URL", function (input) {
-  this.input = input;
-  return `Invalid URL: ${input}`;
-}, TypeError);
-E("ERR_INVALID_URL_SCHEME", (expected) => {
-  if (typeof expected === "string") {
-    expected = [expected];
-  }
-
-  if (expected.length > 2) throw new codes.ERR_INTERNAL_ASSERTION();
-  const res = expected.length === 2
-    ? `one of scheme ${expected[0]} or ${expected[1]}`
-    : `of scheme ${expected[0]}`;
-  return `The URL must be ${res}`;
-}, TypeError);
-E("ERR_IPC_CHANNEL_CLOSED", "Channel closed", Error);
-E("ERR_IPC_DISCONNECTED", "IPC channel is already disconnected", Error);
-E("ERR_IPC_ONE_PIPE", "Child process can have only one IPC pipe", Error);
-E("ERR_IPC_SYNC_FORK", "IPC cannot be used with synchronous forks", Error);
-E("ERR_MANIFEST_ASSERT_INTEGRITY", (moduleURL, realIntegrities) => {
-  let msg =
-    `The content of "${moduleURL}" does not match the expected integrity.`;
-  if (realIntegrities.size) {
-    const sri = [...realIntegrities.entries()].map(([alg, dgs]) => {
-      return `${alg}-${dgs}`;
-    }).join(" ");
-    msg += ` Integrities found are: ${sri}`;
-  } else {
-    msg += " The resource was not found in the policy.";
-  }
-  return msg;
-}, Error);
-E(
-  "ERR_MANIFEST_DEPENDENCY_MISSING",
-  "Manifest resource %s does not list %s as a dependency specifier",
-  Error,
-);
-E(
-  "ERR_MANIFEST_INTEGRITY_MISMATCH",
-  "Manifest resource %s has multiple entries but integrity lists do not match",
-  SyntaxError,
-);
-E(
-  "ERR_MANIFEST_INVALID_RESOURCE_FIELD",
-  "Manifest resource %s has invalid property value for %s",
-  TypeError,
-);
-E("ERR_MANIFEST_TDZ", "Manifest initialization has not yet run", Error);
-E(
-  "ERR_MANIFEST_UNKNOWN_ONERROR",
-  'Manifest specified unknown error behavior "%s".',
-  SyntaxError,
-);
-E("ERR_METHOD_NOT_IMPLEMENTED", "The %s method is not implemented", Error);
-E("ERR_MISSING_ARGS", (...args) => {
-  if (args.length === 0) {
-    throw new codes.ERR_INTERNAL_ASSERTION(
-      "At least one arg needs to be specified",
+export class ERR_CRYPTO_ECDH_INVALID_PUBLIC_KEY extends NodeError {
+  constructor(){
+    super(
+      "ERR_CRYPTO_ECDH_INVALID_PUBLIC_KEY",
+      "Public key is not valid for specified curve",
     );
   }
-  let msg = "The ";
-  const len = args.length;
-  const wrap = (a) => `"${a}"`;
-  args = args.map(
-    (a) => (Array.isArray(a) ? a.map(wrap).join(" or ") : wrap(a)),
-  );
-  switch (len) {
-    case 1:
-      msg += `${args[0]} argument`;
-      break;
-    case 2:
-      msg += `${args[0]} and ${args[1]} arguments`;
-      break;
-    default:
-      msg += args.slice(0, len - 1).join(", ");
-      msg += `, and ${args[len - 1]} arguments`;
-      break;
-  }
-  return `${msg} must be specified`;
-}, TypeError);
-E("ERR_MISSING_OPTION", "%s is required", TypeError);
-E("ERR_MODULE_NOT_FOUND", (path, base, type = "package") => {
-  return `Cannot find ${type} '${path}' imported from ${base}`;
-}, Error);
-E("ERR_MULTIPLE_CALLBACK", "Callback called multiple times", Error);
-E("ERR_NAPI_CONS_FUNCTION", "Constructor must be a function", TypeError);
-E(
-  "ERR_NAPI_INVALID_DATAVIEW_ARGS",
-  "byte_offset + byte_length should be less than or equal to the size in " +
-    "bytes of the array passed in",
-  RangeError,
-);
-E(
-  "ERR_NAPI_INVALID_TYPEDARRAY_ALIGNMENT",
-  "start offset of %s should be a multiple of %s",
-  RangeError,
-);
-E(
-  "ERR_NAPI_INVALID_TYPEDARRAY_LENGTH",
-  "Invalid typed array length",
-  RangeError,
-);
-E(
-  "ERR_NO_CRYPTO",
-  "Node.js is not compiled with OpenSSL crypto support",
-  Error,
-);
-E(
-  "ERR_NO_ICU",
-  "%s is not supported on Node.js compiled without ICU",
-  TypeError,
-);
-E("ERR_OUT_OF_RANGE", (str, range, input, replaceDefaultBoolean = false) => {
-  if (!range) {
-    throw new codes.ERR_INTERNAL_ASSERTION(
-      'Missing "range" argument',
+}
+
+export class ERR_CRYPTO_ENGINE_UNKNOWN extends NodeError {
+  constructor(){
+    super(
+      "ERR_CRYPTO_ENGINE_UNKNOWN",
+      'Engine "%s" was not found',
     );
   }
-  let msg = replaceDefaultBoolean
-    ? str
-    : `The value of "${str}" is out of range.`;
-  let received;
-  if (Number.isInteger(input) && Math.abs(input) > 2 ** 32) {
-    received = addNumericalSeparator(String(input));
-  } else if (typeof input === "bigint") {
-    received = String(input);
-    if (input > 2n ** 32n || input < -(2n ** 32n)) {
-      received = addNumericalSeparator(received);
-    }
-    received += "n";
-  } else {
-    received = inspect(input);
-  }
-  msg += ` It must be ${range}. Received ${received}`;
-  return msg;
-}, RangeError);
-E("ERR_PACKAGE_PATH_NOT_EXPORTED", (pkgPath, subpath, base = undefined) => {
-  if (subpath === ".") {
-    return `No "exports" main resolved in ${pkgPath}${sep}package.json`;
-  } else if (base === undefined) {
-    return `Package subpath '${subpath}' is not defined by "exports" in ${pkgPath}${sep}package.json`;
-  }
-  return `Package subpath '${subpath}' is not defined by "exports" in ${pkgPath} imported from ${base}`;
-}, Error);
-E(
-  "ERR_QUICCLIENTSESSION_FAILED",
-  "Failed to create a new QuicClientSession: %s",
-  Error,
-);
-E(
-  "ERR_QUICCLIENTSESSION_FAILED_SETSOCKET",
-  "Failed to set the QuicSocket",
-  Error,
-);
-E(
-  "ERR_QUICSESSION_DESTROYED",
-  "Cannot call %s after a QuicSession has been destroyed",
-  Error,
-);
-E("ERR_QUICSESSION_INVALID_DCID", "Invalid DCID value: %s", Error);
-E("ERR_QUICSESSION_UPDATEKEY", "Unable to update QuicSession keys", Error);
-E(
-  "ERR_QUICSESSION_VERSION_NEGOTIATION",
-  (version, requestedVersions, supportedVersions) => {
-    return "QUIC session received version negotiation from server. " +
-      `Version: ${version}. Requested: ${requestedVersions.join(", ")} ` +
-      `Supported: ${supportedVersions.join(", ")}`;
-  },
-  Error,
-);
-E(
-  "ERR_QUICSOCKET_DESTROYED",
-  "Cannot call %s after a QuicSocket has been destroyed",
-  Error,
-);
-E(
-  "ERR_QUICSOCKET_INVALID_STATELESS_RESET_SECRET_LENGTH",
-  "The stateResetToken must be exactly 16-bytes in length",
-  Error,
-);
-E("ERR_QUICSOCKET_LISTENING", "This QuicSocket is already listening", Error);
-E(
-  "ERR_QUICSOCKET_UNBOUND",
-  "Cannot call %s before a QuicSocket has been bound",
-  Error,
-);
-E(
-  "ERR_QUICSTREAM_DESTROYED",
-  "Cannot call %s after a QuicStream has been destroyed",
-  Error,
-);
-E(
-  "ERR_QUICSTREAM_INVALID_PUSH",
-  "Push streams are only supported on client-initiated, bidirectional streams",
-  Error,
-);
-E("ERR_QUICSTREAM_OPEN_FAILED", "Opening a new QuicStream failed", Error);
-E(
-  "ERR_QUICSTREAM_UNSUPPORTED_PUSH",
-  "Push streams are not supported on this QuicSession",
-  Error,
-);
-/*
-  E('ERR_QUIC_ERROR', function(code, family) {
-  const {
-    constants: {
-      QUIC_ERROR_APPLICATION,
-      QUIC_ERROR_CRYPTO,
-      QUIC_ERROR_SESSION,
-    }
-  } = internalBinding('quic');
-  let familyType = 'unknown';
-  switch (family) {
-    case QUIC_ERROR_APPLICATION:
-      familyType = 'application';
-      break;
-    case QUIC_ERROR_CRYPTO:
-      familyType = 'crypto';
-      break;
-    case QUIC_ERROR_SESSION:
-      familyType = 'session';
-      break;
-  }
-  return `QUIC session closed with ${familyType} error code ${code}`;
-}, Error);
-*/
-E("ERR_QUIC_TLS13_REQUIRED", "QUIC requires TLS version 1.3", Error);
-E("ERR_REQUIRE_ESM", (filename, parentPath = null, packageJsonPath = null) => {
-  let msg = `Must use import to load ES Module: ${filename}`;
-  if (parentPath && packageJsonPath) {
-    const path = require("path");
-    const basename = path.basename(filename) === path.basename(parentPath)
-      ? filename
-      : path.basename(filename);
-    msg += "\nrequire() of ES modules is not supported.\nrequire() of " +
-      `${filename} ${parentPath ? `from ${parentPath} ` : ""}` +
-      "is an ES module file as it is a .js file whose nearest parent " +
-      'package.json contains "type": "module" which defines all .js ' +
-      "files in that package scope as ES modules.\nInstead rename " +
-      `${basename} to end in .cjs, change the requiring code to use ` +
-      'import(), or remove "type": "module" from ' +
-      `${packageJsonPath}.\n`;
-    return msg;
-  }
-  return msg;
-}, Error);
-E(
-  "ERR_SCRIPT_EXECUTION_INTERRUPTED",
-  "Script execution was interrupted by `SIGINT`",
-  Error,
-);
-E(
-  "ERR_SERVER_ALREADY_LISTEN",
-  "Listen method has been called more than once without closing.",
-  Error,
-);
-E("ERR_SERVER_NOT_RUNNING", "Server is not running.", Error);
-E("ERR_SOCKET_ALREADY_BOUND", "Socket is already bound", Error);
-E(
-  "ERR_SOCKET_BAD_BUFFER_SIZE",
-  "Buffer size must be a positive integer",
-  TypeError,
-);
-E("ERR_SOCKET_BAD_PORT", (name, port, allowZero = true) => {
-  if (typeof allowZero !== "boolean") {
-    throw new codes.ERR_INTERNAL_ASSERTION(
-      "The 'allowZero' argument must be of type boolean.",
+}
+
+export class ERR_CRYPTO_FIPS_FORCED extends NodeError {
+  constructor(){
+    super(
+      "ERR_CRYPTO_FIPS_FORCED",
+      "Cannot set FIPS mode, it was forced with --force-fips at startup.",
     );
   }
-  const operator = allowZero ? ">=" : ">";
-  return `${name} should be ${operator} 0 and < 65536. Received ${port}.`;
-}, RangeError);
-E(
-  "ERR_SOCKET_BAD_TYPE",
-  "Bad socket type specified. Valid types are: udp4, udp6",
-  TypeError,
-);
-E("ERR_SOCKET_BUFFER_SIZE", "Could not get or set buffer size", SystemError);
-E("ERR_SOCKET_CLOSED", "Socket is closed", Error);
-E("ERR_SOCKET_DGRAM_IS_CONNECTED", "Already connected", Error);
-E("ERR_SOCKET_DGRAM_NOT_CONNECTED", "Not connected", Error);
-E("ERR_SOCKET_DGRAM_NOT_RUNNING", "Not running", Error);
-E(
-  "ERR_SRI_PARSE",
-  "Subresource Integrity string %j had an unexpected %j at position %d",
-  SyntaxError,
-);
-E(
-  "ERR_STREAM_ALREADY_FINISHED",
-  "Cannot call %s after a stream was finished",
-  Error,
-);
-E("ERR_STREAM_CANNOT_PIPE", "Cannot pipe, not readable", Error);
-E("ERR_STREAM_DESTROYED", "Cannot call %s after a stream was destroyed", Error);
-E("ERR_STREAM_NULL_VALUES", "May not write null values to stream", TypeError);
-E("ERR_STREAM_PREMATURE_CLOSE", "Premature close", Error);
-E("ERR_STREAM_PUSH_AFTER_EOF", "stream.push() after EOF", Error);
-E(
-  "ERR_STREAM_UNSHIFT_AFTER_END_EVENT",
-  "stream.unshift() after end event",
-  Error,
-);
-E("ERR_STREAM_WRAP", "Stream has StringDecoder set or is in objectMode", Error);
-E("ERR_STREAM_WRITE_AFTER_END", "write after end", Error);
-E("ERR_SYNTHETIC", "JavaScript Callstack", Error);
-E("ERR_SYSTEM_ERROR", "A system error occurred", SystemError);
-E("ERR_TLS_CERT_ALTNAME_INVALID", function (reason, host, cert) {
-  this.reason = reason;
-  this.host = host;
-  this.cert = cert;
-  return `Hostname/IP does not match certificate's altnames: ${reason}`;
-}, Error);
-E("ERR_TLS_DH_PARAM_SIZE", "DH parameter size %s is less than 2048", Error);
-E("ERR_TLS_HANDSHAKE_TIMEOUT", "TLS handshake timeout", Error);
-E("ERR_TLS_INVALID_CONTEXT", "%s must be a SecureContext", TypeError),
-  E(
-    "ERR_TLS_INVALID_STATE",
-    "TLS socket connection must be securely established",
-    Error,
-  ),
-  E(
-    "ERR_TLS_INVALID_PROTOCOL_VERSION",
-    "%j is not a valid %s TLS protocol version",
-    TypeError,
-  );
-E(
-  "ERR_TLS_PROTOCOL_VERSION_CONFLICT",
-  "TLS protocol version %j conflicts with secureProtocol %j",
-  TypeError,
-);
-E(
-  "ERR_TLS_RENEGOTIATION_DISABLED",
-  "TLS session renegotiation disabled for this socket",
-  Error,
-);
+}
 
-// This should probably be a `TypeError`.
-E(
-  "ERR_TLS_REQUIRED_SERVER_NAME",
-  '"servername" is required parameter for Server.addContext',
-  Error,
-);
-E("ERR_TLS_SESSION_ATTACK", "TLS session renegotiation attack detected", Error);
-E(
-  "ERR_TLS_SNI_FROM_SERVER",
-  "Cannot issue SNI from a TLS server-side socket",
-  Error,
-);
-E(
-  "ERR_TRACE_EVENTS_CATEGORY_REQUIRED",
-  "At least one category is required",
-  TypeError,
-);
-E("ERR_TRACE_EVENTS_UNAVAILABLE", "Trace events are unavailable", Error);
+export class ERR_CRYPTO_FIPS_UNAVAILABLE extends NodeError {
+  constructor(){
+    super(
+      "ERR_CRYPTO_FIPS_UNAVAILABLE",
+      "Cannot set FIPS mode in a non-FIPS build.",
+    );
+  }
+}
 
-// This should probably be a `RangeError`.
-E("ERR_TTY_INIT_FAILED", "TTY initialization failed", SystemError);
-E(
-  "ERR_UNAVAILABLE_DURING_EXIT",
-  "Cannot call function in process exit " +
-    "handler",
-  Error,
-);
-E(
-  "ERR_UNCAUGHT_EXCEPTION_CAPTURE_ALREADY_SET",
-  "`process.setupUncaughtExceptionCapture()` was called while a capture " +
-    "callback was already active",
-  Error,
-);
-E("ERR_UNESCAPED_CHARACTERS", "%s contains unescaped characters", TypeError);
-E(
-  "ERR_UNHANDLED_ERROR", // Using a default argument here is important so the argument is not counted
-  // towards `Function#length`.
-  (err = undefined) => {
-    const msg = "Unhandled error.";
-    if (err === undefined) return msg;
-    return `${msg} (${err})`;
-  },
-  Error,
-);
-E("ERR_UNKNOWN_BUILTIN_MODULE", "No such built-in module: %s", Error);
-E("ERR_UNKNOWN_CREDENTIAL", "%s identifier does not exist: %s", Error);
-E("ERR_UNKNOWN_ENCODING", "Unknown encoding: %s", TypeError);
-E(
-  "ERR_UNKNOWN_FILE_EXTENSION",
-  'Unknown file extension "%s" for %s',
-  TypeError,
-);
-E("ERR_UNKNOWN_MODULE_FORMAT", "Unknown module format: %s", RangeError);
-E("ERR_UNKNOWN_SIGNAL", "Unknown signal: %s", TypeError);
-E(
-  "ERR_UNSUPPORTED_DIR_IMPORT",
-  "Directory import '%s' is not supported " +
-    "resolving ES modules, imported from %s",
-  Error,
-);
-E(
-  "ERR_UNSUPPORTED_ESM_URL_SCHEME",
-  "Only file and data URLs are supported " +
-    "by the default ESM loader",
-  Error,
-);
+export class ERR_CRYPTO_HASH_FINALIZED extends NodeError {
+  constructor(){
+    super(
+      "ERR_CRYPTO_HASH_FINALIZED",
+      "Digest already called",
+    );
+  }
+}
 
-E(
-  "ERR_V8BREAKITERATOR",
-  "Full ICU data not installed. See https://github.com/nodejs/node/wiki/Intl",
-  Error,
-);
+export class ERR_CRYPTO_HASH_UPDATE_FAILED extends NodeError {
+  constructor(){
+    super(
+      "ERR_CRYPTO_HASH_UPDATE_FAILED",
+      "Hash update failed",
+    );
+  }
+}
 
-// This should probably be a `TypeError`.
-E(
-  "ERR_VALID_PERFORMANCE_ENTRY_TYPE",
-  "At least one valid performance entry type is required",
-  Error,
-);
-E(
-  "ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING",
-  "A dynamic import callback was not specified.",
-  TypeError,
-);
-E("ERR_VM_MODULE_ALREADY_LINKED", "Module has already been linked", Error);
-E(
-  "ERR_VM_MODULE_CANNOT_CREATE_CACHED_DATA",
-  "Cached data cannot be created for a module which has been evaluated",
-  Error,
-);
-E(
-  "ERR_VM_MODULE_DIFFERENT_CONTEXT",
-  "Linked modules must use the same context",
-  Error,
-);
-E(
-  "ERR_VM_MODULE_LINKING_ERRORED",
-  "Linking has already failed for the provided module",
-  Error,
-);
-E(
-  "ERR_VM_MODULE_NOT_MODULE",
-  "Provided module is not an instance of Module",
-  Error,
-);
-E("ERR_VM_MODULE_STATUS", "Module status %s", Error);
-E("ERR_WASI_ALREADY_STARTED", "WASI instance has already started", Error);
-E("ERR_WORKER_INIT_FAILED", "Worker initialization failure: %s", Error);
-E(
-  "ERR_WORKER_INVALID_EXEC_ARGV",
-  (errors, msg = "invalid execArgv flags") =>
-    `Initiated Worker with ${msg}: ${errors.join(", ")}`,
-  Error,
-);
-E("ERR_WORKER_NOT_RUNNING", "Worker instance not running", Error);
-E(
-  "ERR_WORKER_OUT_OF_MEMORY",
-  "Worker terminated due to reaching memory limit: %s",
-  Error,
-);
-E(
-  "ERR_WORKER_PATH",
-  (filename) =>
-    "The worker script or module filename must be an absolute path or a " +
-    "relative path starting with './' or '../'." +
-    (filename.startsWith("file://")
-      ? " Wrap file:// URLs with `new URL`."
-      : "") +
-    ` Received "${filename}"`,
-  TypeError,
-);
-E(
-  "ERR_WORKER_UNSERIALIZABLE_ERROR",
-  "Serializing an uncaught exception failed",
-  Error,
-);
-E(
-  "ERR_WORKER_UNSUPPORTED_EXTENSION",
-  'The worker script extension must be ".js", ".mjs", or ".cjs". Received "%s"',
-  TypeError,
-);
-E(
-  "ERR_WORKER_UNSUPPORTED_OPERATION",
-  "%s is not supported in workers",
-  TypeError,
-);
-E("ERR_ZLIB_INITIALIZATION_FAILED", "Initialization failed", Error);
+export class ERR_CRYPTO_INCOMPATIBLE_KEY extends NodeError {
+  constructor(){
+    super(
+      "ERR_CRYPTO_INCOMPATIBLE_KEY",
+      "Incompatible %s: %s",
+    );
+  }
+}
 
-export const codes = {
-  ERR_INVALID_ARG_TYPE,
-  ERR_OUT_OF_RANGE,
-};
+export class ERR_CRYPTO_INCOMPATIBLE_KEY_OPTIONS extends NodeError {
+  constructor(){
+    super(
+      "ERR_CRYPTO_INCOMPATIBLE_KEY_OPTIONS",
+      "The selected key encoding %s %s.",
+    );
+  }
+}
+
+export class ERR_CRYPTO_INVALID_DIGEST extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_CRYPTO_INVALID_DIGEST",
+      "Invalid digest: %s",
+    );
+  }
+}
+
+export class ERR_CRYPTO_INVALID_KEY_OBJECT_TYPE extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_CRYPTO_INVALID_KEY_OBJECT_TYPE",
+      "Invalid key object type %s, expected %s.",
+    );
+  }
+}
+
+export class ERR_CRYPTO_INVALID_STATE extends NodeError {
+  constructor(){
+    super(
+      "ERR_CRYPTO_INVALID_STATE",
+      "Invalid state for operation %s",
+    );
+  }
+}
+
+export class ERR_CRYPTO_PBKDF2_ERROR extends NodeError {
+  constructor(){
+    super(
+      "ERR_CRYPTO_PBKDF2_ERROR",
+      "PBKDF2 error",
+    );
+  }
+}
+
+export class ERR_CRYPTO_SCRYPT_INVALID_PARAMETER extends NodeError {
+  constructor(){
+    super(
+      "ERR_CRYPTO_SCRYPT_INVALID_PARAMETER",
+      "Invalid scrypt parameter",
+    );
+  }
+}
+
+export class ERR_CRYPTO_SCRYPT_NOT_SUPPORTED extends NodeError {
+  constructor(){
+    super(
+      "ERR_CRYPTO_SCRYPT_NOT_SUPPORTED",
+      "Scrypt algorithm not supported",
+    );
+  }
+}
+
+export class ERR_CRYPTO_SIGN_KEY_REQUIRED extends NodeError {
+  constructor(){
+    super(
+      "ERR_CRYPTO_SIGN_KEY_REQUIRED",
+      "No key provided to sign",
+    );
+  }
+}
+
+export class ERR_DIR_CLOSED extends NodeError {
+  constructor(){
+    super(
+      "ERR_DIR_CLOSED",
+      "Directory handle was closed",
+    );
+  }
+}
+
+export class ERR_DIR_CONCURRENT_OPERATION extends NodeError {
+  constructor(){
+    super(
+      "ERR_DIR_CONCURRENT_OPERATION",
+      "Cannot do synchronous work on directory handle with concurrent asynchronous operations",
+    );
+  }
+}
+
+export class ERR_DNS_SET_SERVERS_FAILED extends NodeError {
+  constructor(){
+    super(
+      "ERR_DNS_SET_SERVERS_FAILED",
+      'c-ares failed to set servers: "%s" [%s]',
+    );
+  }
+}
+
+export class ERR_DOMAIN_CALLBACK_NOT_AVAILABLE extends NodeError {
+  constructor(){
+    super(
+      "ERR_DOMAIN_CALLBACK_NOT_AVAILABLE",
+      "A callback was registered through " +
+        "process.setUncaughtExceptionCaptureCallback(), which is mutually " +
+        "exclusive with using the `domain` module",
+    );
+  }
+}
+
+export class ERR_DOMAIN_CANNOT_SET_UNCAUGHT_EXCEPTION_CAPTURE extends NodeError {
+  constructor(){
+    super(
+      "ERR_DOMAIN_CANNOT_SET_UNCAUGHT_EXCEPTION_CAPTURE",
+      "The `domain` module is in use, which is mutually exclusive with calling " +
+        "process.setUncaughtExceptionCaptureCallback()",
+    );
+  }
+}
+
+export class ERR_ENCODING_INVALID_ENCODED_DATA extends NodeErrorAbstraction implements TypeError {
+  errno: number;
+  constructor(encoding: string, ret: number){
+    super(
+      TypeError.prototype.name,
+      "ERR_ENCODING_INVALID_ENCODED_DATA",
+      `The encoded data was not valid for encoding ${encoding}`,
+    );
+    Object.setPrototypeOf(this, TypeError.prototype);
+
+    this.errno = ret;
+  }
+}
 
 // In Node these values are coming from libuv:
 // Ref: https://github.com/libuv/libuv/blob/v1.x/include/uv/errno.h
@@ -1575,3 +716,1529 @@ export const errorMap = new Map<number, [string, string]>(
     ? linux
     : unreachable(),
 );
+export class ERR_ENCODING_NOT_SUPPORTED extends NodeRangeError {
+  constructor(){
+    super(
+      "ERR_ENCODING_NOT_SUPPORTED",
+      `The "%s" encoding is not supported`,
+    );
+  }
+}
+export class ERR_EVAL_ESM_CANNOT_PRINT extends NodeError {
+  constructor(){
+    super(
+      "ERR_EVAL_ESM_CANNOT_PRINT",
+      `--print cannot be used with ESM input`,
+    );
+  }
+}
+export class ERR_EVENT_RECURSION extends NodeError {
+  constructor(){
+    super(
+      "ERR_EVENT_RECURSION",
+      `The event "%s" is already being dispatched`,
+    );
+  }
+}
+export class ERR_FEATURE_UNAVAILABLE_ON_PLATFORM extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_FEATURE_UNAVAILABLE_ON_PLATFORM",
+      `The feature %s is unavailable on the current platform, which is being used to run Node.js`,
+    );
+  }
+}
+export class ERR_FS_FILE_TOO_LARGE extends NodeRangeError {
+  constructor(){
+    super(
+      "ERR_FS_FILE_TOO_LARGE",
+      `File size (%s) is greater than 2 GB`,
+    );
+  }
+}
+export class ERR_FS_INVALID_SYMLINK_TYPE extends NodeError {
+  constructor(){
+    super(
+      "ERR_FS_INVALID_SYMLINK_TYPE",
+      `Symlink type must be one of "dir", "file", or "junction". Received "%s"`,
+    );
+  }
+}
+export class ERR_HTTP2_ALTSVC_INVALID_ORIGIN extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_HTTP2_ALTSVC_INVALID_ORIGIN",
+      `HTTP/2 ALTSVC frames require a valid origin`,
+    );
+  }
+}
+export class ERR_HTTP2_ALTSVC_LENGTH extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_HTTP2_ALTSVC_LENGTH",
+      `HTTP/2 ALTSVC frames are limited to 16382 bytes`,
+    );
+  }
+}
+export class ERR_HTTP2_CONNECT_AUTHORITY extends NodeError {
+  constructor(){
+    super(
+      "ERR_HTTP2_CONNECT_AUTHORITY",
+      `:authority header is required for CONNECT requests`,
+    );
+  }
+}
+export class ERR_HTTP2_CONNECT_PATH extends NodeError {
+  constructor(){
+    super(
+      "ERR_HTTP2_CONNECT_PATH",
+      `The :path header is forbidden for CONNECT requests`,
+    );
+  }
+}
+export class ERR_HTTP2_CONNECT_SCHEME extends NodeError {
+  constructor(){
+    super(
+      "ERR_HTTP2_CONNECT_SCHEME",
+      `The :scheme header is forbidden for CONNECT requests`,
+    );
+  }
+}
+export class ERR_HTTP2_GOAWAY_SESSION extends NodeError {
+  constructor(){
+    super(
+      "ERR_HTTP2_GOAWAY_SESSION",
+      `New streams cannot be created after receiving a GOAWAY`,
+    );
+  }
+}
+export class ERR_HTTP2_HEADERS_AFTER_RESPOND extends NodeError {
+  constructor(){
+    super(
+      "ERR_HTTP2_HEADERS_AFTER_RESPOND",
+      `Cannot specify additional headers after response initiated`,
+    );
+  }
+}
+export class ERR_HTTP2_HEADERS_SENT extends NodeError {
+  constructor(){
+    super(
+      "ERR_HTTP2_HEADERS_SENT",
+      `Response has already been initiated.`,
+    );
+  }
+}
+export class ERR_HTTP2_HEADER_SINGLE_VALUE extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_HTTP2_HEADER_SINGLE_VALUE",
+      `Header field "%s" must only have a single value`,
+    );
+  }
+}
+export class ERR_HTTP2_INFO_STATUS_NOT_ALLOWED extends NodeRangeError {
+  constructor(){
+    super(
+      "ERR_HTTP2_INFO_STATUS_NOT_ALLOWED",
+      `Informational status codes cannot be used`,
+    );
+  }
+}
+export class ERR_HTTP2_INVALID_CONNECTION_HEADERS extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_HTTP2_INVALID_CONNECTION_HEADERS",
+      `HTTP/1 Connection specific headers are forbidden: "%s"`,
+    );
+  }
+}
+export class ERR_HTTP2_INVALID_HEADER_VALUE extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_HTTP2_INVALID_HEADER_VALUE",
+      `Invalid value "%s" for header "%s"`,
+    );
+  }
+}
+export class ERR_HTTP2_INVALID_INFO_STATUS extends NodeRangeError {
+  constructor(){
+    super(
+      "ERR_HTTP2_INVALID_INFO_STATUS",
+      `Invalid informational status code: %s`,
+    );
+  }
+}
+export class ERR_HTTP2_INVALID_ORIGIN extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_HTTP2_INVALID_ORIGIN",
+      `HTTP/2 ORIGIN frames require a valid origin`,
+    );
+  }
+}
+export class ERR_HTTP2_INVALID_PACKED_SETTINGS_LENGTH extends NodeRangeError {
+  constructor(){
+    super(
+      "ERR_HTTP2_INVALID_PACKED_SETTINGS_LENGTH",
+      `Packed settings length must be a multiple of six`,
+    );
+  }
+}
+export class ERR_HTTP2_INVALID_PSEUDOHEADER extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_HTTP2_INVALID_PSEUDOHEADER",
+      `"%s" is an invalid pseudoheader or is used incorrectly`,
+    );
+  }
+}
+export class ERR_HTTP2_INVALID_SESSION extends NodeError {
+  constructor(){
+    super(
+      "ERR_HTTP2_INVALID_SESSION",
+      `The session has been destroyed`,
+    );
+  }
+}
+export class ERR_HTTP2_INVALID_STREAM extends NodeError {
+  constructor(){
+    super(
+      "ERR_HTTP2_INVALID_STREAM",
+      `The stream has been destroyed`,
+    );
+  }
+}
+export class ERR_HTTP2_MAX_PENDING_SETTINGS_ACK extends NodeError {
+  constructor(){
+    super(
+      "ERR_HTTP2_MAX_PENDING_SETTINGS_ACK",
+      `Maximum number of pending settings acknowledgements`,
+    );
+  }
+}
+export class ERR_HTTP2_NESTED_PUSH extends NodeError {
+  constructor(){
+    super(
+      "ERR_HTTP2_NESTED_PUSH",
+      `A push stream cannot initiate another push stream.`,
+    );
+  }
+}
+export class ERR_HTTP2_NO_SOCKET_MANIPULATION extends NodeError {
+  constructor(){
+    super(
+      "ERR_HTTP2_NO_SOCKET_MANIPULATION",
+      `HTTP/2 sockets should not be directly manipulated (e.g. read and written)`,
+    );
+  }
+}
+export class ERR_HTTP2_ORIGIN_LENGTH extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_HTTP2_ORIGIN_LENGTH",
+      `HTTP/2 ORIGIN frames are limited to 16382 bytes`,
+    );
+  }
+}
+export class ERR_HTTP2_OUT_OF_STREAMS extends NodeError {
+  constructor(){
+    super(
+      "ERR_HTTP2_OUT_OF_STREAMS",
+      `No stream ID is available because maximum stream ID has been reached`,
+    );
+  }
+}
+export class ERR_HTTP2_PAYLOAD_FORBIDDEN extends NodeError {
+  constructor(){
+    super(
+      "ERR_HTTP2_PAYLOAD_FORBIDDEN",
+      `Responses with %s status must not have a payload`,
+    );
+  }
+}
+export class ERR_HTTP2_PING_CANCEL extends NodeError {
+  constructor(){
+    super(
+      "ERR_HTTP2_PING_CANCEL",
+      `HTTP2 ping cancelled`,
+    );
+  }
+}
+export class ERR_HTTP2_PING_LENGTH extends NodeRangeError {
+  constructor(){
+    super(
+      "ERR_HTTP2_PING_LENGTH",
+      `HTTP2 ping payload must be 8 bytes`,
+    );
+  }
+}
+export class ERR_HTTP2_PSEUDOHEADER_NOT_ALLOWED extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_HTTP2_PSEUDOHEADER_NOT_ALLOWED",
+      `Cannot set HTTP/2 pseudo-headers`,
+    );
+  }
+}
+export class ERR_HTTP2_PUSH_DISABLED extends NodeError {
+  constructor(){
+    super(
+      "ERR_HTTP2_PUSH_DISABLED",
+      `HTTP/2 client has disabled push streams`,
+    );
+  }
+}
+export class ERR_HTTP2_SEND_FILE extends NodeError {
+  constructor(){
+    super(
+      "ERR_HTTP2_SEND_FILE",
+      `Directories cannot be sent`,
+    );
+  }
+}
+export class ERR_HTTP2_SEND_FILE_NOSEEK extends NodeError {
+  constructor(){
+    super(
+      "ERR_HTTP2_SEND_FILE_NOSEEK",
+      `Offset or length can only be specified for regular files`,
+    );
+  }
+}
+export class ERR_HTTP2_SESSION_ERROR extends NodeError {
+  constructor(){
+    super(
+      "ERR_HTTP2_SESSION_ERROR",
+      `Session closed with error code %s`,
+    );
+  }
+}
+export class ERR_HTTP2_SETTINGS_CANCEL extends NodeError {
+  constructor(){
+    super(
+      "ERR_HTTP2_SETTINGS_CANCEL",
+      `HTTP2 session settings canceled`,
+    );
+  }
+}
+export class ERR_HTTP2_SOCKET_BOUND extends NodeError {
+  constructor(){
+    super(
+      "ERR_HTTP2_SOCKET_BOUND",
+      `The socket is already bound to an Http2Session`,
+    );
+  }
+}
+export class ERR_HTTP2_SOCKET_UNBOUND extends NodeError {
+  constructor(){
+    super(
+      "ERR_HTTP2_SOCKET_UNBOUND",
+      `The socket has been disconnected from the Http2Session`,
+    );
+  }
+}
+export class ERR_HTTP2_STATUS_101 extends NodeError {
+  constructor(){
+    super(
+      "ERR_HTTP2_STATUS_101",
+      `HTTP status code 101 (Switching Protocols) is forbidden in HTTP/2`,
+    );
+  }
+}
+export class ERR_HTTP2_STATUS_INVALID extends NodeRangeError {
+  constructor(){
+    super(
+      "ERR_HTTP2_STATUS_INVALID",
+      `Invalid status code: %s`,
+    );
+  }
+}
+export class ERR_HTTP2_STREAM_ERROR extends NodeError {
+  constructor(){
+    super(
+      "ERR_HTTP2_STREAM_ERROR",
+      `Stream closed with error code %s`,
+    );
+  }
+}
+export class ERR_HTTP2_STREAM_SELF_DEPENDENCY extends NodeError {
+  constructor(){
+    super(
+      "ERR_HTTP2_STREAM_SELF_DEPENDENCY",
+      `A stream cannot depend on itself`,
+    );
+  }
+}
+export class ERR_HTTP2_TRAILERS_ALREADY_SENT extends NodeError {
+  constructor(){
+    super(
+      "ERR_HTTP2_TRAILERS_ALREADY_SENT",
+      `Trailing headers have already been sent`,
+    );
+  }
+}
+export class ERR_HTTP2_TRAILERS_NOT_READY extends NodeError {
+  constructor(){
+    super(
+      "ERR_HTTP2_TRAILERS_NOT_READY",
+      `Trailing headers cannot be sent until after the wantTrailers event is emitted`,
+    );
+  }
+}
+export class ERR_HTTP2_UNSUPPORTED_PROTOCOL extends NodeError {
+  constructor(){
+    super(
+      "ERR_HTTP2_UNSUPPORTED_PROTOCOL",
+      `protocol "%s" is unsupported.`,
+    );
+  }
+}
+export class ERR_HTTP_HEADERS_SENT extends NodeError {
+  constructor(){
+    super(
+      "ERR_HTTP_HEADERS_SENT",
+      `Cannot %s headers after they are sent to the client`,
+    );
+  }
+}
+export class ERR_HTTP_INVALID_HEADER_VALUE extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_HTTP_INVALID_HEADER_VALUE",
+      `Invalid value "%s" for header "%s"`,
+    );
+  }
+}
+export class ERR_HTTP_INVALID_STATUS_CODE extends NodeRangeError {
+  constructor(){
+    super(
+      "ERR_HTTP_INVALID_STATUS_CODE",
+      `Invalid status code: %s`,
+    );
+  }
+}
+export class ERR_HTTP_SOCKET_ENCODING extends NodeError {
+  constructor(){
+    super(
+      "ERR_HTTP_SOCKET_ENCODING",
+      `Changing the socket encoding is not allowed per RFC7230 Section 3.`,
+    );
+  }
+}
+export class ERR_HTTP_TRAILER_INVALID extends NodeError {
+  constructor(){
+    super(
+      "ERR_HTTP_TRAILER_INVALID",
+      `Trailers are invalid with this transfer encoding`,
+    );
+  }
+}
+export class ERR_INCOMPATIBLE_OPTION_PAIR extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_INCOMPATIBLE_OPTION_PAIR",
+      `Option "%s" cannot be used in combination with option "%s"`,
+    );
+  }
+}
+export class ERR_INPUT_TYPE_NOT_ALLOWED extends NodeError {
+  constructor(){
+    super(
+      "ERR_INPUT_TYPE_NOT_ALLOWED",
+      `--input-type can only be used with string input via --eval, --print, or STDIN`,
+    );
+  }
+}
+export class ERR_INSPECTOR_ALREADY_ACTIVATED extends NodeError {
+  constructor(){
+    super(
+      "ERR_INSPECTOR_ALREADY_ACTIVATED",
+      `Inspector is already activated. Close it with inspector.close() before activating it again.`,
+    );
+  }
+}
+export class ERR_INSPECTOR_ALREADY_CONNECTED extends NodeError {
+  constructor(){
+    super(
+      "ERR_INSPECTOR_ALREADY_CONNECTED",
+      `%s is already connected`,
+    );
+  }
+}
+export class ERR_INSPECTOR_CLOSED extends NodeError {
+  constructor(){
+    super(
+      "ERR_INSPECTOR_CLOSED",
+      `Session was closed`,
+    );
+  }
+}
+export class ERR_INSPECTOR_COMMAND extends NodeError {
+  constructor(){
+    super(
+      "ERR_INSPECTOR_COMMAND",
+      `Inspector error %d: %s`,
+    );
+  }
+}
+export class ERR_INSPECTOR_NOT_ACTIVE extends NodeError {
+  constructor(){
+    super(
+      "ERR_INSPECTOR_NOT_ACTIVE",
+      `Inspector is not active`,
+    );
+  }
+}
+export class ERR_INSPECTOR_NOT_AVAILABLE extends NodeError {
+  constructor(){
+    super(
+      "ERR_INSPECTOR_NOT_AVAILABLE",
+      `Inspector is not available`,
+    );
+  }
+}
+export class ERR_INSPECTOR_NOT_CONNECTED extends NodeError {
+  constructor(){
+    super(
+      "ERR_INSPECTOR_NOT_CONNECTED",
+      `Session is not connected`,
+    );
+  }
+}
+export class ERR_INSPECTOR_NOT_WORKER extends NodeError {
+  constructor(){
+    super(
+      "ERR_INSPECTOR_NOT_WORKER",
+      `Current thread is not a worker`,
+    );
+  }
+}
+export class ERR_INVALID_ASYNC_ID extends NodeRangeError {
+  constructor(){
+    super(
+      "ERR_INVALID_ASYNC_ID",
+      `Invalid %s value: %s`,
+    );
+  }
+}
+export class ERR_INVALID_BUFFER_SIZE extends NodeRangeError {
+  constructor(){
+    super(
+      "ERR_INVALID_BUFFER_SIZE",
+      `Buffer size must be a multiple of %s`,
+    );
+  }
+}
+export class ERR_INVALID_CALLBACK extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_INVALID_CALLBACK",
+      `Callback must be a function. Received %O`,
+    );
+  }
+}
+export class ERR_INVALID_CURSOR_POS extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_INVALID_CURSOR_POS",
+      `Cannot set cursor row without setting its column`,
+    );
+  }
+}
+export class ERR_INVALID_FD extends NodeRangeError {
+  constructor(){
+    super(
+      "ERR_INVALID_FD",
+      `"fd" must be a positive integer: %s`,
+    );
+  }
+}
+export class ERR_INVALID_FD_TYPE extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_INVALID_FD_TYPE",
+      `Unsupported fd type: %s`,
+    );
+  }
+}
+export class ERR_INVALID_FILE_URL_HOST extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_INVALID_FILE_URL_HOST",
+      `File URL host must be "localhost" or empty on %s`,
+    );
+  }
+}
+export class ERR_INVALID_FILE_URL_PATH extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_INVALID_FILE_URL_PATH",
+      `File URL path %s`,
+    );
+  }
+}
+export class ERR_INVALID_HANDLE_TYPE extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_INVALID_HANDLE_TYPE",
+      `This handle type cannot be sent`,
+    );
+  }
+}
+export class ERR_INVALID_HTTP_TOKEN extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_INVALID_HTTP_TOKEN",
+      `%s must be a valid HTTP token ["%s"]`,
+    );
+  }
+}
+export class ERR_INVALID_IP_ADDRESS extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_INVALID_IP_ADDRESS",
+      `Invalid IP address: %s`,
+    );
+  }
+}
+export class ERR_INVALID_OPT_VALUE_ENCODING extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_INVALID_OPT_VALUE_ENCODING",
+      `The value "%s" is invalid for option "encoding"`,
+    );
+  }
+}
+export class ERR_INVALID_PERFORMANCE_MARK extends NodeError {
+  constructor(){
+    super(
+      "ERR_INVALID_PERFORMANCE_MARK",
+      `The "%s" performance mark has not been set`,
+    );
+  }
+}
+export class ERR_INVALID_PROTOCOL extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_INVALID_PROTOCOL",
+      `Protocol "%s" not supported. Expected "%s"`,
+    );
+  }
+}
+export class ERR_INVALID_REPL_EVAL_CONFIG extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_INVALID_REPL_EVAL_CONFIG",
+      `Cannot specify both "breakEvalOnSigint" and "eval" for REPL`,
+    );
+  }
+}
+export class ERR_INVALID_REPL_INPUT extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_INVALID_REPL_INPUT",
+      `%s`,
+    );
+  }
+}
+export class ERR_INVALID_SYNC_FORK_INPUT extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_INVALID_SYNC_FORK_INPUT",
+      `Asynchronous forks do not support Buffer, TypedArray, DataView or string input: %s`,
+    );
+  }
+}
+export class ERR_INVALID_THIS extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_INVALID_THIS",
+      `Value of "this" must be of type %s`,
+    );
+  }
+}
+export class ERR_INVALID_TUPLE extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_INVALID_TUPLE",
+      `%s must be an iterable %s tuple`,
+    );
+  }
+}
+export class ERR_INVALID_URI extends NodeURIError {
+  constructor(){
+    super(
+      "ERR_INVALID_URI",
+      `URI malformed`,
+    );
+  }
+}
+export class ERR_IPC_CHANNEL_CLOSED extends NodeError {
+  constructor(){
+    super(
+      "ERR_IPC_CHANNEL_CLOSED",
+      `Channel closed`,
+    );
+  }
+}
+export class ERR_IPC_DISCONNECTED extends NodeError {
+  constructor(){
+    super(
+      "ERR_IPC_DISCONNECTED",
+      `IPC channel is already disconnected`,
+    );
+  }
+}
+export class ERR_IPC_ONE_PIPE extends NodeError {
+  constructor(){
+    super(
+      "ERR_IPC_ONE_PIPE",
+      `Child process can have only one IPC pipe`,
+    );
+  }
+}
+export class ERR_IPC_SYNC_FORK extends NodeError {
+  constructor(){
+    super(
+      "ERR_IPC_SYNC_FORK",
+      `IPC cannot be used with synchronous forks`,
+    );
+  }
+}
+export class ERR_MANIFEST_DEPENDENCY_MISSING extends NodeError {
+  constructor(){
+    super(
+      "ERR_MANIFEST_DEPENDENCY_MISSING",
+      `Manifest resource %s does not list %s as a dependency specifier`,
+    );
+  }
+}
+export class ERR_MANIFEST_INTEGRITY_MISMATCH extends NodeSyntaxError {
+  constructor(){
+    super(
+      "ERR_MANIFEST_INTEGRITY_MISMATCH",
+      `Manifest resource %s has multiple entries but integrity lists do not match`,
+    );
+  }
+}
+export class ERR_MANIFEST_INVALID_RESOURCE_FIELD extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_MANIFEST_INVALID_RESOURCE_FIELD",
+      `Manifest resource %s has invalid property value for %s`,
+    );
+  }
+}
+export class ERR_MANIFEST_TDZ extends NodeError {
+  constructor(){
+    super(
+      "ERR_MANIFEST_TDZ",
+      `Manifest initialization has not yet run`,
+    );
+  }
+}
+export class ERR_MANIFEST_UNKNOWN_ONERROR extends NodeSyntaxError {
+  constructor(){
+    super(
+      "ERR_MANIFEST_UNKNOWN_ONERROR",
+      `Manifest specified unknown error behavior "%s".`,
+    );
+  }
+}
+export class ERR_METHOD_NOT_IMPLEMENTED extends NodeError {
+  constructor(){
+    super(
+      "ERR_METHOD_NOT_IMPLEMENTED",
+      `The %s method is not implemented`,
+    );
+  }
+}
+export class ERR_MISSING_OPTION extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_MISSING_OPTION",
+      `%s is required`,
+    );
+  }
+}
+export class ERR_MULTIPLE_CALLBACK extends NodeError {
+  constructor(){
+    super(
+      "ERR_MULTIPLE_CALLBACK",
+      `Callback called multiple times`,
+    );
+  }
+}
+export class ERR_NAPI_CONS_FUNCTION extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_NAPI_CONS_FUNCTION",
+      `Constructor must be a function`,
+    );
+  }
+}
+export class ERR_NAPI_INVALID_DATAVIEW_ARGS extends NodeRangeError {
+  constructor(){
+    super(
+      "ERR_NAPI_INVALID_DATAVIEW_ARGS",
+      `byte_offset + byte_length should be less than or equal to the size in bytes of the array passed in`,
+    );
+  }
+}
+export class ERR_NAPI_INVALID_TYPEDARRAY_ALIGNMENT extends NodeRangeError {
+  constructor(){
+    super(
+      "ERR_NAPI_INVALID_TYPEDARRAY_ALIGNMENT",
+      `start offset of %s should be a multiple of %s`,
+    );
+  }
+}
+export class ERR_NAPI_INVALID_TYPEDARRAY_LENGTH extends NodeRangeError {
+  constructor(){
+    super(
+      "ERR_NAPI_INVALID_TYPEDARRAY_LENGTH",
+      `Invalid typed array length`,
+    );
+  }
+}
+export class ERR_NO_CRYPTO extends NodeError {
+  constructor(){
+    super(
+      "ERR_NO_CRYPTO",
+      `Node.js is not compiled with OpenSSL crypto support`,
+    );
+  }
+}
+export class ERR_NO_ICU extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_NO_ICU",
+      `%s is not supported on Node.js compiled without ICU`,
+    );
+  }
+}
+export class ERR_QUICCLIENTSESSION_FAILED extends NodeError {
+  constructor(){
+    super(
+      "ERR_QUICCLIENTSESSION_FAILED",
+      `Failed to create a new QuicClientSession: %s`,
+    );
+  }
+}
+export class ERR_QUICCLIENTSESSION_FAILED_SETSOCKET extends NodeError {
+  constructor(){
+    super(
+      "ERR_QUICCLIENTSESSION_FAILED_SETSOCKET",
+      `Failed to set the QuicSocket`,
+    );
+  }
+}
+export class ERR_QUICSESSION_DESTROYED extends NodeError {
+  constructor(){
+    super(
+      "ERR_QUICSESSION_DESTROYED",
+      `Cannot call %s after a QuicSession has been destroyed`,
+    );
+  }
+}
+export class ERR_QUICSESSION_INVALID_DCID extends NodeError {
+  constructor(){
+    super(
+      "ERR_QUICSESSION_INVALID_DCID",
+      `Invalid DCID value: %s`,
+    );
+  }
+}
+export class ERR_QUICSESSION_UPDATEKEY extends NodeError {
+  constructor(){
+    super(
+      "ERR_QUICSESSION_UPDATEKEY",
+      `Unable to update QuicSession keys`,
+    );
+  }
+}
+export class ERR_QUICSOCKET_DESTROYED extends NodeError {
+  constructor(){
+    super(
+      "ERR_QUICSOCKET_DESTROYED",
+      `Cannot call %s after a QuicSocket has been destroyed`,
+    );
+  }
+}
+export class ERR_QUICSOCKET_INVALID_STATELESS_RESET_SECRET_LENGTH extends NodeError {
+  constructor(){
+    super(
+      "ERR_QUICSOCKET_INVALID_STATELESS_RESET_SECRET_LENGTH",
+      `The stateResetToken must be exactly 16-bytes in length`,
+    );
+  }
+}
+export class ERR_QUICSOCKET_LISTENING extends NodeError {
+  constructor(){
+    super(
+      "ERR_QUICSOCKET_LISTENING",
+      `This QuicSocket is already listening`,
+    );
+  }
+}
+export class ERR_QUICSOCKET_UNBOUND extends NodeError {
+  constructor(){
+    super(
+      "ERR_QUICSOCKET_UNBOUND",
+      `Cannot call %s before a QuicSocket has been bound`,
+    );
+  }
+}
+export class ERR_QUICSTREAM_DESTROYED extends NodeError {
+  constructor(){
+    super(
+      "ERR_QUICSTREAM_DESTROYED",
+      `Cannot call %s after a QuicStream has been destroyed`,
+    );
+  }
+}
+export class ERR_QUICSTREAM_INVALID_PUSH extends NodeError {
+  constructor(){
+    super(
+      "ERR_QUICSTREAM_INVALID_PUSH",
+      `Push streams are only supported on client-initiated, bidirectional streams`,
+    );
+  }
+}
+export class ERR_QUICSTREAM_OPEN_FAILED extends NodeError {
+  constructor(){
+    super(
+      "ERR_QUICSTREAM_OPEN_FAILED",
+      `Opening a new QuicStream failed`,
+    );
+  }
+}
+export class ERR_QUICSTREAM_UNSUPPORTED_PUSH extends NodeError {
+  constructor(){
+    super(
+      "ERR_QUICSTREAM_UNSUPPORTED_PUSH",
+      `Push streams are not supported on this QuicSession`,
+    );
+  }
+}
+export class ERR_QUIC_TLS13_REQUIRED extends NodeError {
+  constructor(){
+    super(
+      "ERR_QUIC_TLS13_REQUIRED",
+      `QUIC requires TLS version 1.3`,
+    );
+  }
+}
+export class ERR_SCRIPT_EXECUTION_INTERRUPTED extends NodeError {
+  constructor(){
+    super(
+      "ERR_SCRIPT_EXECUTION_INTERRUPTED",
+      "Script execution was interrupted by `SIGINT`",
+    );
+  }
+}
+export class ERR_SERVER_ALREADY_LISTEN extends NodeError {
+  constructor(){
+    super(
+      "ERR_SERVER_ALREADY_LISTEN",
+      `Listen method has been called more than once without closing.`,
+    );
+  }
+}
+export class ERR_SERVER_NOT_RUNNING extends NodeError {
+  constructor(){
+    super(
+      "ERR_SERVER_NOT_RUNNING",
+      `Server is not running.`,
+    );
+  }
+}
+export class ERR_SOCKET_ALREADY_BOUND extends NodeError {
+  constructor(){
+    super(
+      "ERR_SOCKET_ALREADY_BOUND",
+      `Socket is already bound`,
+    );
+  }
+}
+export class ERR_SOCKET_BAD_BUFFER_SIZE extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_SOCKET_BAD_BUFFER_SIZE",
+      `Buffer size must be a positive integer`,
+    );
+  }
+}
+export class ERR_SOCKET_BAD_TYPE extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_SOCKET_BAD_TYPE",
+      `Bad socket type specified. Valid types are: udp4, udp6`,
+    );
+  }
+}
+export class ERR_SOCKET_CLOSED extends NodeError {
+  constructor(){
+    super(
+      "ERR_SOCKET_CLOSED",
+      `Socket is closed`,
+    );
+  }
+}
+export class ERR_SOCKET_DGRAM_IS_CONNECTED extends NodeError {
+  constructor(){
+    super(
+      "ERR_SOCKET_DGRAM_IS_CONNECTED",
+      `Already connected`,
+    );
+  }
+}
+export class ERR_SOCKET_DGRAM_NOT_CONNECTED extends NodeError {
+  constructor(){
+    super(
+      "ERR_SOCKET_DGRAM_NOT_CONNECTED",
+      `Not connected`,
+    );
+  }
+}
+export class ERR_SOCKET_DGRAM_NOT_RUNNING extends NodeError {
+  constructor(){
+    super(
+      "ERR_SOCKET_DGRAM_NOT_RUNNING",
+      `Not running`,
+    );
+  }
+}
+export class ERR_SRI_PARSE extends NodeSyntaxError {
+  constructor(){
+    super(
+      "ERR_SRI_PARSE",
+      `Subresource Integrity string %j had an unexpected %j at position %d`,
+    );
+  }
+}
+export class ERR_STREAM_ALREADY_FINISHED extends NodeError {
+  constructor(){
+    super(
+      "ERR_STREAM_ALREADY_FINISHED",
+      `Cannot call %s after a stream was finished`,
+    );
+  }
+}
+export class ERR_STREAM_CANNOT_PIPE extends NodeError {
+  constructor(){
+    super(
+      "ERR_STREAM_CANNOT_PIPE",
+      `Cannot pipe, not readable`,
+    );
+  }
+}
+export class ERR_STREAM_DESTROYED extends NodeError {
+  constructor(){
+    super(
+      "ERR_STREAM_DESTROYED",
+      `Cannot call %s after a stream was destroyed`,
+    );
+  }
+}
+export class ERR_STREAM_NULL_VALUES extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_STREAM_NULL_VALUES",
+      `May not write null values to stream`,
+    );
+  }
+}
+export class ERR_STREAM_PREMATURE_CLOSE extends NodeError {
+  constructor(){
+    super(
+      "ERR_STREAM_PREMATURE_CLOSE",
+      `Premature close`,
+    );
+  }
+}
+export class ERR_STREAM_PUSH_AFTER_EOF extends NodeError {
+  constructor(){
+    super(
+      "ERR_STREAM_PUSH_AFTER_EOF",
+      `stream.push() after EOF`,
+    );
+  }
+}
+export class ERR_STREAM_UNSHIFT_AFTER_END_EVENT extends NodeError {
+  constructor(){
+    super(
+      "ERR_STREAM_UNSHIFT_AFTER_END_EVENT",
+      `stream.unshift() after end event`,
+    );
+  }
+}
+export class ERR_STREAM_WRAP extends NodeError {
+  constructor(){
+    super(
+      "ERR_STREAM_WRAP",
+      `Stream has StringDecoder set or is in objectMode`,
+    );
+  }
+}
+export class ERR_STREAM_WRITE_AFTER_END extends NodeError {
+  constructor(){
+    super(
+      "ERR_STREAM_WRITE_AFTER_END",
+      `write after end`,
+    );
+  }
+}
+export class ERR_SYNTHETIC extends NodeError {
+  constructor(){
+    super(
+      "ERR_SYNTHETIC",
+      `JavaScript Callstack`,
+    );
+  }
+}
+export class ERR_TLS_DH_PARAM_SIZE extends NodeError {
+  constructor(){
+    super(
+      "ERR_TLS_DH_PARAM_SIZE",
+      `DH parameter size %s is less than 2048`,
+    );
+  }
+}
+export class ERR_TLS_HANDSHAKE_TIMEOUT extends NodeError {
+  constructor(){
+    super(
+      "ERR_TLS_HANDSHAKE_TIMEOUT",
+      `TLS handshake timeout`,
+    );
+  }
+}
+export class ERR_TLS_INVALID_CONTEXT extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_TLS_INVALID_CONTEXT",
+      `%s must be a SecureContext`,
+    );
+  }
+}
+export class ERR_TLS_INVALID_STATE extends NodeError {
+  constructor(){
+    super(
+      "ERR_TLS_INVALID_STATE",
+      `TLS socket connection must be securely established`,
+    );
+  }
+}
+export class ERR_TLS_INVALID_PROTOCOL_VERSION extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_TLS_INVALID_PROTOCOL_VERSION",
+      `%j is not a valid %s TLS protocol version`,
+    );
+  }
+}
+export class ERR_TLS_PROTOCOL_VERSION_CONFLICT extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_TLS_PROTOCOL_VERSION_CONFLICT",
+      `TLS protocol version %j conflicts with secureProtocol %j`,
+    );
+  }
+}
+export class ERR_TLS_RENEGOTIATION_DISABLED extends NodeError {
+  constructor(){
+    super(
+      "ERR_TLS_RENEGOTIATION_DISABLED",
+      `TLS session renegotiation disabled for this socket`,
+    );
+  }
+}
+export class ERR_TLS_REQUIRED_SERVER_NAME extends NodeError {
+  constructor(){
+    super(
+      "ERR_TLS_REQUIRED_SERVER_NAME",
+      `"servername" is required parameter for Server.addContext`,
+    );
+  }
+}
+export class ERR_TLS_SESSION_ATTACK extends NodeError {
+  constructor(){
+    super(
+      "ERR_TLS_SESSION_ATTACK",
+      `TLS session renegotiation attack detected`,
+    );
+  }
+}
+export class ERR_TLS_SNI_FROM_SERVER extends NodeError {
+  constructor(){
+    super(
+      "ERR_TLS_SNI_FROM_SERVER",
+      `Cannot issue SNI from a TLS server-side socket`,
+    );
+  }
+}
+export class ERR_TRACE_EVENTS_CATEGORY_REQUIRED extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_TRACE_EVENTS_CATEGORY_REQUIRED",
+      `At least one category is required`,
+    );
+  }
+}
+export class ERR_TRACE_EVENTS_UNAVAILABLE extends NodeError {
+  constructor(){
+    super(
+      "ERR_TRACE_EVENTS_UNAVAILABLE",
+      `Trace events are unavailable`,
+    );
+  }
+}
+export class ERR_UNAVAILABLE_DURING_EXIT extends NodeError {
+  constructor(){
+    super(
+      "ERR_UNAVAILABLE_DURING_EXIT",
+      `Cannot call function in process exit handler`,
+    );
+  }
+}
+export class ERR_UNCAUGHT_EXCEPTION_CAPTURE_ALREADY_SET extends NodeError {
+  constructor(){
+    super(
+      "ERR_UNCAUGHT_EXCEPTION_CAPTURE_ALREADY_SET",
+      "`process.setupUncaughtExceptionCapture()` was called while a capture callback was already active",
+    );
+  }
+}
+export class ERR_UNESCAPED_CHARACTERS extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_UNESCAPED_CHARACTERS",
+      `%s contains unescaped characters`,
+    );
+  }
+}
+export class ERR_UNKNOWN_BUILTIN_MODULE extends NodeError {
+  constructor(){
+    super(
+      "ERR_UNKNOWN_BUILTIN_MODULE",
+      `No such built-in module: %s`,
+    );
+  }
+}
+export class ERR_UNKNOWN_CREDENTIAL extends NodeError {
+  constructor(){
+    super(
+      "ERR_UNKNOWN_CREDENTIAL",
+      `%s identifier does not exist: %s`,
+    );
+  }
+}
+export class ERR_UNKNOWN_ENCODING extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_UNKNOWN_ENCODING",
+      `Unknown encoding: %s`,
+    );
+  }
+}
+export class ERR_UNKNOWN_FILE_EXTENSION extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_UNKNOWN_FILE_EXTENSION",
+      `Unknown file extension "%s" for %s`,
+    );
+  }
+}
+export class ERR_UNKNOWN_MODULE_FORMAT extends NodeRangeError {
+  constructor(){
+    super(
+      "ERR_UNKNOWN_MODULE_FORMAT",
+      `Unknown module format: %s`,
+    );
+  }
+}
+export class ERR_UNKNOWN_SIGNAL extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_UNKNOWN_SIGNAL",
+      `Unknown signal: %s`,
+    );
+  }
+}
+export class ERR_UNSUPPORTED_DIR_IMPORT extends NodeError {
+  constructor(){
+    super(
+      "ERR_UNSUPPORTED_DIR_IMPORT",
+      `Directory import '%s' is not supported resolving ES modules, imported from %s`,
+    );
+  }
+}
+export class ERR_UNSUPPORTED_ESM_URL_SCHEME extends NodeError {
+  constructor(){
+    super(
+      "ERR_UNSUPPORTED_ESM_URL_SCHEME",
+      `Only file and data URLs are supported by the default ESM loader`,
+    );
+  }
+}
+export class ERR_V8BREAKITERATOR extends NodeError {
+  constructor(){
+    super(
+      "ERR_V8BREAKITERATOR",
+      `Full ICU data not installed. See https://github.com/nodejs/node/wiki/Intl`,
+    );
+  }
+}
+export class ERR_VALID_PERFORMANCE_ENTRY_TYPE extends NodeError {
+  constructor(){
+    super(
+      "ERR_VALID_PERFORMANCE_ENTRY_TYPE",
+      `At least one valid performance entry type is required`,
+    );
+  }
+}
+export class ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING",
+      `A dynamic import callback was not specified.`,
+    );
+  }
+}
+export class ERR_VM_MODULE_ALREADY_LINKED extends NodeError {
+  constructor(){
+    super(
+      "ERR_VM_MODULE_ALREADY_LINKED",
+      `Module has already been linked`,
+    );
+  }
+}
+export class ERR_VM_MODULE_CANNOT_CREATE_CACHED_DATA extends NodeError {
+  constructor(){
+    super(
+      "ERR_VM_MODULE_CANNOT_CREATE_CACHED_DATA",
+      `Cached data cannot be created for a module which has been evaluated`,
+    );
+  }
+}
+export class ERR_VM_MODULE_DIFFERENT_CONTEXT extends NodeError {
+  constructor(){
+    super(
+      "ERR_VM_MODULE_DIFFERENT_CONTEXT",
+      `Linked modules must use the same context`,
+    );
+  }
+}
+export class ERR_VM_MODULE_LINKING_ERRORED extends NodeError {
+  constructor(){
+    super(
+      "ERR_VM_MODULE_LINKING_ERRORED",
+      `Linking has already failed for the provided module`,
+    );
+  }
+}
+export class ERR_VM_MODULE_NOT_MODULE extends NodeError {
+  constructor(){
+    super(
+      "ERR_VM_MODULE_NOT_MODULE",
+      `Provided module is not an instance of Module`,
+    );
+  }
+}
+export class ERR_VM_MODULE_STATUS extends NodeError {
+  constructor(){
+    super(
+      "ERR_VM_MODULE_STATUS",
+      `Module status %s`,
+    );
+  }
+}
+export class ERR_WASI_ALREADY_STARTED extends NodeError {
+  constructor(){
+    super(
+      "ERR_WASI_ALREADY_STARTED",
+      `WASI instance has already started`,
+    );
+  }
+}
+export class ERR_WORKER_INIT_FAILED extends NodeError {
+  constructor(){
+    super(
+      "ERR_WORKER_INIT_FAILED",
+      `Worker initialization failure: %s`,
+    );
+  }
+}
+export class ERR_WORKER_NOT_RUNNING extends NodeError {
+  constructor(){
+    super(
+      "ERR_WORKER_NOT_RUNNING",
+      `Worker instance not running`,
+    );
+  }
+}
+export class ERR_WORKER_OUT_OF_MEMORY extends NodeError {
+  constructor(){
+    super(
+      "ERR_WORKER_OUT_OF_MEMORY",
+      `Worker terminated due to reaching memory limit: %s`,
+    );
+  }
+}
+export class ERR_WORKER_UNSERIALIZABLE_ERROR extends NodeError {
+  constructor(){
+    super(
+      "ERR_WORKER_UNSERIALIZABLE_ERROR",
+      `Serializing an uncaught exception failed`,
+    );
+  }
+}
+export class ERR_WORKER_UNSUPPORTED_EXTENSION extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_WORKER_UNSUPPORTED_EXTENSION",
+      `The worker script extension must be ".js", ".mjs", or ".cjs". Received "%s"`,
+    );
+  }
+}
+export class ERR_WORKER_UNSUPPORTED_OPERATION extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_WORKER_UNSUPPORTED_OPERATION",
+      `%s is not supported in workers`,
+    );
+  }
+}
+export class ERR_ZLIB_INITIALIZATION_FAILED extends NodeError {
+  constructor(){
+    super(
+      "ERR_ZLIB_INITIALIZATION_FAILED",
+      `Initialization failed`,
+    );
+  }
+}
+export class ERR_FALSY_VALUE_REJECTION extends NodeError {
+  reason: string;
+  constructor(reason: string){
+    super(
+      "ERR_FALSY_VALUE_REJECTION",
+      "Promise was rejected with falsy value",
+    );
+    this.reason  = reason;
+  }
+}
+export class ERR_HTTP2_INVALID_SETTING_VALUE extends NodeRangeError {
+  // deno-lint-ignore no-explicit-any
+  actual: any;
+  min?: number;
+  max?: number;
+  
+  // deno-lint-ignore no-explicit-any
+  constructor(name: string, actual: any, min?: number, max?: number){
+    super(
+      "ERR_HTTP2_INVALID_SETTING_VALUE",
+      `Invalid value for setting "${name}": ${actual}`,
+    );
+    this.actual = actual;
+    if (min !== undefined) {
+      this.min = min;
+      this.max = max;
+    }
+  }
+}
+export class ERR_HTTP2_STREAM_CANCEL extends NodeError {
+  cause?: Error;
+  constructor(error: Error){
+    super(
+      "ERR_HTTP2_STREAM_CANCEL",
+      typeof error.message === "string"
+        ? `The pending stream has been canceled (caused by: ${error.message})`
+        : "The pending stream has been canceled"
+    );
+    if (error) {
+      this.cause = error;
+    }
+  }
+}
+
+export class ERR_INVALID_ADDRESS_FAMILY extends NodeRangeError {
+  host: string;
+  port: number;
+  constructor(addressType: string, host: string, port: number){
+    super(
+      "ERR_INVALID_ADDRESS_FAMILY",
+      `Invalid address family: ${addressType} ${host}:${port}`,
+    );
+    this.host = host;
+    this.port = port;
+  }
+}
+
+export class ERR_INVALID_CHAR extends NodeTypeError {
+  constructor(name: string, field?: string){
+    super(
+      "ERR_INVALID_CHAR",
+      field
+        ? `Invalid character in ${name}`
+        : `Invalid character in ${name} ["${field}"]`,
+    );
+  }
+}
+
+export class ERR_INVALID_OPT_VALUE extends NodeTypeError {
+  // deno-lint-ignore no-explicit-any
+  constructor(name: string, value: any){
+    super(
+      "ERR_INVALID_OPT_VALUE",
+      `The value "${String(value)}" is invalid for option "${name}"`,
+    );
+  }
+}
+
+export class ERR_INVALID_RETURN_PROPERTY extends NodeTypeError {
+  constructor(input: string, name: string, prop: string, value: string){
+    super(
+      "ERR_INVALID_RETURN_PROPERTY",
+      `Expected a valid ${input} to be returned for the "${prop}" from the "${name}" function but got ${value}.`,
+    );
+  }
+}
+
+// deno-lint-ignore no-explicit-any
+function buildReturnPropertyType(value: any){
+  if (value && value.constructor && value.constructor.name) {
+    return `instance of ${value.constructor.name}`;
+  } else {
+    return `type ${typeof value}`;
+  }
+}
+
+export class ERR_INVALID_RETURN_PROPERTY_VALUE extends NodeTypeError {
+  // deno-lint-ignore no-explicit-any
+  constructor(input: string, name: string, prop: string, value: any){
+    super(
+      "ERR_INVALID_RETURN_PROPERTY_VALUE",
+      `Expected ${input} to be returned for the "${prop}" from the "${name}" function but got ${buildReturnPropertyType(value)}.`,
+    );
+  }
+}
+
+export class ERR_INVALID_RETURN_VALUE extends NodeTypeError {
+  // deno-lint-ignore no-explicit-any
+  constructor(input: string, name: string, value: any){
+    super(
+      "ERR_INVALID_RETURN_VALUE",
+      `Expected ${input} to be returned from the "${name}" function but got ${buildReturnPropertyType(value)}.`,
+    );
+  }
+}
+
+export class ERR_INVALID_URL extends NodeTypeError {
+  input: string;
+  constructor(input: string){
+    super(
+      "ERR_INVALID_URL",
+      `Invalid URL: ${input}`,
+    );
+    this.input = input;
+  }
+}
