@@ -29,7 +29,6 @@
 * ERR_MANIFEST_ASSERT_INTEGRITY
 * ERR_MISSING_ARGS
 * ERR_MODULE_NOT_FOUND
-* ERR_OUT_OF_RANGE
 * ERR_PACKAGE_PATH_NOT_EXPORTED
 * ERR_QUICSESSION_VERSION_NEGOTIATION
 * ERR_REQUIRE_ESM
@@ -112,6 +111,24 @@ export class ERR_INVALID_ARG_TYPE extends NodeTypeError {
           : a2.map(x => x.toLocaleLowerCase()).join(", ")
       }. Received ${typeof a3} (${a3})`,
     );
+  }
+}
+
+export class ERR_OUT_OF_RANGE extends RangeError {
+  code = "ERR_OUT_OF_RANGE";
+
+  constructor(str: string, range: string, received: unknown) {
+    super(
+      `The value of "${str}" is out of range. It must be ${range}. Received ${received}`,
+    );
+
+    const { name } = this;
+    // Add the error code to the name to include it in the stack trace.
+    this.name = `${name} [${this.code}]`;
+    // Access the stack to generate the error message including the error code from the name.
+    this.stack;
+    // Reset the name to the actual name.
+    this.name = name;
   }
 }
 
