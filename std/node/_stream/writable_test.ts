@@ -115,8 +115,7 @@ Deno.test("Writable stream throws on unexpected close", async () => {
     if (finished_executed == finished_executed_expected) {
       finished_expected_executions.resolve();
     }
-    //@ts-ignore
-    assertEquals(err.code, "ERR_STREAM_PREMATURE_CLOSE");
+    assertEquals(err?.code, "ERR_STREAM_PREMATURE_CLOSE");
   });
 
   const finished_timeout = setTimeout(

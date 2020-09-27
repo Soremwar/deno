@@ -1312,6 +1312,7 @@ class Readable extends Stream {
           return function methodWrapReturnFunction() {
             // deno-lint-ignore ban-ts-comment
             //@ts-ignore
+            // deno-lint-ignore no-undef
             return stream[method].apply(stream, arguments);
           };
         }(i);
