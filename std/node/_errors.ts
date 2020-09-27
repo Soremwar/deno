@@ -57,6 +57,12 @@ class NodeError extends NodeErrorAbstraction {
   }
 }
 
+class NodeRangeError extends NodeErrorAbstraction {
+  constructor(code: string, message: string){
+    super(RangeError.prototype.name, code, message);
+  }
+}
+
 class NodeTypeError extends NodeErrorAbstraction implements TypeError {
   constructor(code: string, message: string){
     super(TypeError.prototype.name, code, message);
@@ -73,69 +79,132 @@ class ERR_INVALID_ARG_TYPE extends NodeTypeError {
   }
 }
 
-class ERR_OUT_OF_RANGE extends RangeError {
-  code = "ERR_OUT_OF_RANGE";
-
-  constructor(str: string, range: string, received: unknown) {
-    super(
-      `The value of "${str}" is out of range. It must be ${range}. Received ${received}`,
-    );
-
-    const { name } = this;
-    // Add the error code to the name to include it in the stack trace.
-    this.name = `${name} [${this.code}]`;
-    // Access the stack to generate the error message including the error code from the name.
-    this.stack;
-    // Reset the name to the actual name.
-    this.name = name;
+class ERR_AMBIGUOUS_ARGUMENT extends NodeTypeError {
+  constructor(){
+    super("ERR_AMBIGUOUS_ARGUMENT", 'The "%s" argument is ambiguous. %s');
   }
 }
-E("ERR_AMBIGUOUS_ARGUMENT", 'The "%s" argument is ambiguous. %s', TypeError);
-E("ERR_ARG_NOT_ITERABLE", "%s must be iterable", TypeError);
-E("ERR_ASSERTION", "%s", Error);
-E("ERR_ASYNC_CALLBACK", "%s must be a function", TypeError);
-E("ERR_ASYNC_TYPE", 'Invalid name for async "type": %s', TypeError);
-E("ERR_BROTLI_INVALID_PARAM", "%s is not a valid Brotli parameter", RangeError);
-E(
-  "ERR_BUFFER_OUT_OF_BOUNDS", // Using a default argument here is important so the argument is not counted
-  // towards `Function#length`.
-  (name = undefined) => {
-    if (name) {
-      return `"${name}" is outside of buffer bounds`;
-    }
-    return "Attempt to access memory outside buffer bounds";
-  },
-  RangeError,
-);
-E(
-  "ERR_BUFFER_TOO_LARGE",
-  "Cannot create a Buffer larger than %s bytes",
-  RangeError,
-);
-E("ERR_CANNOT_WATCH_SIGINT", "Cannot watch for SIGINT signals", Error);
-E("ERR_CHILD_CLOSED_BEFORE_REPLY", "Child closed before reply received", Error);
-E(
-  "ERR_CHILD_PROCESS_IPC_REQUIRED",
-  "Forked processes must have an IPC channel, missing value 'ipc' in %s",
-  Error,
-);
-E(
-  "ERR_CHILD_PROCESS_STDIO_MAXBUFFER",
-  "%s maxBuffer length exceeded",
-  RangeError,
-);
-E(
-  "ERR_CONSOLE_WRITABLE_STREAM",
-  "Console expects a writable stream instance for %s",
-  TypeError,
-);
-E("ERR_CONTEXT_NOT_INITIALIZED", "context used is not initialized", Error);
-E("ERR_CPU_USAGE", "Unable to obtain cpu usage %s", Error);
-E(
-  "ERR_CRYPTO_CUSTOM_ENGINE_NOT_SUPPORTED",
-  "Custom engines not supported by this OpenSSL",
-  Error,
-);
+
+class ERR_ARG_NOT_ITERABLE extends NodeTypeError {
+  constructor(){
+    super("ERR_ARG_NOT_ITERABLE", "%s must be iterable");
+  }
+}
+
+class ERR_ASSERTION extends NodeError {
+  constructor(){
+    super("ERR_ASSERTION", "%s");
+  }
+}
+
+class ERR_ASYNC_CALLBACK extends NodeTypeError {
+  constructor(){
+    super("ERR_ASYNC_CALLBACK", "%s must be a function");
+  }
+}
+
+class ERR_ASYNC_TYPE extends NodeTypeError {
+  constructor(){
+    super("ERR_ASYNC_TYPE", 'Invalid name for async "type": %s');
+  }
+}
+
+class ERR_BROTLI_INVALID_PARAM extends NodeRangeError {
+  constructor(){
+    super("ERR_BROTLI_INVALID_PARAM", "%s is not a valid Brotli parameter");
+  }
+}
+
+class ERR_BUFFER_OUT_OF_BOUNDS extends NodeRangeError {
+  constructor(name?: string){
+    super(
+      "ERR_BUFFER_OUT_OF_BOUNDS",
+      name ? `"${name}" is outside of buffer bounds` : "Attempt to access memory outside buffer bounds",
+    );
+  }
+}
+
+class ERR_BUFFER_TOO_LARGE extends NodeRangeError {
+  constructor(){
+    super(
+      "ERR_BUFFER_TOO_LARGE",
+      "Cannot create a Buffer larger than %s bytes",
+    );
+  }
+}
+
+class ERR_CANNOT_WATCH_SIGINT extends NodeError {
+  constructor(){
+    super(
+      "ERR_CANNOT_WATCH_SIGINT",
+      "Cannot watch for SIGINT signals",
+    );
+  }
+}
+
+class ERR_CHILD_CLOSED_BEFORE_REPLY extends NodeError {
+  constructor(){
+    super(
+      "ERR_CHILD_CLOSED_BEFORE_REPLY",
+      "Child closed before reply received",
+    );
+  }
+}
+
+class ERR_CHILD_PROCESS_IPC_REQUIRED extends NodeError {
+  constructor(){
+    super(
+      "ERR_CHILD_PROCESS_IPC_REQUIRED",
+      "Forked processes must have an IPC channel, missing value 'ipc' in %s",
+    );
+  }
+}
+
+class ERR_CHILD_PROCESS_STDIO_MAXBUFFER extends NodeRangeError {
+  constructor(){
+    super(
+      "ERR_CHILD_PROCESS_STDIO_MAXBUFFER",
+      "%s maxBuffer length exceeded",
+    );
+  }
+}
+
+class ERR_CONSOLE_WRITABLE_STREAM extends NodeTypeError {
+  constructor(){
+    super(
+      "ERR_CONSOLE_WRITABLE_STREAM",
+      "Console expects a writable stream instance for %s",
+    );
+  }
+}
+
+class ERR_CONTEXT_NOT_INITIALIZED extends NodeError {
+  constructor(){
+    super(
+      "ERR_CONTEXT_NOT_INITIALIZED",
+      "context used is not initialized",
+    );
+  }
+}
+
+class ERR_CPU_USAGE extends NodeError {
+  constructor(){
+    super(
+      "ERR_CPU_USAGE",
+      "Unable to obtain cpu usage %s",
+    );
+  }
+}
+
+class ERR_CRYPTO_CUSTOM_ENGINE_NOT_SUPPORTED extends NodeError {
+  constructor(){
+    super(
+      "ERR_CRYPTO_CUSTOM_ENGINE_NOT_SUPPORTED",
+      "Custom engines not supported by this OpenSSL",
+    );
+  }
+}
+
 E("ERR_CRYPTO_ECDH_INVALID_FORMAT", "Invalid ECDH format: %s", TypeError);
 E(
   "ERR_CRYPTO_ECDH_INVALID_PUBLIC_KEY",
