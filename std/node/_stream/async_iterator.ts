@@ -14,6 +14,21 @@ const kStream = Symbol("stream");
 type ReadableIteratorResult = IteratorResult<any>;
 
 // deno-lint-ignore no-explicit-any
+function isRequest(stream: any) {
+  return stream && stream.setHeader && typeof stream.abort === "function";
+}
+
+//TODO(Soremwar)
+//Should be any implementation of stream
+// deno-lint-ignore no-explicit-any
+function destroyer(stream: any, err?: Error | null) {
+  if (isRequest(stream)) return stream.abort();
+  if (isRequest(stream.req)) return stream.req.abort();
+  if (typeof stream.destroy === "function") return stream.destroy(err);
+  if (typeof stream.close === "function") return stream.close();
+}
+
+// deno-lint-ignore no-explicit-any
 function createIterResult(value: any, done: boolean): ReadableIteratorResult {
   return { value, done };
 }
@@ -66,7 +81,7 @@ function finish(self: ReadableStreamAsyncIterator, err?: Error) {
         resolve(createIterResult(undefined, true));
       }
     });
-    destroyImpl.destroyer(stream, err);
+    destroyer(stream, err);
   });
 }
 
@@ -191,7 +206,7 @@ const createReadableStreamAsyncIterator = (stream: any) => {
   if (typeof stream.read !== "function") {
     const src = stream;
     stream = new Readable({ objectMode: true }).wrap(src);
-    finished(stream, (err) => destroyImpl.destroyer(src, err));
+    finished(stream, (err) => destroyer(src, err));
   }
 
   const iterator = new ReadableStreamAsyncIterator(stream);
