@@ -14,7 +14,7 @@ class Stream extends EventEmitter {
   static _uint8ArrayToBuffer = (chunk: Uint8Array) => Buffer.from(chunk);
 
   pipe(dest: Writable, options: { end: boolean }) {
-    // eslint-disable-next-line
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const source = this;
 
     //TODO

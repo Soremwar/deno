@@ -4,14 +4,14 @@ import type { ReadableOptions } from "./readable.ts";
 import { ERR_INVALID_ARG_TYPE, ERR_STREAM_NULL_VALUES } from "../_errors.ts";
 
 export default function from(
-  // eslint-disable-next-line
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   iterable: Iterable<any> | AsyncIterable<any>,
   opts?: ReadableOptions,
 ) {
   let iterator:
-    // eslint-disable-next-line
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     | Iterator<any, any, undefined>
-    // eslint-disable-next-line
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     | AsyncIterator<any, any, undefined>;
   if (typeof iterable === "string" || iterable instanceof Buffer) {
     return new Readable({
@@ -25,10 +25,10 @@ export default function from(
   }
 
   if (Symbol.asyncIterator in iterable) {
-    // eslint-disable-next-line
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     iterator = (iterable as AsyncIterable<any>)[Symbol.asyncIterator]();
   } else if (Symbol.iterator in iterable) {
-    // eslint-disable-next-line
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     iterator = (iterable as Iterable<any>)[Symbol.iterator]();
   } else {
     throw new ERR_INVALID_ARG_TYPE("iterable", ["Iterable"], iterable);

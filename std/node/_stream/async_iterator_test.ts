@@ -131,7 +131,7 @@ Deno.test("Async iterator throws on Readable destroyed sync", async () => {
 
   await assertThrowsAsync(
     async () => {
-      // eslint-disable-next-line
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       for await (const k of readable) {}
     },
     Error,
@@ -233,7 +233,7 @@ Deno.test("Async iterator: 'close' called on forced iteration end", async () => 
   readable.push("asd");
   readable.push("asd");
 
-  // eslint-disable-next-line
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   for await (const d of readable) {
     break;
   }

@@ -321,7 +321,7 @@ function addChunk(
 function prependListener(
   emitter: EventEmitter,
   event: string,
-  // eslint-disable-next-line
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   fn: (...args: any[]) => any,
 ) {
   // Sadly this is not cacheable as some libraries bundle their own
@@ -659,7 +659,7 @@ class Readable extends Stream {
   }
 
   static from(
-    // eslint-disable-next-line
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     iterable: Iterable<any> | AsyncIterable<any>,
     opts?: ReadableOptions,
   ): Readable {
@@ -824,7 +824,7 @@ class Readable extends Stream {
   //TODO(Soremwar)
   //Should be duplex
   pipe<T extends Writable>(dest: T, pipeOpts?: { end?: boolean }): T {
-    // eslint-disable-next-line
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const src = this;
     const state = this._readableState;
 
@@ -901,7 +901,7 @@ class Readable extends Stream {
     }
 
     this.on("data", ondata);
-    // eslint-disable-next-line
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     function ondata(chunk: any) {
       const ret = dest.write(chunk);
       if (ret === false) {
@@ -1008,19 +1008,19 @@ class Readable extends Stream {
     event: "close" | "end" | "pause" | "readable" | "resume",
     listener: () => void,
   ): this;
-  // eslint-disable-next-line
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   on(event: "data", listener: (chunk: any) => void): this;
   on(event: "error", listener: (err: Error) => void): this;
-  // eslint-disable-next-line
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   on(event: string | symbol, listener: (...args: any[]) => void): this;
   on(
     ev: string | symbol,
     fn:
       | (() => void)
-      // eslint-disable-next-line
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       | ((chunk: any) => void)
       | ((err: Error) => void)
-      // eslint-disable-next-line
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       | ((...args: any[]) => void),
   ) {
     const res = super.on.call(this, ev, fn);
@@ -1055,22 +1055,22 @@ class Readable extends Stream {
     event: "close" | "end" | "pause" | "readable" | "resume",
     listener: () => void,
   ): this;
-  // eslint-disable-next-line
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   removeListener(event: "data", listener: (chunk: any) => void): this;
   removeListener(event: "error", listener: (err: Error) => void): this;
   removeListener(
     event: string | symbol,
-    // eslint-disable-next-line
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     listener: (...args: any[]) => void,
   ): this;
   removeListener(
     ev: string | symbol,
     fn:
       | (() => void)
-      // eslint-disable-next-line
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       | ((chunk: any) => void)
       | ((err: Error) => void)
-      // eslint-disable-next-line
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       | ((...args: any[]) => void),
   ) {
     const res = super.removeListener.call(this, ev, fn);
@@ -1150,12 +1150,12 @@ class Readable extends Stream {
 
   //TODO(Soremwar)
   //Same deal, string => encodings
-  // eslint-disable-next-line
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   push(chunk: any, encoding?: string): boolean {
     return readableAddChunk(this, chunk, encoding, false);
   }
 
-  // eslint-disable-next-line
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   unshift(chunk: any, encoding?: string): boolean {
     return readableAddChunk(this, chunk, encoding, true);
   }

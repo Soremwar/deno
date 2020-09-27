@@ -45,7 +45,7 @@ function nop() {}
 //TODO
 //Bring in encodings
 type write_v = (
-  // eslint-disable-next-line
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   chunks: Array<{ chunk: any; encoding: string }>,
   callback: (error?: Error | null) => void,
 ) => void;
@@ -215,7 +215,7 @@ function construct(stream: Writable, cb: (error: Error) => void) {
 function writeOrBuffer(
   stream: Writable,
   state: WritableState,
-  // eslint-disable-next-line
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   chunk: any,
   encoding: string,
   callback: (error: Error) => void,
@@ -260,7 +260,7 @@ function doWrite(
   state: WritableState,
   writev: boolean,
   len: number,
-  // eslint-disable-next-line
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   chunk: any,
   encoding: string,
   cb: (error: Error) => void,
@@ -581,7 +581,7 @@ interface WritableOptions {
   //Bring encodings in
   write?(
     this: Writable,
-    // eslint-disable-next-line
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     chunk: any,
     encoding: string,
     callback: (error?: Error | null) => void,
@@ -590,7 +590,7 @@ interface WritableOptions {
   //Bring encodings in
   writev?(
     this: Writable,
-    // eslint-disable-next-line
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     chunks: Array<{ chunk: any; encoding: string }>,
     callback: (error?: Error | null) => void,
   ): void;
@@ -606,7 +606,7 @@ class WritableState {
   //Bring in encodings
   buffered: Array<{
     allBuffers?: boolean;
-    // eslint-disable-next-line
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     chunk: any;
     encoding: string;
     callback: (error: Error) => void;
@@ -812,15 +812,15 @@ class Writable extends Stream {
   }
 
   end(cb?: () => void): void;
-  // eslint-disable-next-line
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   end(chunk: any, cb?: () => void): void;
   //TODO
   //Bring in encodings
-  // eslint-disable-next-line
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   end(chunk: any, encoding: string, cb?: () => void): void;
 
   end(
-    // eslint-disable-next-line
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     x?: any | (() => void),
     //TODO
     //Bring in encodings
@@ -828,7 +828,7 @@ class Writable extends Stream {
     z?: () => void,
   ) {
     const state = this._writableState;
-    // eslint-disable-next-line
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let chunk: any | null;
     //TODO
     //Bring in encodings
@@ -893,7 +893,7 @@ class Writable extends Stream {
   //TODO
   //Bring in encodings
   _write(
-    // eslint-disable-next-line
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     chunk: any,
     encoding: string,
     cb: (error?: Error | null) => void,
@@ -911,12 +911,12 @@ class Writable extends Stream {
     return dest;
   }
 
-  // eslint-disable-next-line
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   write(chunk: any, cb?: (error: Error | null | undefined) => void): boolean;
   //TODO
   //Bring in encodings
   write(
-    // eslint-disable-next-line
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     chunk: any,
     encoding: string | null,
     cb?: (error: Error | null | undefined) => void,
@@ -925,7 +925,7 @@ class Writable extends Stream {
   //TODO
   //Bring in encodings
   write(
-    // eslint-disable-next-line
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     chunk: any,
     x?: string | null | ((error: Error | null | undefined) => void),
     y?: ((error: Error | null | undefined) => void),

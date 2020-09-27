@@ -9,17 +9,17 @@ const kLastPromise = Symbol("lastPromise");
 const kHandlePromise = Symbol("handlePromise");
 const kStream = Symbol("stream");
 
-// eslint-disable-next-line
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ReadableIteratorResult = IteratorResult<any>;
 
-// eslint-disable-next-line
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function isRequest(stream: any) {
   return stream && stream.setHeader && typeof stream.abort === "function";
 }
 
 //TODO(Soremwar)
 //Should be any implementation of stream
-// eslint-disable-next-line
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function destroyer(stream: any, err?: Error | null) {
   if (isRequest(stream)) return stream.abort();
   if (isRequest(stream.req)) return stream.req.abort();
@@ -27,7 +27,7 @@ function destroyer(stream: any, err?: Error | null) {
   if (typeof stream.close === "function") return stream.close();
 }
 
-// eslint-disable-next-line
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function createIterResult(value: any, done: boolean): ReadableIteratorResult {
   return { value, done };
 }
@@ -98,7 +98,7 @@ const AsyncIteratorPrototype = Object.getPrototypeOf(
   Object.getPrototypeOf(async function* () {}).prototype,
 );
 
-// eslint-disable-next-line
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 class ReadableStreamAsyncIterator implements AsyncIterableIterator<any> {
   [kEnded]: boolean;
   [kError]: Error | null = null;
@@ -117,11 +117,11 @@ class ReadableStreamAsyncIterator implements AsyncIterableIterator<any> {
       this[kLastReject] = reject;
     }
   };
-  // eslint-disable-next-line
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [kLastPromise]: null | Promise<any>;
-  // eslint-disable-next-line
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [kLastReject]: null | ((value: any) => void) = null;
-  // eslint-disable-next-line
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [kLastResolve]: null | ((value: any) => void) = null;
   [kStream]: Readable;
   [Symbol.asyncIterator] = AsyncIteratorPrototype[Symbol.asyncIterator];
@@ -221,7 +221,7 @@ class ReadableStreamAsyncIterator implements AsyncIterableIterator<any> {
 
 //TODO(Soremwar)
 //Should be all implementation of Stream
-// eslint-disable-next-line
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const createReadableStreamAsyncIterator = (stream: any) => {
   if (typeof stream.read !== "function") {
     const src = stream;

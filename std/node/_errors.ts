@@ -1255,7 +1255,7 @@ export class ERR_INVALID_BUFFER_SIZE extends NodeRangeError {
   }
 }
 export class ERR_INVALID_CALLBACK extends NodeTypeError {
-  // eslint-disable-next-line
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(object: { [key: string]: any }) {
     super(
       "ERR_INVALID_CALLBACK",
@@ -2155,12 +2155,12 @@ export class ERR_FALSY_VALUE_REJECTION extends NodeError {
   }
 }
 export class ERR_HTTP2_INVALID_SETTING_VALUE extends NodeRangeError {
-  // eslint-disable-next-line
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   actual: any;
   min?: number;
   max?: number;
 
-  // eslint-disable-next-line
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(name: string, actual: any, min?: number, max?: number) {
     super(
       "ERR_HTTP2_INVALID_SETTING_VALUE",
@@ -2213,7 +2213,7 @@ export class ERR_INVALID_CHAR extends NodeTypeError {
 }
 
 export class ERR_INVALID_OPT_VALUE extends NodeTypeError {
-  // eslint-disable-next-line
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(name: string, value: any) {
     super(
       "ERR_INVALID_OPT_VALUE",
@@ -2231,7 +2231,7 @@ export class ERR_INVALID_RETURN_PROPERTY extends NodeTypeError {
   }
 }
 
-// eslint-disable-next-line
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function buildReturnPropertyType(value: any) {
   if (value && value.constructor && value.constructor.name) {
     return `instance of ${value.constructor.name}`;
@@ -2241,7 +2241,7 @@ function buildReturnPropertyType(value: any) {
 }
 
 export class ERR_INVALID_RETURN_PROPERTY_VALUE extends NodeTypeError {
-  // eslint-disable-next-line
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(input: string, name: string, prop: string, value: any) {
     super(
       "ERR_INVALID_RETURN_PROPERTY_VALUE",
@@ -2253,7 +2253,7 @@ export class ERR_INVALID_RETURN_PROPERTY_VALUE extends NodeTypeError {
 }
 
 export class ERR_INVALID_RETURN_VALUE extends NodeTypeError {
-  // eslint-disable-next-line
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(input: string, name: string, value: any) {
     super(
       "ERR_INVALID_RETURN_VALUE",
