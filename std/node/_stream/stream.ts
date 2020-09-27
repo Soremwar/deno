@@ -16,7 +16,7 @@ class Stream extends EventEmitter {
   static _uint8ArrayToBuffer = (chunk: Uint8Array) => Buffer.from(chunk);
 
   pipe(dest: Writable, options: { end: boolean }) {
-    // deno-lint-ignore no-this-alias
+    // eslint-disable-next-line
     const source = this;
 
     //TODO

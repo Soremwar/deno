@@ -29,7 +29,6 @@ import Stream from "./stream.ts";
 import Buffer from "../buffer.ts";
 import BufferList from "./buffer_list.ts";
 import {
-  ERR_INVALID_ARG_TYPE,
   ERR_STREAM_PUSH_AFTER_EOF,
   ERR_METHOD_NOT_IMPLEMENTED,
   ERR_STREAM_UNSHIFT_AFTER_END_EVENT,
@@ -332,7 +331,7 @@ function addChunk(
 function prependListener(
   emitter: EventEmitter,
   event: string,
-  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line
   fn: (...args: any[]) => any,
 ) {
   // Sadly this is not cacheable as some libraries bundle their own
@@ -584,7 +583,7 @@ export interface ReadableOptions {
   encoding?: string;
   highWaterMark?: number;
   objectMode?: boolean;
-  read?(this: Readable, size: number): void;
+  read?(this: Readable): void;
 }
 
 class ReadableState {
@@ -670,7 +669,7 @@ class Readable extends Stream {
   }
 
   static from(
-    // deno-lint-ignore no-explicit-any
+    // eslint-disable-next-line
     iterable: Iterable<any> | AsyncIterable<any>,
     opts?: ReadableOptions,
   ): Readable {
@@ -776,7 +775,7 @@ class Readable extends Stream {
         state.needReadable = true;
       }
       // Call internal read method
-      this._read(state.highWaterMark);
+      this._read();
       state.sync = false;
       // If _read pushed data synchronously, then `reading` will be false,
       // and we need to re-evaluate how much data we can return to the user.
@@ -828,14 +827,14 @@ class Readable extends Stream {
   // call cb(er, data) where data is <= n in length.
   // for virtual (non-string, non-buffer) streams, "length" is somewhat
   // arbitrary, and perhaps not very meaningful.
-  _read(n?: number) {
+  _read() {
     throw new ERR_METHOD_NOT_IMPLEMENTED("_read()");
   }
 
   //TODO(Soremwar)
   //Should be duplex
   pipe<T extends Writable>(dest: T, pipeOpts?: { end?: boolean }): T {
-    // deno-lint-ignore no-this-alias
+    // eslint-disable-next-line
     const src = this;
     const state = this._readableState;
 
@@ -912,7 +911,7 @@ class Readable extends Stream {
     }
 
     this.on("data", ondata);
-    // deno-lint-ignore no-explicit-any
+    // eslint-disable-next-line
     function ondata(chunk: any) {
       const ret = dest.write(chunk);
       if (ret === false) {
@@ -1019,19 +1018,19 @@ class Readable extends Stream {
     event: "close" | "end" | "pause" | "readable" | "resume",
     listener: () => void,
   ): this;
-  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line
   on(event: "data", listener: (chunk: any) => void): this;
   on(event: "error", listener: (err: Error) => void): this;
-  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line
   on(event: string | symbol, listener: (...args: any[]) => void): this;
   on(
     ev: string | symbol,
     fn:
       | (() => void)
-      // deno-lint-ignore no-explicit-any
+      // eslint-disable-next-line
       | ((chunk: any) => void)
       | ((err: Error) => void)
-      // deno-lint-ignore no-explicit-any
+      // eslint-disable-next-line
       | ((...args: any[]) => void),
   ) {
     const res = super.on.call(this, ev, fn);
@@ -1066,22 +1065,22 @@ class Readable extends Stream {
     event: "close" | "end" | "pause" | "readable" | "resume",
     listener: () => void,
   ): this;
-  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line
   removeListener(event: "data", listener: (chunk: any) => void): this;
   removeListener(event: "error", listener: (err: Error) => void): this;
   removeListener(
     event: string | symbol,
-    // deno-lint-ignore no-explicit-any
+    // eslint-disable-next-line
     listener: (...args: any[]) => void,
   ): this;
   removeListener(
     ev: string | symbol,
     fn:
       | (() => void)
-      // deno-lint-ignore no-explicit-any
+      // eslint-disable-next-line
       | ((chunk: any) => void)
       | ((err: Error) => void)
-      // deno-lint-ignore no-explicit-any
+      // eslint-disable-next-line
       | ((...args: any[]) => void),
   ) {
     const res = super.removeListener.call(this, ev, fn);
@@ -1161,12 +1160,12 @@ class Readable extends Stream {
 
   //TODO(Soremwar)
   //Same deal, string => encodings
-  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line
   push(chunk: any, encoding?: string): boolean {
     return readableAddChunk(this, chunk, encoding, false);
   }
 
-  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line
   unshift(chunk: any, encoding?: string): boolean {
     return readableAddChunk(this, chunk, encoding, true);
   }
@@ -1312,8 +1311,7 @@ class Readable extends Stream {
           return function methodWrapReturnFunction() {
             // deno-lint-ignore ban-ts-comment
             //@ts-ignore
-            // deno-lint-ignore no-undef
-            return stream[method].apply(stream, arguments);
+            return stream[method].apply(stream);
           };
         }(i);
       }
@@ -1341,7 +1339,7 @@ class Readable extends Stream {
 
     // When we try to consume some more bytes, simply unpause the
     // underlying stream.
-    this._read = (n) => {
+    this._read = () => {
       if (paused) {
         paused = false;
         //By the time this is triggered, stream will be a readable stream

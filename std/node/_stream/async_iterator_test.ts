@@ -136,7 +136,7 @@ Deno.test("Async iterator throws on Readable destroyed sync", async () => {
 
   await assertThrowsAsync(
     async () => {
-      // deno-lint-ignore no-empty
+      // eslint-disable-next-line
       for await (const k of readable) {}
     },
     Error,
@@ -237,7 +237,8 @@ Deno.test("Async iterator: 'close' called on forced iteration end", async () => 
   const readable = new IndestructibleReadable();
   readable.push("asd");
   readable.push("asd");
-
+  
+  // eslint-disable-next-line
   for await (const d of readable) {
     break;
   }

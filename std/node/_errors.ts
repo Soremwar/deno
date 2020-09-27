@@ -1250,7 +1250,7 @@ export class ERR_INVALID_BUFFER_SIZE extends NodeRangeError {
   }
 }
 export class ERR_INVALID_CALLBACK extends NodeTypeError {
-  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line
   constructor(object: {[key: string]: any}){
     super(
       "ERR_INVALID_CALLBACK",
@@ -1430,7 +1430,7 @@ export class ERR_MANIFEST_DEPENDENCY_MISSING extends NodeError {
   constructor(x: string, y: string){
     super(
       "ERR_MANIFEST_DEPENDENCY_MISSING",
-      `Manifest resource ${x} does not list ${x} as a dependency specifier`,
+      `Manifest resource ${x} does not list ${y} as a dependency specifier`,
     );
   }
 }
@@ -1990,7 +1990,7 @@ export class ERR_UNSUPPORTED_DIR_IMPORT extends NodeError {
   constructor(x: string, y: string){
     super(
       "ERR_UNSUPPORTED_DIR_IMPORT",
-      `Directory import '${x}' is not supported resolving ES modules, imported from ${x}`,
+      `Directory import '${x}' is not supported resolving ES modules, imported from ${y}`,
     );
   }
 }
@@ -2149,12 +2149,12 @@ export class ERR_FALSY_VALUE_REJECTION extends NodeError {
   }
 }
 export class ERR_HTTP2_INVALID_SETTING_VALUE extends NodeRangeError {
-  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line
   actual: any;
   min?: number;
   max?: number;
   
-  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line
   constructor(name: string, actual: any, min?: number, max?: number){
     super(
       "ERR_HTTP2_INVALID_SETTING_VALUE",
@@ -2207,11 +2207,11 @@ export class ERR_INVALID_CHAR extends NodeTypeError {
 }
 
 export class ERR_INVALID_OPT_VALUE extends NodeTypeError {
-  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line
   constructor(name: string, value: any){
     super(
       "ERR_INVALID_OPT_VALUE",
-      `The value "${String(value)}" is invalid for option "${name}"`,
+      `The value "${value}" is invalid for option "${name}"`,
     );
   }
 }
@@ -2225,7 +2225,7 @@ export class ERR_INVALID_RETURN_PROPERTY extends NodeTypeError {
   }
 }
 
-// deno-lint-ignore no-explicit-any
+// eslint-disable-next-line
 function buildReturnPropertyType(value: any){
   if (value && value.constructor && value.constructor.name) {
     return `instance of ${value.constructor.name}`;
@@ -2235,7 +2235,7 @@ function buildReturnPropertyType(value: any){
 }
 
 export class ERR_INVALID_RETURN_PROPERTY_VALUE extends NodeTypeError {
-  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line
   constructor(input: string, name: string, prop: string, value: any){
     super(
       "ERR_INVALID_RETURN_PROPERTY_VALUE",
@@ -2245,7 +2245,7 @@ export class ERR_INVALID_RETURN_PROPERTY_VALUE extends NodeTypeError {
 }
 
 export class ERR_INVALID_RETURN_VALUE extends NodeTypeError {
-  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line
   constructor(input: string, name: string, value: any){
     super(
       "ERR_INVALID_RETURN_VALUE",

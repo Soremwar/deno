@@ -9,14 +9,14 @@ import {
 } from "../_errors.ts";
 
 export default function from(
-  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line
   iterable: Iterable<any> | AsyncIterable<any>,
   opts?: ReadableOptions,
 ) {
   let iterator:
-    // deno-lint-ignore no-explicit-any
+    // eslint-disable-next-line
     | Iterator<any, any, undefined>
-    // deno-lint-ignore no-explicit-any
+    // eslint-disable-next-line
     | AsyncIterator<any, any, undefined>;
   if (typeof iterable === "string" || iterable instanceof Buffer) {
     return new Readable({
@@ -30,10 +30,10 @@ export default function from(
   }
 
   if (Symbol.asyncIterator in iterable) {
-    // deno-lint-ignore no-explicit-any
+    // eslint-disable-next-line
     iterator = (iterable as AsyncIterable<any>)[Symbol.asyncIterator]();
   } else if (Symbol.iterator in iterable) {
-    // deno-lint-ignore no-explicit-any
+    // eslint-disable-next-line
     iterator = (iterable as Iterable<any>)[Symbol.iterator]();
   } else {
     throw new ERR_INVALID_ARG_TYPE("iterable", ["Iterable"], iterable);

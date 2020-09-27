@@ -9,17 +9,17 @@ const kLastPromise = Symbol("lastPromise");
 const kHandlePromise = Symbol("handlePromise");
 const kStream = Symbol("stream");
 
-// deno-lint-ignore no-explicit-any
+// eslint-disable-next-line
 type ReadableIteratorResult = IteratorResult<any>;
 
-// deno-lint-ignore no-explicit-any
+// eslint-disable-next-line
 function isRequest(stream: any) {
   return stream && stream.setHeader && typeof stream.abort === "function";
 }
 
 //TODO(Soremwar)
 //Should be any implementation of stream
-// deno-lint-ignore no-explicit-any
+// eslint-disable-next-line
 function destroyer(stream: any, err?: Error | null) {
   if (isRequest(stream)) return stream.abort();
   if (isRequest(stream.req)) return stream.req.abort();
@@ -27,7 +27,7 @@ function destroyer(stream: any, err?: Error | null) {
   if (typeof stream.close === "function") return stream.close();
 }
 
-// deno-lint-ignore no-explicit-any
+// eslint-disable-next-line
 function createIterResult(value: any, done: boolean): ReadableIteratorResult {
   return { value, done };
 }
@@ -87,7 +87,7 @@ const AsyncIteratorPrototype = Object.getPrototypeOf(
   Object.getPrototypeOf(async function* () {}).prototype,
 );
 
-// deno-lint-ignore no-explicit-any
+// eslint-disable-next-line
 class ReadableStreamAsyncIterator implements AsyncIterableIterator<any> {
   [kEnded]: boolean;
   [kError]: Error | null = null;
@@ -106,11 +106,11 @@ class ReadableStreamAsyncIterator implements AsyncIterableIterator<any> {
       this[kLastReject] = reject;
     }
   };
-  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line
   [kLastPromise]: null | Promise<any>;
-  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line
   [kLastReject]: null | ((value: any) => void) = null;
-  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line
   [kLastResolve]: null | ((value: any) => void) = null;
   [kStream]: Readable;
   [Symbol.asyncIterator] = AsyncIteratorPrototype[Symbol.asyncIterator];
@@ -198,7 +198,7 @@ class ReadableStreamAsyncIterator implements AsyncIterableIterator<any> {
 
 //TODO(Soremwar)
 //Should be all implementation of Stream
-// deno-lint-ignore no-explicit-any
+// eslint-disable-next-line
 const createReadableStreamAsyncIterator = (stream: any) => {
   if (typeof stream.read !== "function") {
     const src = stream;

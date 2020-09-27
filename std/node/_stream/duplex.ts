@@ -1,2 +1,2 @@
-// deno-lint-ignore ban-no-explicit-any
+// eslint-disable-next-line
 export const errorOrDestroy = (...args: any[]) => {};

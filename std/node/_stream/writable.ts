@@ -50,7 +50,7 @@ function nop() {}
 //TODO
 //Bring in encodings
 type write_v = (
-  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line
   chunks: Array<{ chunk: any; encoding: string }>,
   callback: (error?: Error | null) => void,
 ) => void;
@@ -220,7 +220,7 @@ function construct(stream: Writable, cb: (error: Error) => void) {
 function writeOrBuffer(
   stream: Writable,
   state: WritableState,
-  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line
   chunk: any,
   encoding: string,
   callback: (error: Error) => void,
@@ -265,7 +265,7 @@ function doWrite(
   state: WritableState,
   writev: boolean,
   len: number,
-  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line
   chunk: any,
   encoding: string,
   cb: (error: Error) => void,
@@ -441,7 +441,7 @@ function clearBuffer(stream: Writable, state: WritableState) {
     return;
   }
 
-  let i = bufferedIndex;
+  const i = bufferedIndex;
 
   state.bufferProcessing = true;
   if (bufferedLength > 1 && stream._writev) {
@@ -586,7 +586,7 @@ interface WritableOptions {
   //Bring encodings in
   write?(
     this: Writable,
-    // deno-lint-ignore no-explicit-any
+    // eslint-disable-next-line
     chunk: any,
     encoding: string,
     callback: (error?: Error | null) => void,
@@ -595,7 +595,7 @@ interface WritableOptions {
   //Bring encodings in
   writev?(
     this: Writable,
-    // deno-lint-ignore no-explicit-any
+    // eslint-disable-next-line
     chunks: Array<{ chunk: any; encoding: string }>,
     callback: (error?: Error | null) => void,
   ): void;
@@ -611,7 +611,7 @@ class WritableState {
   //Bring in encodings
   buffered: Array<{
     allBuffers?: boolean;
-    // deno-lint-ignore no-explicit-any
+    // eslint-disable-next-line
     chunk: any;
     encoding: string;
     callback: (error: Error) => void;
@@ -817,15 +817,15 @@ class Writable extends Stream {
   }
 
   end(cb?: () => void): void;
-  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line
   end(chunk: any, cb?: () => void): void;
   //TODO
   //Bring in encodings
-  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line
   end(chunk: any, encoding: string, cb?: () => void): void;
 
   end(
-    // deno-lint-ignore no-explicit-any
+    // eslint-disable-next-line
     x?: any | (() => void),
     //TODO
     //Bring in encodings
@@ -833,7 +833,7 @@ class Writable extends Stream {
     z?: () => void,
   ) {
     const state = this._writableState;
-    // deno-lint-ignore no-explicit-any
+    // eslint-disable-next-line
     let chunk: any | null;
     //TODO
     //Bring in encodings
@@ -898,7 +898,7 @@ class Writable extends Stream {
   //TODO
   //Bring in encodings
   _write(
-    // deno-lint-ignore no-explicit-any
+    // eslint-disable-next-line
     chunk: any,
     encoding: string,
     cb: (error?: Error | null) => void,
@@ -911,17 +911,17 @@ class Writable extends Stream {
   }
 
   //This signature was changed to keep inheritance coherent
-  pipe(dest: Writable, options: { end: boolean }): Writable {
+  pipe(dest: Writable): Writable {
     errorOrDestroy(this, new ERR_STREAM_CANNOT_PIPE());
     return dest;
   }
 
-  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line
   write(chunk: any, cb?: (error: Error | null | undefined) => void): boolean;
   //TODO
   //Bring in encodings
   write(
-    // deno-lint-ignore no-explicit-any
+    // eslint-disable-next-line
     chunk: any,
     encoding: string | null,
     cb?: (error: Error | null | undefined) => void,
@@ -930,7 +930,7 @@ class Writable extends Stream {
   //TODO
   //Bring in encodings
   write(
-    // deno-lint-ignore no-explicit-any
+    // eslint-disable-next-line
     chunk: any,
     x?: string | null | ((error: Error | null | undefined) => void),
     y?: ((error: Error | null | undefined) => void),
