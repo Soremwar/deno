@@ -132,10 +132,8 @@ export function validateIntegerRange(
   }
 }
 
-type OptionalSpread<T> =
-    T extends undefined
-    ? []
-    : [T];
+type OptionalSpread<T> = T extends undefined ? []
+  : [T];
 
 export function once(callback: (...args: OptionalSpread<undefined>) => void) {
   let called = false;

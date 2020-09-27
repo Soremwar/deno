@@ -1,12 +1,7 @@
 import Buffer from "../buffer.ts";
 import Readable from "./readable.ts";
-import type {
-  ReadableOptions,
-} from "./readable.ts";
-import {
-  ERR_INVALID_ARG_TYPE,
-  ERR_STREAM_NULL_VALUES,
-} from "../_errors.ts";
+import type { ReadableOptions } from "./readable.ts";
+import { ERR_INVALID_ARG_TYPE, ERR_STREAM_NULL_VALUES } from "../_errors.ts";
 
 export default function from(
   // eslint-disable-next-line

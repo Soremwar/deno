@@ -22,33 +22,23 @@
 // DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 // USE OR OTHER DEALINGS IN THE SOFTWARE.
-import EventEmitter, {
-  captureRejectionSymbol,
-} from "../events.ts";
+import EventEmitter, { captureRejectionSymbol } from "../events.ts";
 import Stream from "./stream.ts";
 import Buffer from "../buffer.ts";
 import BufferList from "./buffer_list.ts";
 import {
-  ERR_STREAM_PUSH_AFTER_EOF,
-  ERR_METHOD_NOT_IMPLEMENTED,
-  ERR_STREAM_UNSHIFT_AFTER_END_EVENT,
   ERR_INVALID_OPT_VALUE,
+  ERR_METHOD_NOT_IMPLEMENTED,
   ERR_MULTIPLE_CALLBACK,
+  ERR_STREAM_PUSH_AFTER_EOF,
+  ERR_STREAM_UNSHIFT_AFTER_END_EVENT,
 } from "../_errors.ts";
-import {
-  StringDecoder,
-} from "../string_decoder.ts";
+import { StringDecoder } from "../string_decoder.ts";
 import createReadableStreamAsyncIterator from "./async_iterator.ts";
 import streamFrom from "./from.ts";
-import {
-  kConstruct,
-  kDestroy,
-  kPaused,
-} from "./symbols.ts";
+import { kConstruct, kDestroy, kPaused } from "./symbols.ts";
 import type Writable from "./writable.ts";
-import {
-  errorOrDestroy as errorOrDestroyDuplex,
-} from "./duplex.ts";
+import { errorOrDestroy as errorOrDestroyDuplex } from "./duplex.ts";
 
 function construct(stream: Readable, cb: () => void) {
   const r = stream._readableState;

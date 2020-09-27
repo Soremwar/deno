@@ -1,13 +1,8 @@
 import Readable from "./readable.ts";
 import Stream from "./stream.ts";
 import toReadableAsyncIterator from "./async_iterator.ts";
-import {
-  deferred,
-} from "../../async/mod.ts";
-import {
-  assertEquals,
-  assertThrowsAsync,
-} from "../../testing/asserts.ts";
+import { deferred } from "../../async/mod.ts";
+import { assertEquals, assertThrowsAsync } from "../../testing/asserts.ts";
 
 Deno.test("Stream to async iterator", async () => {
   let destroy_executed = 0;
@@ -237,7 +232,7 @@ Deno.test("Async iterator: 'close' called on forced iteration end", async () => 
   const readable = new IndestructibleReadable();
   readable.push("asd");
   readable.push("asd");
-  
+
   // eslint-disable-next-line
   for await (const d of readable) {
     break;

@@ -25,24 +25,19 @@
 
 import Buffer from "../buffer.ts";
 import Stream from "./stream.ts";
-import {
-  captureRejectionSymbol,
-} from "../events.ts";
-import {
-  kConstruct,
-  kDestroy,
-} from "./symbols.ts";
+import { captureRejectionSymbol } from "../events.ts";
+import { kConstruct, kDestroy } from "./symbols.ts";
 import {
   ERR_INVALID_ARG_TYPE,
+  ERR_INVALID_OPT_VALUE,
   ERR_METHOD_NOT_IMPLEMENTED,
   ERR_MULTIPLE_CALLBACK,
+  ERR_STREAM_ALREADY_FINISHED,
   ERR_STREAM_CANNOT_PIPE,
   ERR_STREAM_DESTROYED,
-  ERR_STREAM_ALREADY_FINISHED,
   ERR_STREAM_NULL_VALUES,
   ERR_STREAM_WRITE_AFTER_END,
   ERR_UNKNOWN_ENCODING,
-  ERR_INVALID_OPT_VALUE,
 } from "../_errors.ts";
 
 function nop() {}
@@ -1032,6 +1027,4 @@ class Writable extends Stream {
 }
 
 export default Writable;
-export {
-  WritableState,
-};
+export { WritableState };

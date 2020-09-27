@@ -55,8 +55,14 @@ function onReadable(iter: ReadableStreamAsyncIterator) {
   queueMicrotask(() => readAndResolve(iter));
 }
 
-function wrapForNext(lastPromise: Promise<ReadableIteratorResult>, iter: ReadableStreamAsyncIterator) {
-  return (resolve: (value: ReadableIteratorResult) => void, reject: (error: Error) => void) => {
+function wrapForNext(
+  lastPromise: Promise<ReadableIteratorResult>,
+  iter: ReadableStreamAsyncIterator,
+) {
+  return (
+    resolve: (value: ReadableIteratorResult) => void,
+    reject: (error: Error) => void,
+  ) => {
     lastPromise.then(() => {
       if (iter[kEnded]) {
         resolve(createIterResult(undefined, true));
@@ -69,18 +75,23 @@ function wrapForNext(lastPromise: Promise<ReadableIteratorResult>, iter: Readabl
 }
 
 function finish(self: ReadableStreamAsyncIterator, err?: Error) {
-  return new Promise((resolve: (result: ReadableIteratorResult) => void, reject: (error: Error) => void) => {
-    const stream = self[kStream];
+  return new Promise(
+    (
+      resolve: (result: ReadableIteratorResult) => void,
+      reject: (error: Error) => void,
+    ) => {
+      const stream = self[kStream];
 
-    finished(stream, (err) => {
-      if (err && err.code !== "ERR_STREAM_PREMATURE_CLOSE") {
-        reject(err);
-      } else {
-        resolve(createIterResult(undefined, true));
-      }
-    });
-    destroyer(stream, err);
-  });
+      finished(stream, (err) => {
+        if (err && err.code !== "ERR_STREAM_PREMATURE_CLOSE") {
+          reject(err);
+        } else {
+          resolve(createIterResult(undefined, true));
+        }
+      });
+      destroyer(stream, err);
+    },
+  );
 }
 
 const AsyncIteratorPrototype = Object.getPrototypeOf(
@@ -115,17 +126,29 @@ class ReadableStreamAsyncIterator implements AsyncIterableIterator<any> {
   [kStream]: Readable;
   [Symbol.asyncIterator] = AsyncIteratorPrototype[Symbol.asyncIterator];
 
-  constructor(stream: Readable){
+  constructor(stream: Readable) {
     this[kEnded] = stream.readableEnded || stream._readableState.endEmitted;
     this[kStream] = stream;
     Object.defineProperties(this, {
-      [kEnded]: {configurable: false, enumerable: false, writable: true},
-      [kError]: {configurable: false, enumerable: false, writable: true},
-      [kHandlePromise]: {configurable: false, enumerable: false, writable: true},
-      [kLastPromise]: {configurable: false, enumerable: false, writable: true},
-      [kLastReject]: {configurable: false, enumerable: false, writable: true},
-      [kLastResolve]: {configurable: false, enumerable: false, writable: true},
-      [kStream]: {configurable: false, enumerable: false, writable: true},
+      [kEnded]: { configurable: false, enumerable: false, writable: true },
+      [kError]: { configurable: false, enumerable: false, writable: true },
+      [kHandlePromise]: {
+        configurable: false,
+        enumerable: false,
+        writable: true,
+      },
+      [kLastPromise]: {
+        configurable: false,
+        enumerable: false,
+        writable: true,
+      },
+      [kLastReject]: { configurable: false, enumerable: false, writable: true },
+      [kLastResolve]: {
+        configurable: false,
+        enumerable: false,
+        writable: true,
+      },
+      [kStream]: { configurable: false, enumerable: false, writable: true },
     });
   }
 
