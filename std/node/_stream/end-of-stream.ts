@@ -1,18 +1,12 @@
 // Ported from https://github.com/mafintosh/end-of-stream with
 // permission from the author, Mathias Buus (@mafintosh).
-import {
-  codes as error_codes,
-} from "../internal/errors.js";
 import { once } from "../internal/util.js";
 import type Readable from "./readable.ts";
 import type Writable from "./writable.ts";
-
-const {
-  //@ts-ignore
+import {
   ERR_INVALID_ARG_TYPE,
-  //@ts-ignore
   ERR_STREAM_PREMATURE_CLOSE,
-} = error_codes;
+} from "../_errors.ts";
 
 type Stream = Readable | Writable;
 

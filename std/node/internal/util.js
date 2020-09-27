@@ -21,17 +21,6 @@ const {
   SymbolFor,
 } = primordials;
 */
-import {
-  /*
-  codes: {
-    ERR_INVALID_ARG_TYPE,
-    ERR_NO_CRYPTO,
-    ERR_UNKNOWN_SIGNAL
-  },
-  */
-  //uvErrmapGet,
-  //overrideStackTrace,
-} from "./errors.js";
 /*
 const { signals } = internalBinding('constants').os;
 const {

@@ -4,15 +4,9 @@ import type {
   ReadableOptions,
 } from "./readable.ts";
 import {
-  codes as error_codes,
-} from "../internal/errors.js";
-
-const {
-  //@ts-ignore
   ERR_INVALID_ARG_TYPE,
-  //@ts-ignore
   ERR_STREAM_NULL_VALUES,
-} = error_codes;
+} from "../_errors.ts";
 
 export default function from(
   // deno-lint-ignore no-explicit-any

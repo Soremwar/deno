@@ -103,47 +103,51 @@ class NodeURIError extends NodeErrorAbstraction implements URIError {
 }
 
 export class ERR_INVALID_ARG_TYPE extends NodeTypeError {
-  constructor(a1: string, a2: string, a3: unknown) {
+  constructor(a1: string, a2: string | string[], a3: unknown) {
     super(
       "ERR_INVALID_ARG_TYPE",
-      `The "${a1}" argument must be of type ${a2.toLocaleLowerCase()}. Received ${typeof a3} (${a3})`,
+      `The "${a1}" argument must be of type ${
+        typeof a2 === "string"
+          ? a2.toLocaleLowerCase()
+          : a2.map(x => x.toLocaleLowerCase()).join(", ")
+      }. Received ${typeof a3} (${a3})`,
     );
   }
 }
 
 export class ERR_AMBIGUOUS_ARGUMENT extends NodeTypeError {
-  constructor(){
-    super("ERR_AMBIGUOUS_ARGUMENT", 'The "%s" argument is ambiguous. %s');
+  constructor(x: string, y: string){
+    super("ERR_AMBIGUOUS_ARGUMENT", `The "${x}" argument is ambiguous. ${y}`);
   }
 }
 
 export class ERR_ARG_NOT_ITERABLE extends NodeTypeError {
-  constructor(){
-    super("ERR_ARG_NOT_ITERABLE", "%s must be iterable");
+  constructor(x: string){
+    super("ERR_ARG_NOT_ITERABLE", `${x} must be iterable`);
   }
 }
 
 export class ERR_ASSERTION extends NodeError {
-  constructor(){
-    super("ERR_ASSERTION", "%s");
+  constructor(x: string){
+    super("ERR_ASSERTION", `${x}`);
   }
 }
 
 export class ERR_ASYNC_CALLBACK extends NodeTypeError {
-  constructor(){
-    super("ERR_ASYNC_CALLBACK", "%s must be a function");
+  constructor(x: string){
+    super("ERR_ASYNC_CALLBACK", `${x} must be a function`);
   }
 }
 
 export class ERR_ASYNC_TYPE extends NodeTypeError {
-  constructor(){
-    super("ERR_ASYNC_TYPE", 'Invalid name for async "type": %s');
+  constructor(x: string){
+    super("ERR_ASYNC_TYPE", `Invalid name for async "type": ${x}`);
   }
 }
 
 export class ERR_BROTLI_INVALID_PARAM extends NodeRangeError {
-  constructor(){
-    super("ERR_BROTLI_INVALID_PARAM", "%s is not a valid Brotli parameter");
+  constructor(x: string){
+    super("ERR_BROTLI_INVALID_PARAM", `${x} is not a valid Brotli parameter`);
   }
 }
 
@@ -157,10 +161,10 @@ export class ERR_BUFFER_OUT_OF_BOUNDS extends NodeRangeError {
 }
 
 export class ERR_BUFFER_TOO_LARGE extends NodeRangeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_BUFFER_TOO_LARGE",
-      "Cannot create a Buffer larger than %s bytes",
+      `Cannot create a Buffer larger than ${x} bytes`,
     );
   }
 }
@@ -184,28 +188,28 @@ export class ERR_CHILD_CLOSED_BEFORE_REPLY extends NodeError {
 }
 
 export class ERR_CHILD_PROCESS_IPC_REQUIRED extends NodeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_CHILD_PROCESS_IPC_REQUIRED",
-      "Forked processes must have an IPC channel, missing value 'ipc' in %s",
+      `Forked processes must have an IPC channel, missing value 'ipc' in ${x}`,
     );
   }
 }
 
 export class ERR_CHILD_PROCESS_STDIO_MAXBUFFER extends NodeRangeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_CHILD_PROCESS_STDIO_MAXBUFFER",
-      "%s maxBuffer length exceeded",
+      `${x} maxBuffer length exceeded`,
     );
   }
 }
 
 export class ERR_CONSOLE_WRITABLE_STREAM extends NodeTypeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_CONSOLE_WRITABLE_STREAM",
-      "Console expects a writable stream instance for %s",
+      `Console expects a writable stream instance for ${x}`,
     );
   }
 }
@@ -220,10 +224,10 @@ export class ERR_CONTEXT_NOT_INITIALIZED extends NodeError {
 }
 
 export class ERR_CPU_USAGE extends NodeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_CPU_USAGE",
-      "Unable to obtain cpu usage %s",
+      `Unable to obtain cpu usage ${x}`,
     );
   }
 }
@@ -238,10 +242,10 @@ export class ERR_CRYPTO_CUSTOM_ENGINE_NOT_SUPPORTED extends NodeError {
 }
 
 export class ERR_CRYPTO_ECDH_INVALID_FORMAT extends NodeTypeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_CRYPTO_ECDH_INVALID_FORMAT",
-      "Invalid ECDH format: %s",
+      `Invalid ECDH format: ${x}`,
     );
   }
 }
@@ -256,10 +260,10 @@ export class ERR_CRYPTO_ECDH_INVALID_PUBLIC_KEY extends NodeError {
 }
 
 export class ERR_CRYPTO_ENGINE_UNKNOWN extends NodeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_CRYPTO_ENGINE_UNKNOWN",
-      'Engine "%s" was not found',
+      `Engine "${x}" was not found`,
     );
   }
 }
@@ -301,46 +305,46 @@ export class ERR_CRYPTO_HASH_UPDATE_FAILED extends NodeError {
 }
 
 export class ERR_CRYPTO_INCOMPATIBLE_KEY extends NodeError {
-  constructor(){
+  constructor(x: string, y: string){
     super(
       "ERR_CRYPTO_INCOMPATIBLE_KEY",
-      "Incompatible %s: %s",
+      `Incompatible ${x}: ${y}`,
     );
   }
 }
 
 export class ERR_CRYPTO_INCOMPATIBLE_KEY_OPTIONS extends NodeError {
-  constructor(){
+  constructor(x: string, y: string){
     super(
       "ERR_CRYPTO_INCOMPATIBLE_KEY_OPTIONS",
-      "The selected key encoding %s %s.",
+      `The selected key encoding ${x} ${y}.`,
     );
   }
 }
 
 export class ERR_CRYPTO_INVALID_DIGEST extends NodeTypeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_CRYPTO_INVALID_DIGEST",
-      "Invalid digest: %s",
+      `Invalid digest: ${x}`,
     );
   }
 }
 
 export class ERR_CRYPTO_INVALID_KEY_OBJECT_TYPE extends NodeTypeError {
-  constructor(){
+  constructor(x: string, y: string){
     super(
       "ERR_CRYPTO_INVALID_KEY_OBJECT_TYPE",
-      "Invalid key object type %s, expected %s.",
+      `Invalid key object type ${x}, expected ${y}.`,
     );
   }
 }
 
 export class ERR_CRYPTO_INVALID_STATE extends NodeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_CRYPTO_INVALID_STATE",
-      "Invalid state for operation %s",
+      `Invalid state for operation ${x}`,
     );
   }
 }
@@ -400,10 +404,10 @@ export class ERR_DIR_CONCURRENT_OPERATION extends NodeError {
 }
 
 export class ERR_DNS_SET_SERVERS_FAILED extends NodeError {
-  constructor(){
+  constructor(x: string, y: string){
     super(
       "ERR_DNS_SET_SERVERS_FAILED",
-      'c-ares failed to set servers: "%s" [%s]',
+      `c-ares failed to set servers: "${x}" [${y}]`,
     );
   }
 }
@@ -717,10 +721,10 @@ export const errorMap = new Map<number, [string, string]>(
     : unreachable(),
 );
 export class ERR_ENCODING_NOT_SUPPORTED extends NodeRangeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_ENCODING_NOT_SUPPORTED",
-      `The "%s" encoding is not supported`,
+      `The "${x}" encoding is not supported`,
     );
   }
 }
@@ -733,34 +737,34 @@ export class ERR_EVAL_ESM_CANNOT_PRINT extends NodeError {
   }
 }
 export class ERR_EVENT_RECURSION extends NodeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_EVENT_RECURSION",
-      `The event "%s" is already being dispatched`,
+      `The event "${x}" is already being dispatched`,
     );
   }
 }
 export class ERR_FEATURE_UNAVAILABLE_ON_PLATFORM extends NodeTypeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_FEATURE_UNAVAILABLE_ON_PLATFORM",
-      `The feature %s is unavailable on the current platform, which is being used to run Node.js`,
+      `The feature ${x} is unavailable on the current platform, which is being used to run Node.js`,
     );
   }
 }
 export class ERR_FS_FILE_TOO_LARGE extends NodeRangeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_FS_FILE_TOO_LARGE",
-      `File size (%s) is greater than 2 GB`,
+      `File size (${x}) is greater than 2 GB`,
     );
   }
 }
 export class ERR_FS_INVALID_SYMLINK_TYPE extends NodeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_FS_INVALID_SYMLINK_TYPE",
-      `Symlink type must be one of "dir", "file", or "junction". Received "%s"`,
+      `Symlink type must be one of "dir", "file", or "junction". Received "${x}"`,
     );
   }
 }
@@ -829,10 +833,10 @@ export class ERR_HTTP2_HEADERS_SENT extends NodeError {
   }
 }
 export class ERR_HTTP2_HEADER_SINGLE_VALUE extends NodeTypeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_HTTP2_HEADER_SINGLE_VALUE",
-      `Header field "%s" must only have a single value`,
+      `Header field "${x}" must only have a single value`,
     );
   }
 }
@@ -845,26 +849,26 @@ export class ERR_HTTP2_INFO_STATUS_NOT_ALLOWED extends NodeRangeError {
   }
 }
 export class ERR_HTTP2_INVALID_CONNECTION_HEADERS extends NodeTypeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_HTTP2_INVALID_CONNECTION_HEADERS",
-      `HTTP/1 Connection specific headers are forbidden: "%s"`,
+      `HTTP/1 Connection specific headers are forbidden: "${x}"`,
     );
   }
 }
 export class ERR_HTTP2_INVALID_HEADER_VALUE extends NodeTypeError {
-  constructor(){
+  constructor(x: string, y: string){
     super(
       "ERR_HTTP2_INVALID_HEADER_VALUE",
-      `Invalid value "%s" for header "%s"`,
+      `Invalid value "${x}" for header "${y}"`,
     );
   }
 }
 export class ERR_HTTP2_INVALID_INFO_STATUS extends NodeRangeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_HTTP2_INVALID_INFO_STATUS",
-      `Invalid informational status code: %s`,
+      `Invalid informational status code: ${x}`,
     );
   }
 }
@@ -885,10 +889,10 @@ export class ERR_HTTP2_INVALID_PACKED_SETTINGS_LENGTH extends NodeRangeError {
   }
 }
 export class ERR_HTTP2_INVALID_PSEUDOHEADER extends NodeTypeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_HTTP2_INVALID_PSEUDOHEADER",
-      `"%s" is an invalid pseudoheader or is used incorrectly`,
+      `"${x}" is an invalid pseudoheader or is used incorrectly`,
     );
   }
 }
@@ -949,10 +953,10 @@ export class ERR_HTTP2_OUT_OF_STREAMS extends NodeError {
   }
 }
 export class ERR_HTTP2_PAYLOAD_FORBIDDEN extends NodeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_HTTP2_PAYLOAD_FORBIDDEN",
-      `Responses with %s status must not have a payload`,
+      `Responses with ${x} status must not have a payload`,
     );
   }
 }
@@ -1005,10 +1009,10 @@ export class ERR_HTTP2_SEND_FILE_NOSEEK extends NodeError {
   }
 }
 export class ERR_HTTP2_SESSION_ERROR extends NodeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_HTTP2_SESSION_ERROR",
-      `Session closed with error code %s`,
+      `Session closed with error code ${x}`,
     );
   }
 }
@@ -1045,18 +1049,18 @@ export class ERR_HTTP2_STATUS_101 extends NodeError {
   }
 }
 export class ERR_HTTP2_STATUS_INVALID extends NodeRangeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_HTTP2_STATUS_INVALID",
-      `Invalid status code: %s`,
+      `Invalid status code: ${x}`,
     );
   }
 }
 export class ERR_HTTP2_STREAM_ERROR extends NodeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_HTTP2_STREAM_ERROR",
-      `Stream closed with error code %s`,
+      `Stream closed with error code ${x}`,
     );
   }
 }
@@ -1085,34 +1089,34 @@ export class ERR_HTTP2_TRAILERS_NOT_READY extends NodeError {
   }
 }
 export class ERR_HTTP2_UNSUPPORTED_PROTOCOL extends NodeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_HTTP2_UNSUPPORTED_PROTOCOL",
-      `protocol "%s" is unsupported.`,
+      `protocol "${x}" is unsupported.`,
     );
   }
 }
 export class ERR_HTTP_HEADERS_SENT extends NodeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_HTTP_HEADERS_SENT",
-      `Cannot %s headers after they are sent to the client`,
+      `Cannot ${x} headers after they are sent to the client`,
     );
   }
 }
 export class ERR_HTTP_INVALID_HEADER_VALUE extends NodeTypeError {
-  constructor(){
+  constructor(x: string, y: string){
     super(
       "ERR_HTTP_INVALID_HEADER_VALUE",
-      `Invalid value "%s" for header "%s"`,
+      `Invalid value "${x}" for header "${y}"`,
     );
   }
 }
 export class ERR_HTTP_INVALID_STATUS_CODE extends NodeRangeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_HTTP_INVALID_STATUS_CODE",
-      `Invalid status code: %s`,
+      `Invalid status code: ${x}`,
     );
   }
 }
@@ -1133,10 +1137,10 @@ export class ERR_HTTP_TRAILER_INVALID extends NodeError {
   }
 }
 export class ERR_INCOMPATIBLE_OPTION_PAIR extends NodeTypeError {
-  constructor(){
+  constructor(x: string, y: string){
     super(
       "ERR_INCOMPATIBLE_OPTION_PAIR",
-      `Option "%s" cannot be used in combination with option "%s"`,
+      `Option "${x}" cannot be used in combination with option "${y}"`,
     );
   }
 }
@@ -1157,10 +1161,10 @@ export class ERR_INSPECTOR_ALREADY_ACTIVATED extends NodeError {
   }
 }
 export class ERR_INSPECTOR_ALREADY_CONNECTED extends NodeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_INSPECTOR_ALREADY_CONNECTED",
-      `%s is already connected`,
+      `${x} is already connected`,
     );
   }
 }
@@ -1173,10 +1177,10 @@ export class ERR_INSPECTOR_CLOSED extends NodeError {
   }
 }
 export class ERR_INSPECTOR_COMMAND extends NodeError {
-  constructor(){
+  constructor(x: number, y: string){
     super(
       "ERR_INSPECTOR_COMMAND",
-      `Inspector error %d: %s`,
+      `Inspector error ${x}: ${y}`,
     );
   }
 }
@@ -1213,18 +1217,18 @@ export class ERR_INSPECTOR_NOT_WORKER extends NodeError {
   }
 }
 export class ERR_INVALID_ASYNC_ID extends NodeRangeError {
-  constructor(){
+  constructor(x: string, y: string){
     super(
       "ERR_INVALID_ASYNC_ID",
-      `Invalid %s value: %s`,
+      `Invalid ${x} value: ${y}`,
     );
   }
 }
 export class ERR_INVALID_BUFFER_SIZE extends NodeRangeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_INVALID_BUFFER_SIZE",
-      `Buffer size must be a multiple of %s`,
+      `Buffer size must be a multiple of ${x}`,
     );
   }
 }
@@ -1245,34 +1249,34 @@ export class ERR_INVALID_CURSOR_POS extends NodeTypeError {
   }
 }
 export class ERR_INVALID_FD extends NodeRangeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_INVALID_FD",
-      `"fd" must be a positive integer: %s`,
+      `"fd" must be a positive integer: ${x}`,
     );
   }
 }
 export class ERR_INVALID_FD_TYPE extends NodeTypeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_INVALID_FD_TYPE",
-      `Unsupported fd type: %s`,
+      `Unsupported fd type: ${x}`,
     );
   }
 }
 export class ERR_INVALID_FILE_URL_HOST extends NodeTypeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_INVALID_FILE_URL_HOST",
-      `File URL host must be "localhost" or empty on %s`,
+      `File URL host must be "localhost" or empty on ${x}`,
     );
   }
 }
 export class ERR_INVALID_FILE_URL_PATH extends NodeTypeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_INVALID_FILE_URL_PATH",
-      `File URL path %s`,
+      `File URL path ${x}`,
     );
   }
 }
@@ -1285,42 +1289,42 @@ export class ERR_INVALID_HANDLE_TYPE extends NodeTypeError {
   }
 }
 export class ERR_INVALID_HTTP_TOKEN extends NodeTypeError {
-  constructor(){
+  constructor(x: string, y: string){
     super(
       "ERR_INVALID_HTTP_TOKEN",
-      `%s must be a valid HTTP token ["%s"]`,
+      `${x} must be a valid HTTP token ["${y}"]`,
     );
   }
 }
 export class ERR_INVALID_IP_ADDRESS extends NodeTypeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_INVALID_IP_ADDRESS",
-      `Invalid IP address: %s`,
+      `Invalid IP address: ${x}`,
     );
   }
 }
 export class ERR_INVALID_OPT_VALUE_ENCODING extends NodeTypeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_INVALID_OPT_VALUE_ENCODING",
-      `The value "%s" is invalid for option "encoding"`,
+      `The value "${x}" is invalid for option "encoding"`,
     );
   }
 }
 export class ERR_INVALID_PERFORMANCE_MARK extends NodeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_INVALID_PERFORMANCE_MARK",
-      `The "%s" performance mark has not been set`,
+      `The "${x}" performance mark has not been set`,
     );
   }
 }
 export class ERR_INVALID_PROTOCOL extends NodeTypeError {
-  constructor(){
+  constructor(x: string, y: string){
     super(
       "ERR_INVALID_PROTOCOL",
-      `Protocol "%s" not supported. Expected "%s"`,
+      `Protocol "${x}" not supported. Expected "${y}"`,
     );
   }
 }
@@ -1333,34 +1337,34 @@ export class ERR_INVALID_REPL_EVAL_CONFIG extends NodeTypeError {
   }
 }
 export class ERR_INVALID_REPL_INPUT extends NodeTypeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_INVALID_REPL_INPUT",
-      `%s`,
+      `${x}`,
     );
   }
 }
 export class ERR_INVALID_SYNC_FORK_INPUT extends NodeTypeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_INVALID_SYNC_FORK_INPUT",
-      `Asynchronous forks do not support Buffer, TypedArray, DataView or string input: %s`,
+      `Asynchronous forks do not support Buffer, TypedArray, DataView or string input: ${x}`,
     );
   }
 }
 export class ERR_INVALID_THIS extends NodeTypeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_INVALID_THIS",
-      `Value of "this" must be of type %s`,
+      `Value of "this" must be of type ${x}`,
     );
   }
 }
 export class ERR_INVALID_TUPLE extends NodeTypeError {
-  constructor(){
+  constructor(x: string, y: string){
     super(
       "ERR_INVALID_TUPLE",
-      `%s must be an iterable %s tuple`,
+      `${x} must be an iterable ${y} tuple`,
     );
   }
 }
@@ -1405,26 +1409,26 @@ export class ERR_IPC_SYNC_FORK extends NodeError {
   }
 }
 export class ERR_MANIFEST_DEPENDENCY_MISSING extends NodeError {
-  constructor(){
+  constructor(x: string, y: string){
     super(
       "ERR_MANIFEST_DEPENDENCY_MISSING",
-      `Manifest resource %s does not list %s as a dependency specifier`,
+      `Manifest resource ${x} does not list ${x} as a dependency specifier`,
     );
   }
 }
 export class ERR_MANIFEST_INTEGRITY_MISMATCH extends NodeSyntaxError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_MANIFEST_INTEGRITY_MISMATCH",
-      `Manifest resource %s has multiple entries but integrity lists do not match`,
+      `Manifest resource ${x} has multiple entries but integrity lists do not match`,
     );
   }
 }
 export class ERR_MANIFEST_INVALID_RESOURCE_FIELD extends NodeTypeError {
-  constructor(){
+  constructor(x: string, y: string){
     super(
       "ERR_MANIFEST_INVALID_RESOURCE_FIELD",
-      `Manifest resource %s has invalid property value for %s`,
+      `Manifest resource ${x} has invalid property value for ${y}`,
     );
   }
 }
@@ -1437,26 +1441,26 @@ export class ERR_MANIFEST_TDZ extends NodeError {
   }
 }
 export class ERR_MANIFEST_UNKNOWN_ONERROR extends NodeSyntaxError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_MANIFEST_UNKNOWN_ONERROR",
-      `Manifest specified unknown error behavior "%s".`,
+      `Manifest specified unknown error behavior "${x}".`,
     );
   }
 }
 export class ERR_METHOD_NOT_IMPLEMENTED extends NodeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_METHOD_NOT_IMPLEMENTED",
-      `The %s method is not implemented`,
+      `The ${x} method is not implemented`,
     );
   }
 }
 export class ERR_MISSING_OPTION extends NodeTypeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_MISSING_OPTION",
-      `%s is required`,
+      `${x} is required`,
     );
   }
 }
@@ -1485,10 +1489,10 @@ export class ERR_NAPI_INVALID_DATAVIEW_ARGS extends NodeRangeError {
   }
 }
 export class ERR_NAPI_INVALID_TYPEDARRAY_ALIGNMENT extends NodeRangeError {
-  constructor(){
+  constructor(x: string, y: string){
     super(
       "ERR_NAPI_INVALID_TYPEDARRAY_ALIGNMENT",
-      `start offset of %s should be a multiple of %s`,
+      `start offset of ${x} should be a multiple of ${y}`,
     );
   }
 }
@@ -1509,18 +1513,18 @@ export class ERR_NO_CRYPTO extends NodeError {
   }
 }
 export class ERR_NO_ICU extends NodeTypeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_NO_ICU",
-      `%s is not supported on Node.js compiled without ICU`,
+      `${x} is not supported on Node.js compiled without ICU`,
     );
   }
 }
 export class ERR_QUICCLIENTSESSION_FAILED extends NodeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_QUICCLIENTSESSION_FAILED",
-      `Failed to create a new QuicClientSession: %s`,
+      `Failed to create a new QuicClientSession: ${x}`,
     );
   }
 }
@@ -1533,18 +1537,18 @@ export class ERR_QUICCLIENTSESSION_FAILED_SETSOCKET extends NodeError {
   }
 }
 export class ERR_QUICSESSION_DESTROYED extends NodeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_QUICSESSION_DESTROYED",
-      `Cannot call %s after a QuicSession has been destroyed`,
+      `Cannot call ${x} after a QuicSession has been destroyed`,
     );
   }
 }
 export class ERR_QUICSESSION_INVALID_DCID extends NodeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_QUICSESSION_INVALID_DCID",
-      `Invalid DCID value: %s`,
+      `Invalid DCID value: ${x}`,
     );
   }
 }
@@ -1557,10 +1561,10 @@ export class ERR_QUICSESSION_UPDATEKEY extends NodeError {
   }
 }
 export class ERR_QUICSOCKET_DESTROYED extends NodeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_QUICSOCKET_DESTROYED",
-      `Cannot call %s after a QuicSocket has been destroyed`,
+      `Cannot call ${x} after a QuicSocket has been destroyed`,
     );
   }
 }
@@ -1581,18 +1585,18 @@ export class ERR_QUICSOCKET_LISTENING extends NodeError {
   }
 }
 export class ERR_QUICSOCKET_UNBOUND extends NodeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_QUICSOCKET_UNBOUND",
-      `Cannot call %s before a QuicSocket has been bound`,
+      `Cannot call ${x} before a QuicSocket has been bound`,
     );
   }
 }
 export class ERR_QUICSTREAM_DESTROYED extends NodeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_QUICSTREAM_DESTROYED",
-      `Cannot call %s after a QuicStream has been destroyed`,
+      `Cannot call ${x} after a QuicStream has been destroyed`,
     );
   }
 }
@@ -1717,10 +1721,10 @@ export class ERR_SRI_PARSE extends NodeSyntaxError {
   }
 }
 export class ERR_STREAM_ALREADY_FINISHED extends NodeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_STREAM_ALREADY_FINISHED",
-      `Cannot call %s after a stream was finished`,
+      `Cannot call ${x} after a stream was finished`,
     );
   }
 }
@@ -1733,10 +1737,10 @@ export class ERR_STREAM_CANNOT_PIPE extends NodeError {
   }
 }
 export class ERR_STREAM_DESTROYED extends NodeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_STREAM_DESTROYED",
-      `Cannot call %s after a stream was destroyed`,
+      `Cannot call ${x} after a stream was destroyed`,
     );
   }
 }
@@ -1797,10 +1801,10 @@ export class ERR_SYNTHETIC extends NodeError {
   }
 }
 export class ERR_TLS_DH_PARAM_SIZE extends NodeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_TLS_DH_PARAM_SIZE",
-      `DH parameter size %s is less than 2048`,
+      `DH parameter size ${x} is less than 2048`,
     );
   }
 }
@@ -1813,10 +1817,10 @@ export class ERR_TLS_HANDSHAKE_TIMEOUT extends NodeError {
   }
 }
 export class ERR_TLS_INVALID_CONTEXT extends NodeTypeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_TLS_INVALID_CONTEXT",
-      `%s must be a SecureContext`,
+      `${x} must be a SecureContext`,
     );
   }
 }
@@ -1829,10 +1833,10 @@ export class ERR_TLS_INVALID_STATE extends NodeError {
   }
 }
 export class ERR_TLS_INVALID_PROTOCOL_VERSION extends NodeTypeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_TLS_INVALID_PROTOCOL_VERSION",
-      `%j is not a valid %s TLS protocol version`,
+      `%j is not a valid ${x} TLS protocol version`,
     );
   }
 }
@@ -1909,66 +1913,66 @@ export class ERR_UNCAUGHT_EXCEPTION_CAPTURE_ALREADY_SET extends NodeError {
   }
 }
 export class ERR_UNESCAPED_CHARACTERS extends NodeTypeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_UNESCAPED_CHARACTERS",
-      `%s contains unescaped characters`,
+      `${x} contains unescaped characters`,
     );
   }
 }
 export class ERR_UNKNOWN_BUILTIN_MODULE extends NodeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_UNKNOWN_BUILTIN_MODULE",
-      `No such built-in module: %s`,
+      `No such built-in module: ${x}`,
     );
   }
 }
 export class ERR_UNKNOWN_CREDENTIAL extends NodeError {
-  constructor(){
+  constructor(x: string, y: string){
     super(
       "ERR_UNKNOWN_CREDENTIAL",
-      `%s identifier does not exist: %s`,
+      `${x} identifier does not exist: ${y}`,
     );
   }
 }
 export class ERR_UNKNOWN_ENCODING extends NodeTypeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_UNKNOWN_ENCODING",
-      `Unknown encoding: %s`,
+      `Unknown encoding: ${x}`,
     );
   }
 }
 export class ERR_UNKNOWN_FILE_EXTENSION extends NodeTypeError {
-  constructor(){
+  constructor(x: string, y: string){
     super(
       "ERR_UNKNOWN_FILE_EXTENSION",
-      `Unknown file extension "%s" for %s`,
+      `Unknown file extension "${x}" for ${y}`,
     );
   }
 }
 export class ERR_UNKNOWN_MODULE_FORMAT extends NodeRangeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_UNKNOWN_MODULE_FORMAT",
-      `Unknown module format: %s`,
+      `Unknown module format: ${x}`,
     );
   }
 }
 export class ERR_UNKNOWN_SIGNAL extends NodeTypeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_UNKNOWN_SIGNAL",
-      `Unknown signal: %s`,
+      `Unknown signal: ${x}`,
     );
   }
 }
 export class ERR_UNSUPPORTED_DIR_IMPORT extends NodeError {
-  constructor(){
+  constructor(x: string, y: string){
     super(
       "ERR_UNSUPPORTED_DIR_IMPORT",
-      `Directory import '%s' is not supported resolving ES modules, imported from %s`,
+      `Directory import '${x}' is not supported resolving ES modules, imported from ${x}`,
     );
   }
 }
@@ -2045,10 +2049,10 @@ export class ERR_VM_MODULE_NOT_MODULE extends NodeError {
   }
 }
 export class ERR_VM_MODULE_STATUS extends NodeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_VM_MODULE_STATUS",
-      `Module status %s`,
+      `Module status ${x}`,
     );
   }
 }
@@ -2061,10 +2065,10 @@ export class ERR_WASI_ALREADY_STARTED extends NodeError {
   }
 }
 export class ERR_WORKER_INIT_FAILED extends NodeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_WORKER_INIT_FAILED",
-      `Worker initialization failure: %s`,
+      `Worker initialization failure: ${x}`,
     );
   }
 }
@@ -2077,10 +2081,10 @@ export class ERR_WORKER_NOT_RUNNING extends NodeError {
   }
 }
 export class ERR_WORKER_OUT_OF_MEMORY extends NodeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_WORKER_OUT_OF_MEMORY",
-      `Worker terminated due to reaching memory limit: %s`,
+      `Worker terminated due to reaching memory limit: ${x}`,
     );
   }
 }
@@ -2093,18 +2097,18 @@ export class ERR_WORKER_UNSERIALIZABLE_ERROR extends NodeError {
   }
 }
 export class ERR_WORKER_UNSUPPORTED_EXTENSION extends NodeTypeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_WORKER_UNSUPPORTED_EXTENSION",
-      `The worker script extension must be ".js", ".mjs", or ".cjs". Received "%s"`,
+      `The worker script extension must be ".js", ".mjs", or ".cjs". Received "${x}"`,
     );
   }
 }
 export class ERR_WORKER_UNSUPPORTED_OPERATION extends NodeTypeError {
-  constructor(){
+  constructor(x: string){
     super(
       "ERR_WORKER_UNSUPPORTED_OPERATION",
-      `%s is not supported in workers`,
+      `${x} is not supported in workers`,
     );
   }
 }

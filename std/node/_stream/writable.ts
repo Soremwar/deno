@@ -33,31 +33,17 @@ import {
   kDestroy,
 } from "./symbols.ts";
 import {
-  codes as error_codes,
-} from "../internal/errors.js";
-
-const {
-  //@ts-ignore
   ERR_INVALID_ARG_TYPE,
-  //@ts-ignore
   ERR_METHOD_NOT_IMPLEMENTED,
-  //@ts-ignore
   ERR_MULTIPLE_CALLBACK,
-  //@ts-ignore
   ERR_STREAM_CANNOT_PIPE,
-  //@ts-ignore
   ERR_STREAM_DESTROYED,
-  //@ts-ignore
   ERR_STREAM_ALREADY_FINISHED,
-  //@ts-ignore
   ERR_STREAM_NULL_VALUES,
-  //@ts-ignore
   ERR_STREAM_WRITE_AFTER_END,
-  //@ts-ignore
   ERR_UNKNOWN_ENCODING,
-  //@ts-ignore
   ERR_INVALID_OPT_VALUE,
-} = error_codes;
+} from "../_errors.ts";
 
 function nop() {}
 

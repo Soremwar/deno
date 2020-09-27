@@ -29,8 +29,13 @@ import Stream from "./stream.ts";
 import Buffer from "../buffer.ts";
 import BufferList from "./buffer_list.ts";
 import {
-  codes as error_codes,
-} from "../internal/errors.js";
+  ERR_INVALID_ARG_TYPE,
+  ERR_STREAM_PUSH_AFTER_EOF,
+  ERR_METHOD_NOT_IMPLEMENTED,
+  ERR_STREAM_UNSHIFT_AFTER_END_EVENT,
+  ERR_INVALID_OPT_VALUE,
+  ERR_MULTIPLE_CALLBACK,
+} from "../_errors.ts";
 import {
   StringDecoder,
 } from "../string_decoder.ts";
@@ -45,21 +50,6 @@ import type Writable from "./writable.ts";
 import {
   errorOrDestroy as errorOrDestroyDuplex,
 } from "./duplex.ts";
-
-const {
-  //@ts-ignore
-  ERR_INVALID_ARG_TYPE,
-  //@ts-ignore
-  ERR_STREAM_PUSH_AFTER_EOF,
-  //@ts-ignore
-  ERR_METHOD_NOT_IMPLEMENTED,
-  //@ts-ignore
-  ERR_STREAM_UNSHIFT_AFTER_END_EVENT,
-  //@ts-ignore
-  ERR_INVALID_OPT_VALUE,
-  //@ts-ignore
-  ERR_MULTIPLE_CALLBACK,
-} = error_codes;
 
 function construct(stream: Readable, cb: () => void) {
   const r = stream._readableState;
