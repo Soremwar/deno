@@ -1490,5 +1490,4 @@ E("ERR_ZLIB_INITIALIZATION_FAILED", "Initialization failed", Error);
 
 export {
   codes,
-  kEnhanceStackBeforeInspector,
 };
