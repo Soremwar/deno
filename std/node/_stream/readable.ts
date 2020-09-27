@@ -347,10 +347,13 @@ function prependListener(
   //the prependListener() method. The goal is to eventually remove this hack.
   // TODO(Soremwar)
   // Burn it with fire
+  // deno-lint-ignore ban-ts-comment
   //@ts-ignore
   if (emitter._events.get(event)?.length) {
+    // deno-lint-ignore ban-ts-comment
     //@ts-ignore
     const listeners = [fn, ...emitter._events.get(event)];
+    // deno-lint-ignore ban-ts-comment
     //@ts-ignore
     emitter._events.set(event, listeners);
   } else {
@@ -1290,6 +1293,7 @@ class Readable extends Stream {
         paused = true;
         //TODO
         //By the time this is triggered, stream will be a readable stream
+        // deno-lint-ignore ban-ts-comment
         //@ts-ignore
         stream.pause();
       }
@@ -1299,11 +1303,14 @@ class Readable extends Stream {
     //There must be a clean way to implement this on TypeScript
     // Proxy all the other methods. Important when wrapping filters and duplexes.
     for (const i in stream) {
+      // deno-lint-ignore ban-ts-comment
       //@ts-ignore
       if (this[i] === undefined && typeof stream[i] === "function") {
+        // deno-lint-ignore ban-ts-comment
         //@ts-ignore
         this[i] = function methodWrap(method) {
           return function methodWrapReturnFunction() {
+            // deno-lint-ignore ban-ts-comment
             //@ts-ignore
             return stream[method].apply(stream, arguments);
           };
@@ -1336,8 +1343,8 @@ class Readable extends Stream {
     this._read = (n) => {
       if (paused) {
         paused = false;
-        //TODO
         //By the time this is triggered, stream will be a readable stream
+        // deno-lint-ignore ban-ts-comment
         //@ts-ignore
         stream.resume();
       }

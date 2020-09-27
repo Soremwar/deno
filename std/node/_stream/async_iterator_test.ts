@@ -80,7 +80,6 @@ Deno.test("Stream to async iterator throws on 'error' emitted", async () => {
 
   toReadableAsyncIterator(stream)
     .next()
-    //@ts-ignore
     .catch((err) => {
       error_executed++;
       if (error_executed == error_executed_expected) {
@@ -117,7 +116,6 @@ Deno.test("Async iterator matches values of Readable", async () => {
   const iter = readable[Symbol.asyncIterator]();
 
   assertEquals(
-    //@ts-ignore
     await iter.next().then(({ value }) => value),
     0,
   );

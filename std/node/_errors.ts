@@ -51,7 +51,7 @@ import { unreachable } from "../testing/asserts.ts";
  * All error instances in Node have additional methods and properties
  * This export class is meant to be extended by these instances abstracting native JS error instances
  */
-class NodeErrorAbstraction extends Error {
+export class NodeErrorAbstraction extends Error {
   code: string;
 
   constructor(name: string, code: string, message: string){
@@ -68,34 +68,34 @@ class NodeErrorAbstraction extends Error {
   }
 }
 
-class NodeError extends NodeErrorAbstraction {
+export class NodeError extends NodeErrorAbstraction {
   constructor(code: string, message: string){
     super(Error.prototype.name, code, message);
   }
 }
 
-class NodeSyntaxError extends NodeErrorAbstraction implements SyntaxError {
+export class NodeSyntaxError extends NodeErrorAbstraction implements SyntaxError {
   constructor(code: string, message: string){
     super(SyntaxError.prototype.name, code, message);
     Object.setPrototypeOf(this, SyntaxError.prototype);
   }
 }
 
-class NodeRangeError extends NodeErrorAbstraction {
+export class NodeRangeError extends NodeErrorAbstraction {
   constructor(code: string, message: string){
     super(RangeError.prototype.name, code, message);
     Object.setPrototypeOf(this, RangeError.prototype);
   }
 }
 
-class NodeTypeError extends NodeErrorAbstraction implements TypeError {
+export class NodeTypeError extends NodeErrorAbstraction implements TypeError {
   constructor(code: string, message: string){
     super(TypeError.prototype.name, code, message);
     Object.setPrototypeOf(this, TypeError.prototype);
   }
 }
 
-class NodeURIError extends NodeErrorAbstraction implements URIError {
+export class NodeURIError extends NodeErrorAbstraction implements URIError {
   constructor(code: string, message: string){
     super(URIError.prototype.name, code, message);
     Object.setPrototypeOf(this, URIError.prototype);

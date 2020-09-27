@@ -65,8 +65,10 @@ export default class BufferList {
     }
     let p: BufferListItem | null = (this.head as BufferListItem);
     let ret = "" + p.data;
-    while (p = p.next) {
+    p = p.next;
+    while (p) {
       ret += s + p.data;
+      p = p.next;
     }
     return ret;
   }
@@ -118,6 +120,7 @@ export default class BufferList {
     let ret = "";
     let p: BufferListItem | null = (this.head as BufferListItem);
     let c = 0;
+    p = p.next as BufferListItem;
     do {
       const str = p.data;
       if (n > str.length) {
@@ -140,7 +143,8 @@ export default class BufferList {
         break;
       }
       ++c;
-    } while (p = p.next);
+      p = p.next;
+    } while (p);
     this.length -= c;
     return ret;
   }
@@ -151,6 +155,7 @@ export default class BufferList {
     const retLen = n;
     let p: BufferListItem | null = (this.head as BufferListItem);
     let c = 0;
+    p = p.next as BufferListItem;
     do {
       const buf = p.data as Buffer;
       if (n > buf.length) {
@@ -173,7 +178,8 @@ export default class BufferList {
         break;
       }
       ++c;
-    } while (p = p.next);
+      p = p.next;
+    } while (p);
     this.length -= c;
     return ret;
   }

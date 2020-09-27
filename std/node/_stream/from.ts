@@ -42,7 +42,6 @@ export default function from(
   const readable = new Readable({
     objectMode: true,
     highWaterMark: 1,
-    // TODO(ronag): What options should be allowed?
     ...opts,
   });
 

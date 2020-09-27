@@ -1,34 +1,42 @@
 // Ported from https://github.com/mafintosh/end-of-stream with
 // permission from the author, Mathias Buus (@mafintosh).
-import { once } from "../internal/util.js";
+import { once } from "../_utils.ts";
 import type Readable from "./readable.ts";
 import type Writable from "./writable.ts";
 import {
   ERR_INVALID_ARG_TYPE,
   ERR_STREAM_PREMATURE_CLOSE,
+  NodeErrorAbstraction,
 } from "../_errors.ts";
 
 type Stream = Readable | Writable;
 
 function isRequest(stream: Stream) {
+  // deno-lint-ignore ban-ts-comment
   //@ts-ignore
   return stream.setHeader && typeof stream.abort === "function";
 }
 
 function isReadable(stream: Stream) {
+  // deno-lint-ignore ban-ts-comment
   //@ts-ignore
   return typeof stream.readable === "boolean" ||
+    // deno-lint-ignore ban-ts-comment
     //@ts-ignore
     typeof stream.readableEnded === "boolean" ||
+    // deno-lint-ignore ban-ts-comment
     //@ts-ignore
     !!stream._readableState;
 }
 
 function isWritable(stream: Stream) {
+  // deno-lint-ignore ban-ts-comment
   //@ts-ignore
   return typeof stream.writable === "boolean" ||
+    // deno-lint-ignore ban-ts-comment
     //@ts-ignore
     typeof stream.writableEnded === "boolean" ||
+    // deno-lint-ignore ban-ts-comment
     //@ts-ignore
     !!stream._writableState;
 }
@@ -43,7 +51,6 @@ function isWritableFinished(stream: Writable) {
 function nop() {}
 
 function isReadableEnded(stream: Readable) {
-  //@ts-ignore
   if (stream.readableEnded) return true;
   const rState = stream._readableState;
   if (!rState || rState.errored) return false;
@@ -59,20 +66,20 @@ interface FinishedOptions {
 export default function eos(
   stream: Stream,
   options: FinishedOptions | null,
-  callback: (err?: Error | null) => void,
+  callback: (err?: NodeErrorAbstraction | null) => void,
 ): () => void;
 export default function eos(
   stream: Stream,
-  callback: (err?: Error | null) => void,
+  callback: (err?: NodeErrorAbstraction | null) => void,
 ): () => void;
 
 export default function eos(
   stream: Stream,
-  x: FinishedOptions | ((err?: Error | null) => void) | null,
-  y?: (err?: Error | null) => void,
+  x: FinishedOptions | ((err?: NodeErrorAbstraction | null) => void) | null,
+  y?: (err?: NodeErrorAbstraction | null) => void,
 ) {
   let opts: FinishedOptions;
-  let callback: (err?: Error | null) => void;
+  let callback: (err?: NodeErrorAbstraction | null) => void;
 
   if (!y) {
     if (typeof x !== "function") {
@@ -99,13 +106,16 @@ export default function eos(
   const writable = opts.writable ||
     (opts.writable !== false && isWritable(stream));
 
+  // deno-lint-ignore ban-ts-comment
   //@ts-ignore
   const wState = stream._writableState;
+  // deno-lint-ignore ban-ts-comment
   //@ts-ignore
   const rState = stream._readableState;
   const state = wState || rState;
 
   const onlegacyfinish = () => {
+    // deno-lint-ignore ban-ts-comment
     //@ts-ignore
     if (!stream.writable) onfinish();
   };
@@ -122,6 +132,7 @@ export default function eos(
     isWritable(stream) === writable
   );
 
+  // deno-lint-ignore ban-ts-comment
   //@ts-ignore
   let writableFinished = stream.writableFinished ||
     (wState && wState.finished);
@@ -130,14 +141,17 @@ export default function eos(
     // Stream should not be destroyed here. If it is that
     // means that user space is doing something differently and
     // we cannot trust willEmitClose.
+    // deno-lint-ignore ban-ts-comment
     //@ts-ignore
     if (stream.destroyed) willEmitClose = false;
 
+    // deno-lint-ignore ban-ts-comment
     //@ts-ignore
     if (willEmitClose && (!stream.readable || readable)) return;
     if (!readable || readableEnded) callback.call(stream);
   };
 
+  // deno-lint-ignore ban-ts-comment
   //@ts-ignore
   let readableEnded = stream.readableEnded ||
     (rState && rState.endEmitted);
@@ -146,26 +160,30 @@ export default function eos(
     // Stream should not be destroyed here. If it is that
     // means that user space is doing something differently and
     // we cannot trust willEmitClose.
+    // deno-lint-ignore ban-ts-comment
     //@ts-ignore
     if (stream.destroyed) willEmitClose = false;
 
+    // deno-lint-ignore ban-ts-comment
     //@ts-ignore
     if (willEmitClose && (!stream.writable || writable)) return;
     if (!writable || writableFinished) callback.call(stream);
   };
 
-  const onerror = (err: Error) => {
+  const onerror = (err: NodeErrorAbstraction) => {
     callback.call(stream, err);
   };
 
   const onclose = () => {
     if (readable && !readableEnded) {
+      // deno-lint-ignore ban-ts-comment
       //@ts-ignore
       if (!isReadableEnded(stream)) {
         return callback.call(stream, new ERR_STREAM_PREMATURE_CLOSE());
       }
     }
     if (writable && !writableFinished) {
+      // deno-lint-ignore ban-ts-comment
       //@ts-ignore
       if (!isWritableFinished(stream)) {
         return callback.call(stream, new ERR_STREAM_PREMATURE_CLOSE());
@@ -175,6 +193,7 @@ export default function eos(
   };
 
   const onrequest = () => {
+    // deno-lint-ignore ban-ts-comment
     //@ts-ignore
     stream.req.on("finish", onfinish);
   };
@@ -182,6 +201,7 @@ export default function eos(
   if (isRequest(stream)) {
     stream.on("complete", onfinish);
     stream.on("abort", onclose);
+    // deno-lint-ignore ban-ts-comment
     //@ts-ignore
     if (stream.req) onrequest();
     else stream.on("request", onrequest);
@@ -191,6 +211,7 @@ export default function eos(
   }
 
   // Not all streams will emit 'close' after 'aborted'.
+  // deno-lint-ignore ban-ts-comment
   //@ts-ignore
   if (typeof stream.aborted === "boolean") {
     stream.on("aborted", onclose);
@@ -206,6 +227,7 @@ export default function eos(
     (rState && rState.closed) ||
     (wState && wState.errorEmitted) ||
     (rState && rState.errorEmitted) ||
+    // deno-lint-ignore ban-ts-comment
     //@ts-ignore
     (rState && stream.req && stream.aborted) ||
     (
@@ -233,6 +255,7 @@ export default function eos(
     stream.removeListener("complete", onfinish);
     stream.removeListener("abort", onclose);
     stream.removeListener("request", onrequest);
+    // deno-lint-ignore ban-ts-comment
     //@ts-ignore
     if (stream.req) stream.req.removeListener("finish", onfinish);
     stream.removeListener("end", onlegacyfinish);

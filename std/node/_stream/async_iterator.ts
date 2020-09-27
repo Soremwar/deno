@@ -73,7 +73,6 @@ function finish(self: ReadableStreamAsyncIterator, err?: Error) {
     const stream = self[kStream];
 
     finished(stream, (err) => {
-      //@ts-ignore
       if (err && err.code !== "ERR_STREAM_PREMATURE_CLOSE") {
         reject(err);
       } else {
@@ -154,7 +153,6 @@ class ReadableStreamAsyncIterator implements AsyncIterableIterator<any> {
           resolve(createIterResult(undefined, true));
         } else {
           finished(this[kStream], (err) => {
-            //@ts-ignore
             if (err && err.code !== "ERR_STREAM_PREMATURE_CLOSE") {
               reject(err);
             } else {
@@ -212,7 +210,6 @@ const createReadableStreamAsyncIterator = (stream: any) => {
   iterator[kLastPromise] = null;
 
   finished(stream, { writable: false }, (err) => {
-    //@ts-ignore
     if (err && err.code !== "ERR_STREAM_PREMATURE_CLOSE") {
       const reject = iterator[kLastReject];
       // Reject if we are waiting for data in the Promise returned by next() and
