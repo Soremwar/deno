@@ -1,6 +1,5 @@
 import finished from "./end-of-stream.ts";
 import Readable from "./readable.ts";
-import type Stream from "./stream.ts";
 import * as destroyImpl from "./destroy.js";
 
 const kLastResolve = Symbol("lastResolve");
@@ -12,11 +11,14 @@ const kHandlePromise = Symbol("handlePromise");
 const kStream = Symbol("stream");
 
 // deno-lint-ignore no-explicit-any
-function createIterResult(value: any, done: boolean): IteratorResult<any> {
+type ReadableIteratorResult = IteratorResult<any>;
+
+// deno-lint-ignore no-explicit-any
+function createIterResult(value: any, done: boolean): ReadableIteratorResult {
   return { value, done };
 }
 
-function readAndResolve(iter: any) {
+function readAndResolve(iter: ReadableStreamAsyncIterator) {
   const resolve = iter[kLastResolve];
   if (resolve !== null) {
     const data = iter[kStream].read();
@@ -30,7 +32,7 @@ function readAndResolve(iter: any) {
   }
 }
 
-function onReadable(iter: any) {
+function onReadable(iter: ReadableStreamAsyncIterator) {
   // We wait for the next tick, because it might
   // emit an error with `process.nextTick()`.
   //TODO
@@ -39,8 +41,8 @@ function onReadable(iter: any) {
   queueMicrotask(() => readAndResolve(iter));
 }
 
-function wrapForNext(lastPromise: Promise<any>, iter: any) {
-  return (resolve: (value: any) => void, reject: (value: any) => void) => {
+function wrapForNext(lastPromise: Promise<ReadableIteratorResult>, iter: ReadableStreamAsyncIterator) {
+  return (resolve: (value: ReadableIteratorResult) => void, reject: (error: Error) => void) => {
     lastPromise.then(() => {
       if (iter[kEnded]) {
         resolve(createIterResult(undefined, true));
@@ -52,8 +54,8 @@ function wrapForNext(lastPromise: Promise<any>, iter: any) {
   };
 }
 
-function finish(self: any, err?: Error) {
-  return new Promise((resolve, reject) => {
+function finish(self: ReadableStreamAsyncIterator, err?: Error) {
+  return new Promise((resolve: (result: ReadableIteratorResult) => void, reject: (error: Error) => void) => {
     const stream = self[kStream];
 
     finished(stream, (err) => {
@@ -77,10 +79,8 @@ class ReadableStreamAsyncIterator implements AsyncIterableIterator<any> {
   [kEnded]: boolean;
   [kError]: Error | null = null;
   [kHandlePromise] = (
-    // deno-lint-ignore no-explicit-any
-    resolve: (value: any) => void,
-    // deno-lint-ignore no-explicit-any
-    reject: (value: any) => void,
+    resolve: (value: ReadableIteratorResult) => void,
+    reject: (value: Error) => void,
   ) => {
     const data = this[kStream].read();
     if (data) {
@@ -120,7 +120,7 @@ class ReadableStreamAsyncIterator implements AsyncIterableIterator<any> {
     return this[kStream];
   }
 
-  next() {
+  next(): Promise<ReadableIteratorResult> {
     // If we have detected an error in the meanwhile
     // reject straight away.
     const error = this[kError];
@@ -175,17 +175,18 @@ class ReadableStreamAsyncIterator implements AsyncIterableIterator<any> {
     return promise;
   }
 
-  return(): Promise<any> {
+  return(): Promise<ReadableIteratorResult> {
     return finish(this);
   }
 
-  throw(err: Error): Promise<any> {
+  throw(err: Error): Promise<ReadableIteratorResult> {
     return finish(this, err);
   }
 }
 
-//TODO
+//TODO(Soremwar)
 //Should be all implementation of Stream
+// deno-lint-ignore no-explicit-any
 const createReadableStreamAsyncIterator = (stream: any) => {
   if (typeof stream.read !== "function") {
     const src = stream;
