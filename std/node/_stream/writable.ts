@@ -31,7 +31,7 @@ import {
 import {
   kConstruct,
   kDestroy,
-} from "./symbols.js";
+} from "./symbols.ts";
 import {
   codes as error_codes,
 } from "../internal/errors.js";

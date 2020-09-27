@@ -40,7 +40,7 @@ import {
   kConstruct,
   kDestroy,
   kPaused,
-} from "./symbols.js";
+} from "./symbols.ts";
 import type Writable from "./writable.ts";
 import {
   errorOrDestroy as errorOrDestroyDuplex,

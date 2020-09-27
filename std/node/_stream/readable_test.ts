@@ -94,7 +94,7 @@ Deno.test("Readable stream gets destroyed on error", async () => {
 });
 
 Deno.test("Readable stream works as Transform stream", async () => {
-  async function* generate(stream) {
+  async function* generate(stream: Readable) {
     for await (const chunk of stream) {
       yield chunk.toUpperCase();
     }
@@ -123,13 +123,13 @@ Deno.test("Readable stream can be paused", () => {
   const readable = new Readable();
 
   // _read is a noop, here.
-  readable._read = Function();
+  readable._read = () => {};
 
   // Default state of a stream is not "paused"
   assert(!readable.isPaused());
 
   // Make the stream start flowing...
-  readable.on("data", Function());
+  readable.on("data", () => {});
 
   // still not paused.
   assert(!readable.isPaused());
@@ -444,7 +444,7 @@ Deno.test("Readable stream: 'read' is emitted on empty string pushed in non-obje
 
   const underlyingData = ["", "x", "y", "", "z"];
   const expected = underlyingData.filter((data) => data);
-  const result = [];
+  const result: unknown[] = [];
 
   const r = new Readable({
     encoding: "utf8",
@@ -486,7 +486,7 @@ Deno.test("Readable stream: listeners can be removed", () => {
   r._read = () => {};
   r.on("data", () => {});
 
-  r.removeAllListeners();
+  r.removeAllListeners("data");
 
   assertEquals(r.eventNames().length, 0);
 });

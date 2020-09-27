@@ -12,7 +12,7 @@ import {
 } from "../../testing/asserts.ts";
 
 Deno.test("Writable stream writes correctly", async () => {
-  let callback;
+  let callback: undefined | ((error?: Error | null | undefined) => void);
 
   let write_executed = 0;
   const write_executed_expected = 1;
@@ -48,7 +48,7 @@ Deno.test("Writable stream writes correctly", async () => {
   writable.write(new TextEncoder().encode("ABC"));
   writable.write(new TextEncoder().encode("DEF"));
   writable.end(new TextEncoder().encode("GHI"));
-  callback();
+  callback?.();
 
   const write_timeout = setTimeout(
     () => write_expected_executions.reject(),
@@ -115,6 +115,7 @@ Deno.test("Writable stream throws on unexpected close", async () => {
     if (finished_executed == finished_executed_expected) {
       finished_expected_executions.resolve();
     }
+    //@ts-ignore
     assertEquals(err.code, "ERR_STREAM_PREMATURE_CLOSE");
   });
 

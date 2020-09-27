@@ -1,6 +1,5 @@
 import finished from "./end-of-stream.ts";
 import Readable from "./readable.ts";
-import * as destroyImpl from "./destroy.js";
 
 const kLastResolve = Symbol("lastResolve");
 const kLastReject = Symbol("lastReject");
