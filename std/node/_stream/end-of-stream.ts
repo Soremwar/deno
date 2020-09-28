@@ -1,5 +1,3 @@
-// Ported from https://github.com/mafintosh/end-of-stream with
-// permission from the author, Mathias Buus (@mafintosh).
 import { once } from "../_utils.ts";
 import type Readable from "./readable.ts";
 import type Writable from "./writable.ts";
@@ -138,9 +136,6 @@ export default function eos(
     (wState && wState.finished);
   const onfinish = () => {
     writableFinished = true;
-    // Stream should not be destroyed here. If it is that
-    // means that user space is doing something differently and
-    // we cannot trust willEmitClose.
     // deno-lint-ignore ban-ts-comment
     //@ts-ignore
     if (stream.destroyed) willEmitClose = false;
@@ -157,9 +152,6 @@ export default function eos(
     (rState && rState.endEmitted);
   const onend = () => {
     readableEnded = true;
-    // Stream should not be destroyed here. If it is that
-    // means that user space is doing something differently and
-    // we cannot trust willEmitClose.
     // deno-lint-ignore ban-ts-comment
     //@ts-ignore
     if (stream.destroyed) willEmitClose = false;
@@ -210,7 +202,6 @@ export default function eos(
     stream.on("close", onlegacyfinish);
   }
 
-  // Not all streams will emit 'close' after 'aborted'.
   // deno-lint-ignore ban-ts-comment
   //@ts-ignore
   if (typeof stream.aborted === "boolean") {
@@ -237,15 +228,6 @@ export default function eos(
   );
 
   if (closed) {
-    // TODO(ronag): Re-throw error if errorEmitted?
-    // TODO(ronag): Throw premature close as if finished was called?
-    // before being closed? i.e. if closed but not errored, ended or finished.
-    // TODO(ronag): Throw some kind of error? Does it make sense
-    // to call finished() on a "finished" stream?
-    // TODO(ronag): willEmitClose?
-    // TODO(Soremwar)
-    // God this is a mess
-    // This is a replacement for `process.nextTick(() => callback());`
     queueMicrotask(callback);
   }
 

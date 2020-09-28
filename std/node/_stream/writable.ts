@@ -19,10 +19,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 // USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-// A bit simpler than readable streams.
-// Implement an async ._write(chunk, encoding, cb), and it'll handle all
-// the drain event emission and buffering.
-
 import Buffer from "../buffer.ts";
 import Stream from "./stream.ts";
 import { captureRejectionSymbol } from "../events.ts";
@@ -42,7 +38,7 @@ import {
 
 function nop() {}
 
-//TODO
+//TODO(Soremwar)
 //Bring in encodings
 type write_v = (
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -58,8 +54,6 @@ type AfterWriteTick = {
 };
 
 const kOnFinished = Symbol("kOnFinished");
-
-////////////////////////////////////////////
 
 function destroy(this: Writable, err?: Error, cb?: () => void) {
   const w = this._writableState;
@@ -83,7 +77,6 @@ function destroy(this: Writable, err?: Error, cb?: () => void) {
 
   w.destroyed = true;
 
-  // If still constructing then defer calling _destroy.
   if (!w.constructed) {
     this.once(kDestroy, (er) => {
       _destroy(this, err || er, cb);
@@ -208,9 +201,7 @@ function construct(stream: Writable, cb: (error: Error) => void) {
   });
 }
 
-///////////////////////////////////////////
-
-//TODO
+//TODO(Soremwar)
 //Bring encodings in
 function writeOrBuffer(
   stream: Writable,
@@ -243,13 +234,10 @@ function writeOrBuffer(
 
   const ret = state.length < state.highWaterMark;
 
-  // We must ensure that previous needDrain will not be reset to false.
   if (!ret) {
     state.needDrain = true;
   }
 
-  // Return false if errored or destroyed in order to break
-  // any synchronous while(stream.write(data)) loops.
   return ret && !state.errored && !state.destroyed;
 }
 
@@ -288,12 +276,7 @@ function onwriteError(
   --state.pendingcb;
 
   cb(er);
-  // Ensure callbacks are invoked even when autoDestroy is
-  // not enabled. Passing `er` here doesn't make sense since
-  // it's related to one specific write, not to the buffered
-  // writes.
   errorBuffer(state);
-  // This can emit error, but error must always follow cb.
   errorOrDestroy(stream, er);
 }
 
@@ -321,9 +304,6 @@ function onwrite(stream: Writable, er?: Error | null) {
     }
 
     if (sync) {
-      //TODO(Soremwar)
-      //This replaces `process.nextTick(onwriteError, stream, state, er, cb);`
-      //Check if this is a reliable replace
       queueMicrotask(() => onwriteError(stream, state, er, cb));
     } else {
       onwriteError(stream, state, er, cb);
@@ -334,10 +314,6 @@ function onwrite(stream: Writable, er?: Error | null) {
     }
 
     if (sync) {
-      // It is a common case that the callback passed to .write() is always
-      // the same. In that case, we do not schedule a new nextTick(), but
-      // rather just increase a counter, to improve performance and avoid
-      // memory allocations.
       if (
         state.afterWriteTickInfo !== null &&
         state.afterWriteTickInfo.cb === cb
@@ -350,9 +326,6 @@ function onwrite(stream: Writable, er?: Error | null) {
           stream,
           state,
         };
-        //TODO(Soremwar)
-        //This replaces `process.nextTick(afterWriteTick, state.afterWriteTickInfo);`
-        //Check if this is a reliable replace
         queueMicrotask(() =>
           afterWriteTick(state.afterWriteTickInfo as AfterWriteTick)
         );
@@ -398,7 +371,7 @@ function afterWrite(
   finishMaybe(stream, state);
 }
 
-// If there's something in the buffer waiting, then invoke callbacks.
+/** If there's something in the buffer waiting, then invoke callbacks.*/
 function errorBuffer(state: WritableState) {
   if (state.writing) {
     return;
@@ -418,7 +391,7 @@ function errorBuffer(state: WritableState) {
   resetBuffer(state);
 }
 
-// If there's something in the buffer waiting, then process it.
+/** If there's something in the buffer waiting, then process it.*/
 function clearBuffer(stream: Writable, state: WritableState) {
   if (
     state.corked ||
@@ -447,13 +420,12 @@ function clearBuffer(stream: Writable, state: WritableState) {
         buffered[n].callback(err);
       }
     };
-    // Make a copy of `buffered` if it's going to be used by `callback` above,
-    // since `doWrite` will mutate the array.
     const chunks = state.allNoop && i === 0 ? buffered : buffered.slice(i);
 
     //TODO(Soremwar)
-    //I cannot figure this out at
-    //chunks.allBuffers = state.allBuffers;
+    //I cannot figure this out at all
+    //Removing it doesn't seem to do anything though
+    //This should go here  > chunks.allBuffers = state.allBuffers;
 
     doWrite(stream, state, true, state.length, chunks, "", callback);
 
@@ -482,7 +454,6 @@ function clearBuffer(stream: Writable, state: WritableState) {
 
 function finish(stream: Writable, state: WritableState) {
   state.pendingcb--;
-  // TODO (ronag): Unify with needFinish.
   if (state.errorEmitted || state.closeEmitted) {
     return;
   }
@@ -506,9 +477,6 @@ function finishMaybe(stream: Writable, state: WritableState, sync?: boolean) {
     if (state.pendingcb === 0 && needFinish(state)) {
       state.pendingcb++;
       if (sync) {
-        //TODO(Soremwar)
-        //This replaces `process.nextTick(finish, stream, state);`
-        //Check if this is a reliable replace
         queueMicrotask(() => finish(stream, state));
       } else {
         finish(stream, state);
@@ -534,13 +502,7 @@ function prefinish(stream: Writable, state: WritableState) {
         } else if (needFinish(state)) {
           state.prefinished = true;
           stream.emit("prefinish");
-          // Backwards compat. Don't check state.sync here.
-          // Some streams assume 'finish' will be emitted
-          // asynchronously relative to _final callback.
           state.pendingcb++;
-          //TODO(Soremwar)
-          //This replaces `process.nextTick(finish, stream, state);`
-          //Check if this is a reliable replace
           queueMicrotask(() => finish(stream, state));
         }
       });
@@ -681,6 +643,10 @@ function resetBuffer(state: WritableState) {
   state.allNoop = true;
 }
 
+/** A bit simpler than readable streams.
+* Implement an async `._write(chunk, encoding, cb)`, and it'll handle all
+* the drain event emission and buffering.
+*/
 class Writable extends Stream {
   _construct?: (cb: (error?: Error) => void) => void;
   _final?: (
@@ -734,7 +700,6 @@ class Writable extends Stream {
   }
 
   set destroyed(value) {
-    // Backward compatibility, the user is explicitly managing destroyed.
     if (this._writableState) {
       this._writableState.destroyed = value;
     }
@@ -746,7 +711,6 @@ class Writable extends Stream {
   }
 
   set writable(val) {
-    // Backwards compatible.
     if (this._writableState) {
       this._writableState.writable = !!val;
     }
@@ -802,9 +766,6 @@ class Writable extends Stream {
   destroy(err?: Error, cb?: () => void) {
     const state = this._writableState;
     if (!state.destroyed) {
-      //TODO(Soremwar)
-      //This replaces `process.nextTick(errorBuffer, state);`
-      //Check if this is a reliable replace
       queueMicrotask(() => errorBuffer(state));
     }
     destroy.call(this, err, cb);
@@ -853,16 +814,11 @@ class Writable extends Stream {
       this.write(chunk, encoding);
     }
 
-    // .end() fully uncorks.
     if (state.corked) {
       state.corked = 1;
       this.uncork();
     }
 
-    // This is forgiving in terms of unnecessary calls to end() and can hide
-    // logic errors. However, usually such errors are harmless and causing a
-    // hard error can be disproportionately destructive. It is not always
-    // trivial for the user to determine whether end() needs to be called or not.
     let err: Error | undefined;
     if (!state.errored && !state.ending) {
       state.ending = true;
@@ -876,9 +832,6 @@ class Writable extends Stream {
 
     if (typeof cb === "function") {
       if (err || state.finished) {
-        //TODO(Soremwar)
-        //This replaces `process.nextTick(cb, err);`
-        //Check if this is a reliable replace
         queueMicrotask(() => {
           (cb as (error?: Error | undefined) => void)(err);
         });
@@ -984,9 +937,6 @@ class Writable extends Stream {
     }
 
     if (err) {
-      //TODO(Soremwar)
-      //This replaces `process.nextTick(cb, err);`
-      //Check if this is a reliable replace
       queueMicrotask(() => cb(err));
       errorOrDestroy(this, err, true);
       return false;

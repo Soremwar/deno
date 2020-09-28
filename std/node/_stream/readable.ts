@@ -1,7 +1,3 @@
-//TODO@Soremwar
-//Investigate/Reintegrate debug calls for the stream
-//Reintegrate lazy loads
-
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -157,9 +153,6 @@ function pipeOnDrain(src: Readable, dest: Writable) {
   return function pipeOnDrainFunctionResult() {
     const state = src._readableState;
 
-    // `ondrain` will call directly,
-    // `this` maybe not a reference to dest,
-    // so we use the real dest here.
     if (state.awaitDrainWriters === dest) {
       state.awaitDrainWriters = null;
     } else if (state.multiAwaitDrain) {
@@ -280,9 +273,6 @@ function readableAddChunk(
     maybeReadMore(stream, state);
   }
 
-  // We can push more data if we are below the highWaterMark.
-  // Also, if we have no data yet, we can stand some more bytes.
-  // This is to work around cases where hwm=0, such as the repl.
   return !state.ended &&
     (state.length < state.highWaterMark || state.length === 0);
 }
@@ -294,8 +284,6 @@ function addChunk(
   addToFront: boolean,
 ) {
   if (state.flowing && state.length === 0 && !state.sync) {
-    // Use the guard to avoid creating `Set()` repeatedly
-    // when we have multiple pipes.
     if (state.multiAwaitDrain) {
       (state.awaitDrainWriters as Set<Writable>).clear();
     } else {
@@ -324,8 +312,6 @@ function prependListener(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   fn: (...args: any[]) => any,
 ) {
-  // Sadly this is not cacheable as some libraries bundle their own
-  // event emitter implementation with them.
   if (typeof emitter.prependListener === "function") {
     return emitter.prependListener(event, fn);
   }
@@ -350,10 +336,11 @@ function prependListener(
   }
 }
 
-// Pluck off n bytes from an array of buffers.
-// Length is the combined lengths of all the buffers in the list.
-// This function is designed to be inlinable, so please take care when making
-// changes to the function body.
+/** Pluck off n bytes from an array of buffers.
+* Length is the combined lengths of all the buffers in the list.
+* This function is designed to be inlinable, so please take care when making
+* changes to the function body.
+*/
 function fromList(n: number, state: ReadableState) {
   // nothing buffered.
   if (state.length === 0) {
@@ -364,7 +351,6 @@ function fromList(n: number, state: ReadableState) {
   if (state.objectMode) {
     ret = state.buffer.shift();
   } else if (!n || n >= state.length) {
-    // Read it all, truncate the list.
     if (state.decoder) {
       ret = state.buffer.join("");
     } else if (state.buffer.length === 1) {
@@ -374,7 +360,6 @@ function fromList(n: number, state: ReadableState) {
     }
     state.buffer.clear();
   } else {
-    // read part of list.
     ret = state.buffer.consume(n, !!state.decoder);
   }
 
@@ -391,7 +376,6 @@ function endReadable(stream: Readable) {
 }
 
 function endReadableNT(state: ReadableState, stream: Readable) {
-  // Check that we didn't get one last unshift.
   if (
     !state.errorEmitted && !state.closeEmitted &&
     !state.endEmitted && state.length === 0
@@ -409,11 +393,8 @@ function endReadableNT(state: ReadableState, stream: Readable) {
 const MAX_HWM = 0x40000000;
 function computeNewHighWaterMark(n: number) {
   if (n >= MAX_HWM) {
-    // TODO(ronag): Throw ERR_VALUE_OUT_OF_RANGE.
     n = MAX_HWM;
   } else {
-    // Get the next highest power of 2 to prevent increasing hwm excessively in
-    // tiny amounts.
     n--;
     n |= n >>> 1;
     n |= n >>> 2;
@@ -425,8 +406,6 @@ function computeNewHighWaterMark(n: number) {
   return n;
 }
 
-// This function is designed to be inlinable, so please take care when making
-// changes to the function body.
 function howMuchToRead(n: number, state: ReadableState) {
   if (n <= 0 || (state.length === 0 && state.ended)) {
     return 0;
@@ -459,23 +438,14 @@ function onEofChunk(stream: Readable, state: ReadableState) {
   state.ended = true;
 
   if (state.sync) {
-    // If we are sync, wait until next tick to emit the data.
-    // Otherwise we risk emitting data in the flow()
-    // the readable code triggers during a read() call.
     emitReadable(stream);
   } else {
-    // Emit 'readable' now to make sure it gets picked up.
     state.needReadable = false;
     state.emittedReadable = true;
-    // We have to emit readable now that we are EOF. Modules
-    // in the ecosystem (e.g. dicer) rely on this event being sync.
     emitReadable_(stream);
   }
 }
 
-// Don't emit readable right away in sync mode, because this can trigger
-// another read() call => stack overflow.  This way, it might trigger
-// a nextTick recursion warning, but that's not so bad.
 function emitReadable(stream: Readable) {
   const state = stream._readableState;
   state.needReadable = false;
@@ -492,24 +462,12 @@ function emitReadable_(stream: Readable) {
     state.emittedReadable = false;
   }
 
-  // The stream needs another readable event if:
-  // 1. It is not flowing, as the flow mechanism will take
-  //    care of it.
-  // 2. It is not ended.
-  // 3. It is below the highWaterMark, so we can schedule
-  //    another readable later.
   state.needReadable = !state.flowing &&
     !state.ended &&
     state.length <= state.highWaterMark;
   flow(stream);
 }
 
-// At this point, the user has presumably seen the 'readable' event,
-// and called read() to consume some data.  that may have triggered
-// in turn another _read(n) call, in which case reading = true if
-// it's in progress.
-// However, if we're not ended, or reading, and the length < hwm,
-// then go ahead and try to read some more preemptively.
 function maybeReadMore(stream: Readable, state: ReadableState) {
   if (!state.readingMore && state.constructed) {
     state.readingMore = true;
@@ -518,29 +476,6 @@ function maybeReadMore(stream: Readable, state: ReadableState) {
 }
 
 function maybeReadMore_(stream: Readable, state: ReadableState) {
-  // Attempt to read more data if we should.
-  //
-  // The conditions for reading more data are (one of):
-  // - Not enough data buffered (state.length < state.highWaterMark). The loop
-  //   is responsible for filling the buffer with enough data if such data
-  //   is available. If highWaterMark is 0 and we are not in the flowing mode
-  //   we should _not_ attempt to buffer any extra data. We'll get more data
-  //   when the stream consumer calls read() instead.
-  // - No data in the buffer, and the stream is in flowing mode. In this mode
-  //   the loop below is responsible for ensuring read() is called. Failing to
-  //   call read here would abort the flow and there's no other mechanism for
-  //   continuing the flow if the stream consumer has just subscribed to the
-  //   'data' event.
-  //
-  // In addition to the above conditions to keep reading data, the following
-  // conditions prevent the data from being read:
-  // - The stream has ended (state.ended).
-  // - There is already a pending 'read' operation (state.reading). This is a
-  //   case where the the stream has called the implementation defined _read()
-  //   method, but they are processing the call asynchronously and have _not_
-  //   called push() with new data. In this case we skip performing more
-  //   read()s. The execution ends in this method again after the _read() ends
-  //   up calling push() with more data.
   while (
     !state.reading && !state.ended &&
     (state.length < state.highWaterMark ||
@@ -680,7 +615,6 @@ class Readable extends Stream {
     const state = this._readableState;
     const nOrig = n;
 
-    // If we're asking for more than the current hwm, then raise the hwm.
     if (n > state.highWaterMark) {
       state.highWaterMark = computeNewHighWaterMark(n);
     }
@@ -689,9 +623,6 @@ class Readable extends Stream {
       state.emittedReadable = false;
     }
 
-    // If we're doing read(0) to trigger a readable event, but we
-    // already have a bunch of data in the buffer, then just trigger
-    // the 'readable' event and move on.
     if (
       n === 0 &&
       state.needReadable &&
@@ -710,7 +641,6 @@ class Readable extends Stream {
 
     n = howMuchToRead(n, state);
 
-    // If we've ended, and we're now clear, then finish it up.
     if (n === 0 && state.ended) {
       if (state.length === 0) {
         endReadable(this);
@@ -718,40 +648,13 @@ class Readable extends Stream {
       return null;
     }
 
-    // All the actual chunk generation logic needs to be
-    // *below* the call to _read.  The reason is that in certain
-    // synthetic stream cases, such as passthrough streams, _read
-    // may be a completely synchronous operation which may change
-    // the state of the read buffer, providing enough data when
-    // before there was *not* enough.
-    //
-    // So, the steps are:
-    // 1. Figure out what the state of things will be after we do
-    // a read from the buffer.
-    //
-    // 2. If that resulting state will trigger a _read, then call _read.
-    // Note that this may be asynchronous, or synchronous.  Yes, it is
-    // deeply ugly to write APIs this way, but that still doesn't mean
-    // that the Readable class should behave improperly, as streams are
-    // designed to be sync/async agnostic.
-    // Take note if the _read call is sync or async (ie, if the read call
-    // has returned yet), so that we know whether or not it's safe to emit
-    // 'readable' etc.
-    //
-    // 3. Actually pull the requested chunks out of the buffer and return.
-
-    // if we need a readable event, then we need to do some reading.
     let doRead = state.needReadable;
-    // If we currently have less than the highWaterMark, then also read some.
     if (
       state.length === 0 || state.length - (n as number) < state.highWaterMark
     ) {
       doRead = true;
     }
 
-    // However, if we've ended, then there's no point, if we're already
-    // reading, then it's unnecessary, if we're constructing we have to wait,
-    // and if we're destroyed or errored, then it's not allowed,
     if (
       state.ended || state.reading || state.destroyed || state.errored ||
       !state.constructed
@@ -760,15 +663,11 @@ class Readable extends Stream {
     } else if (doRead) {
       state.reading = true;
       state.sync = true;
-      // If the length is currently zero, then we *need* a readable event.
       if (state.length === 0) {
         state.needReadable = true;
       }
-      // Call internal read method
       this._read();
       state.sync = false;
-      // If _read pushed data synchronously, then `reading` will be false,
-      // and we need to re-evaluate how much data we can return to the user.
       if (!state.reading) {
         n = howMuchToRead(nOrig, state);
       }
@@ -794,13 +693,10 @@ class Readable extends Stream {
     }
 
     if (state.length === 0) {
-      // If we have nothing in the buffer, then we want to know
-      // as soon as we *do* get something into the buffer.
       if (!state.ended) {
         state.needReadable = true;
       }
 
-      // If we tried to read() past the EOF, then emit end on the next tick.
       if (nOrig !== n && state.ended) {
         endReadable(this);
       }
@@ -813,10 +709,6 @@ class Readable extends Stream {
     return ret;
   }
 
-  // Abstract method.  to be overridden in specific implementation classes.
-  // call cb(er, data) where data is <= n in length.
-  // for virtual (non-string, non-buffer) streams, "length" is somewhat
-  // arbitrary, and perhaps not very meaningful.
   _read() {
     throw new ERR_METHOD_NOT_IMPLEMENTED("_read()");
   }
@@ -841,9 +733,9 @@ class Readable extends Stream {
 
     const doEnd = (!pipeOpts || pipeOpts.end !== false);
 
-    //TODO
+    //TODO(Soremwar)
     //Part of doEnd condition
-    //In  node, output is a writable Stream
+    //In  node, output/inout are a duplex Stream
     // &&
     // dest !== stdout &&
     // dest !== stderr
@@ -873,7 +765,6 @@ class Readable extends Stream {
 
     let cleanedUp = false;
     function cleanup() {
-      // Cleanup event handlers once the pipe is broken.
       dest.removeListener("close", onclose);
       dest.removeListener("finish", onfinish);
       if (ondrain) {
@@ -886,12 +777,6 @@ class Readable extends Stream {
       src.removeListener("data", ondata);
 
       cleanedUp = true;
-
-      // If the reader is waiting for a drain event from this
-      // specific writer, then it would cause it to never start
-      // flowing again.
-      // So, if this is awaiting a drain, then we just call it now.
-      // If we don't know, then assume that we are waiting for one.
       if (
         ondrain && state.awaitDrainWriters &&
         (!dest._writableState || dest._writableState.needDrain)
@@ -905,10 +790,6 @@ class Readable extends Stream {
     function ondata(chunk: any) {
       const ret = dest.write(chunk);
       if (ret === false) {
-        // If the user unpiped during `dest.write()`, it is possible
-        // to get stuck in a permanently paused state if that write
-        // also returned false.
-        // => Check whether `dest` is still a piping destination.
         if (!cleanedUp) {
           if (state.pipes.length === 1 && state.pipes[0] === dest) {
             state.awaitDrainWriters = dest;
@@ -919,18 +800,12 @@ class Readable extends Stream {
           src.pause();
         }
         if (!ondrain) {
-          // When the dest drains, it reduces the awaitDrain counter
-          // on the source.  This would be more elegant with a .once()
-          // handler in flow(), but adding and removing repeatedly is
-          // too slow.
           ondrain = pipeOnDrain(src, dest);
           dest.on("drain", ondrain);
         }
       }
     }
 
-    // If the dest has an error, then stop piping into it.
-    // However, don't suppress the throwing behavior for this.
     function onerror(er: Error) {
       unpipe();
       dest.removeListener("error", onerror);
@@ -947,10 +822,8 @@ class Readable extends Stream {
       }
     }
 
-    // Make sure our error handler is attached before userland ones.
     prependListener(dest, "error", onerror);
 
-    // Both close and finish should trigger unpipe, but only once.
     function onclose() {
       dest.removeListener("finish", onfinish);
       unpipe();
@@ -966,10 +839,8 @@ class Readable extends Stream {
       src.unpipe(dest);
     }
 
-    // Tell the dest that it's being piped to.
     dest.emit("pipe", this);
 
-    // Start the flow if it hasn't been started already.
     if (!state.flowing) {
       this.resume();
     }
@@ -987,11 +858,9 @@ class Readable extends Stream {
   setEncoding(enc: string) {
     const decoder = new StringDecoder(enc);
     this._readableState.decoder = decoder;
-    // If setEncoding(null), decoder.encoding equals utf8.
     this._readableState.encoding = this._readableState.decoder.encoding;
 
     const buffer = this._readableState.buffer;
-    // Iterate over current buffer to convert already stored Buffers:
     let content = "";
     for (const data of buffer) {
       content += decoder.write(data as Buffer);
@@ -1027,11 +896,8 @@ class Readable extends Stream {
     const state = this._readableState;
 
     if (ev === "data") {
-      // Update readableListening so that resume() may be a no-op
-      // a few lines down. This is needed to support once('readable').
       state.readableListening = this.listenerCount("readable") > 0;
 
-      // Try start flowing on next tick if stream isn't explicitly paused.
       if (state.flowing !== false) {
         this.resume();
       }
@@ -1076,12 +942,6 @@ class Readable extends Stream {
     const res = super.removeListener.call(this, ev, fn);
 
     if (ev === "readable") {
-      // We need to check if there is someone still listening to
-      // readable and reset the state. However this needs to happen
-      // after readable has been emitted but before I/O (nextTick) to
-      // support once('readable', fn) cycles. This means that calling
-      // resume within the same tick will have no
-      // effect.
       queueMicrotask(() => updateReadableListening(this));
     }
 
@@ -1164,7 +1024,6 @@ class Readable extends Stream {
     const state = this._readableState;
     const unpipeInfo = { hasUnpiped: false };
 
-    // If we're not piping anywhere, then do nothing.
     if (state.pipes.length === 0) {
       return this;
     }
@@ -1181,7 +1040,6 @@ class Readable extends Stream {
       return this;
     }
 
-    // Try to find the right one.
     const index = state.pipes.indexOf(dest);
     if (index === -1) {
       return this;
@@ -1212,20 +1070,12 @@ class Readable extends Stream {
     const res = super.removeAllListeners(ev);
 
     if (ev === "readable" || ev === undefined) {
-      // We need to check if there is someone still listening to
-      // readable and reset the state. However this needs to happen
-      // after readable has been emitted but before I/O (nextTick) to
-      // support once('readable', fn) cycles. This means that calling
-      // resume within the same tick will have no
-      // effect.
       queueMicrotask(() => updateReadableListening(this));
     }
 
     return res;
   }
 
-  // pause() and resume() are remnants of the legacy readable stream API
-  // If the user uses them, then switch into old mode.
   resume() {
     const state = this._readableState;
     if (!state.flowing) {
@@ -1246,10 +1096,9 @@ class Readable extends Stream {
     }
     this._readableState[kPaused] = true;
     return this;
-  } // Wrap an old-style stream as the async data source.
-  // This is *not* part of the readable stream interface.
-  // It is an ugly unfortunate mess of history.
+  } 
 
+  /** Wrap an old-style stream as the async data source. */
   wrap(stream: Stream): this {
     const state = this._readableState;
     let paused = false;
@@ -1270,7 +1119,6 @@ class Readable extends Stream {
         chunk = state.decoder.write(chunk);
       }
 
-      // Don't skip over falsy values in objectMode.
       if (state.objectMode && (chunk === null || chunk === undefined)) {
         return;
       } else if (!state.objectMode && (!chunk || !chunk.length)) {
@@ -1280,16 +1128,15 @@ class Readable extends Stream {
       const ret = this.push(chunk);
       if (!ret) {
         paused = true;
-        //TODO
-        //By the time this is triggered, stream will be a readable stream
+        // By the time this is triggered, stream will be a readable stream
         // deno-lint-ignore ban-ts-comment
-        //@ts-ignore
+        // @ts-ignore
         stream.pause();
       }
     });
 
-    //TODO(Soremwar)
-    //There must be a clean way to implement this on TypeScript
+    // TODO(Soremwar)
+    // There must be a clean way to implement this on TypeScript
     // Proxy all the other methods. Important when wrapping filters and duplexes.
     for (const i in stream) {
       // deno-lint-ignore ban-ts-comment
@@ -1327,12 +1174,10 @@ class Readable extends Stream {
       this.emit("resume");
     });
 
-    // When we try to consume some more bytes, simply unpause the
-    // underlying stream.
     this._read = () => {
       if (paused) {
         paused = false;
-        //By the time this is triggered, stream will be a readable stream
+        // By the time this is triggered, stream will be a readable stream
         // deno-lint-ignore ban-ts-comment
         //@ts-ignore
         stream.resume();
