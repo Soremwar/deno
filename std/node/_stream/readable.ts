@@ -1096,7 +1096,7 @@ class Readable extends Stream {
     }
     this._readableState[kPaused] = true;
     return this;
-  } 
+  }
 
   /** Wrap an old-style stream as the async data source. */
   wrap(stream: Stream): this {
