@@ -61,14 +61,11 @@
 // would be consumed, and then the rest would wait (un-transformed) until
 // the results of the previous transformed chunk were consumed.
 
-import {
-  codes as error_codes,
-} from "../internal/errors.js";
 import Duplex from "./duplex.ts";
-
-const {
+import {
   ERR_METHOD_NOT_IMPLEMENTED,
-} = error_codes;
+} from "../_errors.ts";
+
 
 const kCallback = Symbol("kCallback");
 

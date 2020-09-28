@@ -1,11 +1,6 @@
-//TODO@Soremwar
-
 import {
-  codes as error_codes,
-} from "../internal/errors.js";
-const {
   ERR_MULTIPLE_CALLBACK,
-} = error_codes;
+} from "../_errors.ts";
 
 const kDestroy = Symbol("kDestroy");
 const kConstruct = Symbol("kConstruct");

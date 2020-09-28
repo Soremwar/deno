@@ -1,6 +1,6 @@
 import Buffer from "../buffer.ts";
-import Readable from "./readable.js";
-import Writable from "./writable.js";
+import Readable from "./readable.ts";
+import Writable from "./writable.ts";
 import {
   pipeline,
 } from "./promises.js";

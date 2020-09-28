@@ -1,25 +1,18 @@
-// Ported from https://github.com/mafintosh/pump with
-// permission from the author, Mathias Buus (@mafintosh).
-
-import { once } from "../internal/util.js";
+import { once } from "../_utils.ts";
 import {
   destroyer as impl_destroyer,
 } from "./destroy.js";
-import {
-  codes as internal_codes,
-} from "../internal/errors.js";
 import eos from "./end-of-stream.ts";
-import createReadableStreamAsyncIterator from "./async_iterator.js";
+import createReadableStreamAsyncIterator from "./async_iterator.ts";
 import * as events from "../events.ts";
 import PassThrough from "./passthrough.js";
-
-const {
+import {
   ERR_INVALID_ARG_TYPE,
   ERR_INVALID_RETURN_VALUE,
   ERR_INVALID_CALLBACK,
   ERR_MISSING_ARGS,
   ERR_STREAM_DESTROYED,
-} = internal_codes;
+} from "../_errors.ts";
 
 function destroyer(stream, reading, writing, callback) {
   callback = once(callback);

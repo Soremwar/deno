@@ -516,7 +516,7 @@ function needFinish(state: WritableState) {
     !state.writing);
 }
 
-interface WritableOptions {
+export interface WritableOptions {
   autoDestroy?: boolean;
   decodeStrings?: boolean;
   //TODO(Soremwar)

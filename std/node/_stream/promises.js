@@ -1,5 +1,5 @@
-import pl from "../internal/streams/pipeline.js";
-import eos from "../internal/streams/end-of-stream.js";
+import pl from "./pipeline.js";
+import eos from "./end-of-stream.ts";
 
 function pipeline(...streams) {
   return new Promise((resolve, reject) => {
