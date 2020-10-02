@@ -1,5 +1,6 @@
 import Buffer from "../buffer.ts";
 import EventEmitter from "../events.ts";
+import type Duplex from "./duplex.ts";
 import type Writable from "./writable.ts";
 import { types } from "../util.ts";
 
@@ -11,7 +12,7 @@ class Stream extends EventEmitter {
   static _isUint8Array = types.isUint8Array;
   static _uint8ArrayToBuffer = (chunk: Uint8Array) => Buffer.from(chunk);
 
-  pipe(dest: Writable, options: { end: boolean }) {
+  pipe(dest: Duplex | Writable, options: { end: boolean }) {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const source = this;
 

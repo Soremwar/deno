@@ -22,7 +22,7 @@
 import Buffer from "../buffer.ts";
 import Stream from "./stream.ts";
 import { captureRejectionSymbol } from "../events.ts";
-import { kConstruct, kDestroy } from "./symbols.ts";
+import { kDestroy } from "./symbols.ts";
 import {
   ERR_INVALID_ARG_TYPE,
   ERR_INVALID_OPT_VALUE,
@@ -165,40 +165,6 @@ function errorOrDestroy(stream: Writable, err: Error, sync = false) {
       stream.emit("error", err);
     }
   }
-}
-
-function construct(stream: Writable, cb: (error: Error) => void) {
-  if (!stream._construct) {
-    return;
-  }
-
-  stream.once(kConstruct, cb);
-  const w = stream._writableState;
-
-  w.constructed = false;
-
-  queueMicrotask(() => {
-    let called = false;
-    stream._construct?.((err) => {
-      w.constructed = true;
-
-      if (called) {
-        err = new ERR_MULTIPLE_CALLBACK();
-      } else {
-        called = true;
-      }
-
-      if (w.destroyed) {
-        stream.emit(kDestroy, err);
-      } else if (err) {
-        errorOrDestroy(stream, err, true);
-      } else {
-        queueMicrotask(() => {
-          stream.emit(kConstruct);
-        });
-      }
-    });
-  });
 }
 
 //TODO(Soremwar)
@@ -550,7 +516,7 @@ export interface WritableOptions {
   ): void;
 }
 
-class WritableState {
+export class WritableState {
   [kOnFinished]: Array<(error?: Error) => void> = [];
   afterWriteTickInfo: null | AfterWriteTick = null;
   allBuffers = true;
@@ -640,7 +606,6 @@ function resetBuffer(state: WritableState) {
 * the drain event emission and buffering.
 */
 class Writable extends Stream {
-  _construct?: (cb: (error?: Error) => void) => void;
   _final?: (
     this: Writable,
     callback: (error?: Error | null | undefined) => void,
@@ -669,16 +634,6 @@ class Writable extends Stream {
         this._final = options.final;
       }
     }
-
-    construct(this, () => {
-      const state = this._writableState;
-
-      if (!state.writing) {
-        clearBuffer(this, state);
-      }
-
-      finishMaybe(this, state);
-    });
   }
 
   [captureRejectionSymbol](err?: Error) {
@@ -969,4 +924,3 @@ class Writable extends Stream {
 }
 
 export default Writable;
-export { WritableState };
