@@ -138,14 +138,10 @@ export default class BufferList {
         }
         break;
       }
-      // deno-lint-ignore no-unreachable
       ++c;
-      // deno-lint-ignore no-unreachable
       p = p.next;
     } while (p);
-    // deno-lint-ignore no-unreachable
     this.length -= c;
-    // deno-lint-ignore no-unreachable
     return ret;
   }
 
@@ -177,14 +173,10 @@ export default class BufferList {
         }
         break;
       }
-      // deno-lint-ignore no-unreachable
       ++c;
-      // deno-lint-ignore no-unreachable
       p = p.next;
     } while (p);
-    // deno-lint-ignore no-unreachable
     this.length -= c;
-    // deno-lint-ignore no-unreachable
     return ret;
   }
 }
