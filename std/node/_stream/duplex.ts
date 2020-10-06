@@ -30,19 +30,19 @@ import Writable, {
 import {
   StringDecoder,
 } from "../string_decoder.ts";
-import type Buffer from "../buffer.ts";
+import Buffer from "../buffer.ts";
 import {
   kPaused,
 } from "./symbols.ts";
 import {
-  ERR_METHOD_NOT_IMPLEMENTED,
+  ERR_INVALID_ARG_TYPE,
+  ERR_METHOD_NOT_IMPLEMENTED, ERR_STREAM_ALREADY_FINISHED, ERR_STREAM_DESTROYED, ERR_STREAM_NULL_VALUES, ERR_STREAM_WRITE_AFTER_END, ERR_UNKNOWN_ENCODING,
 } from "../_errors.ts";
 import createReadableStreamAsyncIterator from "./async_iterator.ts";
 import {
   _destroy,
   computeNewHighWaterMark,
   emitReadable,
-  errorOrDestroy,
   fromList,
   howMuchToRead,
   nReadingNextTick,
@@ -52,51 +52,19 @@ import {
   resume,
   updateReadableListening,
 } from "./readable_internal.ts";
-
-function endDuplex(stream: Duplex) {
-  const state = stream._readableState;
-
-  if (!state.endEmitted) {
-    state.ended = true;
-    queueMicrotask(() => endReadableNT(state, stream));
-  }
-}
-
-function endReadableNT(state: ReadableState, stream: Duplex) {
-  // Check that we didn't get one last unshift.
-  if (!state.errorEmitted && !state.closeEmitted &&
-      !state.endEmitted && state.length === 0) {
-    state.endEmitted = true;
-    stream.emit('end');
-
-    if (stream.writable && stream.allowHalfOpen === false) {
-      queueMicrotask(() => endWritableNT(state, stream));
-    } else if (state.autoDestroy) {
-      // In case of duplex streams we need a way to detect
-      // if the writable side is ready for autoDestroy as well.
-      const wState = stream._writableState;
-      const autoDestroy = !wState || (
-        wState.autoDestroy &&
-        // We don't expect the writable to ever 'finish'
-        // if writable is explicitly set to false.
-        (wState.finished || wState.writable === false)
-      );
-
-      if (autoDestroy) {
-        stream.destroy();
-      }
-    }
-  }
-}
-
-function endWritableNT(state: ReadableState, stream: Duplex) {
-  const writable = stream.writable &&
-    !stream.writableEnded &&
-    !stream.destroyed;
-  if (writable) {
-    stream.end();
-  }
-}
+import {
+  clearBuffer,
+  kOnFinished,
+  nop,
+  writeOrBuffer,
+} from "./writable_internal.ts";
+import {
+  endDuplex,
+  errorOrDestroy,
+  finishMaybe,
+  onwrite,
+} from "./duplex_internal.ts";
+export {errorOrDestroy} from "./duplex_internal.ts";
 
 interface DuplexOptions {
   allowHalfOpen?: boolean;
@@ -137,7 +105,6 @@ interface DuplexOptions {
  */
 class Duplex extends Stream {
   allowHalfOpen = true;
-  writable = true;
   _final?: (
     this: Duplex,
     callback: (error?: Error | null | undefined) => void,
@@ -227,9 +194,16 @@ class Duplex extends Stream {
 
     this._readableState = new ReadableState(readable_options);
     this._writableState = new WritableState(writable_options, this as unknown as Writable);
+    //Very important to override onwrite here, duplex implementation adds a check
+    //on the readable side
+    this._writableState.onwrite = onwrite.bind(undefined, this);
   }
 
-  // You can override either this method, or the async _read(n) below.
+  [captureRejectionSymbol](err?: Error) {
+    this.destroy(err);
+  }
+
+  /** You can override either this method, or the async `_read` method */
   read(n?: number) {
     // Same as parseInt(undefined, 10), however V8 7.3 performance regressed
     // in this scenario, so we are doing it manually.
@@ -339,7 +313,7 @@ class Duplex extends Stream {
 
   //TODO(Soremwar)
   //Should be duplex
-  pipe<T extends Writable>(dest: T, pipeOpts?: { end?: boolean }): T {
+  pipe(dest: Duplex, pipeOpts?: { end?: boolean }): Duplex {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const src = this;
     const state = this._readableState;
@@ -419,7 +393,7 @@ class Duplex extends Stream {
             state.awaitDrainWriters = dest;
             state.multiAwaitDrain = false;
           } else if (state.pipes.length > 1 && state.pipes.includes(dest)) {
-            (state.awaitDrainWriters as Set<Writable>).add(dest);
+            (state.awaitDrainWriters as Set<Duplex | Writable>).add(dest);
           }
           src.pause();
         }
@@ -439,7 +413,7 @@ class Duplex extends Stream {
         const s = dest._writableState;
         if (s && !s.errorEmitted) {
           // User incorrectly emitted 'error' directly on the stream.
-          errorOrDestroyDuplex(dest, er);
+          errorOrDestroy(dest, er);
         } else {
           dest.emit("error", er);
         }
@@ -622,9 +596,34 @@ class Duplex extends Stream {
       }
   
       if (err) {
-        queueMicrotask(() => emitErrorCloseNT(this, err));
+        queueMicrotask(() => {
+          const r = this._readableState;
+          const w = this._writableState;
+
+          if (!w.errorEmitted && !r.errorEmitted) {
+            w.errorEmitted = true;
+            r.errorEmitted = true;
+  
+            this.emit('error', err);
+          }
+
+          r.closeEmitted = true;
+
+          if (w.emitClose || r.emitClose) {
+            this.emit('close');
+          }
+        });
       } else {
-        queueMicrotask(emitCloseNT(this));
+        queueMicrotask(() => {
+          const r = this._readableState;
+          const w = this._writableState;
+
+          r.closeEmitted = true;
+
+          if (w.emitClose || r.emitClose) {
+            this.emit('close');
+          }
+        });
       }
     });
   
@@ -651,10 +650,6 @@ class Duplex extends Stream {
     callback(error);
   }
 
-  [captureRejectionSymbol](err: Error) {
-    this.destroy(err);
-  }
-
   //TODO(Soremwar)
   //Same deal, string => encodings
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -667,7 +662,7 @@ class Duplex extends Stream {
     return readableAddChunk(this, chunk, encoding, true);
   }
 
-  unpipe(dest?: Writable): this {
+  unpipe(dest?: Duplex): this {
     const state = this._readableState;
     const unpipeInfo = { hasUnpiped: false };
 
@@ -880,20 +875,6 @@ class Duplex extends Stream {
     return this._readableState ? this._readableState.encoding : null;
   }
 
-  get destroyed() {
-    if (this._readableState === undefined) {
-      return false;
-    }
-    return this._readableState.destroyed;
-  }
-
-  set destroyed(value: boolean) {
-    if (!this._readableState) {
-      return;
-    }
-    this._readableState.destroyed = value;
-  }
-
   get readableEnded() {
     return this._readableState ? this._readableState.endEmitted : false;
   }
@@ -912,18 +893,244 @@ class Duplex extends Stream {
       throw new ERR_METHOD_NOT_IMPLEMENTED("_write()");
     }
   }
-}
 
-Object.defineProperties(Stream, {
-  _readableState: { enumerable: false },
-  destroyed: { enumerable: false },
-  readableBuffer: { enumerable: false },
-  readableEncoding: { enumerable: false },
-  readableEnded: { enumerable: false },
-  readableFlowing: { enumerable: false },
-  readableHighWaterMark: { enumerable: false },
-  readableLength: { enumerable: false },
-  readableObjectMode: { enumerable: false },
-});
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  write(chunk: any, cb?: (error: Error | null | undefined) => void): boolean;
+  //TODO(Soremwar)
+  //Bring in encodings
+  write(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    chunk: any,
+    encoding: string | null,
+    cb?: (error: Error | null | undefined) => void,
+  ): boolean;
+
+  //TODO(Soremwar)
+  //Bring in encodings
+  write(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    chunk: any,
+    x?: string | null | ((error: Error | null | undefined) => void),
+    y?: ((error: Error | null | undefined) => void),
+  ) {
+    const state = this._writableState;
+    //TODO(Soremwar)
+    //Bring in encodings
+    let encoding: string;
+    let cb: (error?: Error | null) => void;
+
+    if (typeof x === "function") {
+      cb = x;
+      encoding = state.defaultEncoding;
+    } else {
+      if (!x) {
+        encoding = state.defaultEncoding;
+      } else if (x !== "buffer" && !Buffer.isEncoding(x)) {
+        throw new ERR_UNKNOWN_ENCODING(x);
+      } else {
+        encoding = x;
+      }
+      if (typeof y !== "function") {
+        cb = nop;
+      } else {
+        cb = y;
+      }
+    }
+
+    if (chunk === null) {
+      throw new ERR_STREAM_NULL_VALUES();
+    } else if (!state.objectMode) {
+      if (typeof chunk === "string") {
+        if (state.decodeStrings !== false) {
+          chunk = Buffer.from(chunk, encoding);
+          encoding = "buffer";
+        }
+      } else if (chunk instanceof Buffer) {
+        encoding = "buffer";
+      } else if (Stream._isUint8Array(chunk)) {
+        chunk = Stream._uint8ArrayToBuffer(chunk);
+        encoding = "buffer";
+      } else {
+        throw new ERR_INVALID_ARG_TYPE(
+          "chunk",
+          ["string", "Buffer", "Uint8Array"],
+          chunk,
+        );
+      }
+    }
+
+    let err: Error | undefined;
+    if (state.ending) {
+      err = new ERR_STREAM_WRITE_AFTER_END();
+    } else if (state.destroyed) {
+      err = new ERR_STREAM_DESTROYED("write");
+    }
+
+    if (err) {
+      queueMicrotask(() => cb(err));
+      errorOrDestroy(this, err, true);
+      return false;
+    }
+    state.pendingcb++;
+    return writeOrBuffer(this, state, chunk, encoding, cb);
+  }
+
+  cork() {
+    this._writableState.corked++;
+  }
+
+  uncork() {
+    const state = this._writableState;
+
+    if (state.corked) {
+      state.corked--;
+
+      if (!state.writing) {
+        clearBuffer(this, state);
+      }
+    }
+  }
+
+  //TODO(Soremwar)
+  //Bring allowed encodings
+  setDefaultEncoding(encoding: string) {
+    // node::ParseEncoding() requires lower case.
+    if (typeof encoding === "string") {
+      encoding = encoding.toLowerCase();
+    }
+    if (!Buffer.isEncoding(encoding)) {
+      throw new ERR_UNKNOWN_ENCODING(encoding);
+    }
+    this._writableState.defaultEncoding = encoding;
+    return this;
+  }
+
+  end(cb?: () => void): void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  end(chunk: any, cb?: () => void): void;
+  //TODO(Soremwar)
+  //Bring in encodings
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  end(chunk: any, encoding: string, cb?: () => void): void;
+
+  end(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    x?: any | (() => void),
+    //TODO(Soremwar)
+    //Bring in encodings
+    y?: string | (() => void),
+    z?: () => void,
+  ) {
+    const state = this._writableState;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let chunk: any | null;
+    //TODO(Soremwar)
+    //Bring in encodings
+    let encoding: string | null;
+    let cb: undefined | ((error?: Error) => void);
+
+    if (typeof x === "function") {
+      chunk = null;
+      encoding = null;
+      cb = x;
+    } else if (typeof y === "function") {
+      chunk = x;
+      encoding = null;
+      cb = y;
+    } else {
+      chunk = x;
+      encoding = y as string;
+      cb = z;
+    }
+
+    if (chunk !== null && chunk !== undefined) {
+      this.write(chunk, encoding);
+    }
+
+    if (state.corked) {
+      state.corked = 1;
+      this.uncork();
+    }
+
+    let err: Error | undefined;
+    if (!state.errored && !state.ending) {
+      state.ending = true;
+      finishMaybe(this, state, true);
+      state.ended = true;
+    } else if (state.finished) {
+      err = new ERR_STREAM_ALREADY_FINISHED("end");
+    } else if (state.destroyed) {
+      err = new ERR_STREAM_DESTROYED("end");
+    }
+
+    if (typeof cb === "function") {
+      if (err || state.finished) {
+        queueMicrotask(() => {
+          (cb as (error?: Error | undefined) => void)(err);
+        });
+      } else {
+        state[kOnFinished].push(cb);
+      }
+    }
+
+    return this;
+  }
+
+  get destroyed() {
+    if (
+      this._readableState === undefined ||
+      this._writableState === undefined
+    ) {
+      return false;
+    }
+    return this._readableState.destroyed && this._writableState.destroyed;
+  }
+
+  set destroyed(value: boolean) {
+    if (this._readableState && this._writableState) {
+      this._readableState.destroyed = value;
+      this._writableState.destroyed = value;
+    }
+  }
+
+  get writable() {
+    const w = this._writableState;
+    return !w.destroyed && !w.errored && !w.ending && !w.ended;
+  }
+
+  set writable(val) {
+    if (this._writableState) {
+      this._writableState.writable = !!val;
+    }
+  }
+
+  get writableFinished() {
+    return this._writableState ? this._writableState.finished : false;
+  }
+
+  get writableObjectMode() {
+    return this._writableState ? this._writableState.objectMode : false;
+  }
+
+  get writableBuffer() {
+    return this._writableState && this._writableState.getBuffer();
+  }
+
+  get writableEnded() {
+    return this._writableState ? this._writableState.ending : false;
+  }
+
+  get writableHighWaterMark() {
+    return this._writableState && this._writableState.highWaterMark;
+  }
+
+  get writableCorked() {
+    return this._writableState ? this._writableState.corked : 0;
+  }
+
+  get writableLength() {
+    return this._writableState && this._writableState.length;
+  }
+}
 
 export default Duplex;
