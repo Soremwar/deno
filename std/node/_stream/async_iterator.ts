@@ -47,11 +47,6 @@ function readAndResolve(iter: ReadableStreamAsyncIterator) {
 }
 
 function onReadable(iter: ReadableStreamAsyncIterator) {
-  // We wait for the next tick, because it might
-  // emit an error with `process.nextTick()`.
-  //TODO
-  //This replaces `process.nextTick(readAndResolve, iter);`
-  //Is this reliable?
   queueMicrotask(() => readAndResolve(iter));
 }
 

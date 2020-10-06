@@ -118,9 +118,6 @@ export default function eos(
     if (!stream.writable) onfinish();
   };
 
-  // TODO (ronag): Improve soft detection to include core modules and
-  // common ecosystem modules that do properly emit 'close' but fail
-  // this generic check.
   let willEmitClose = (
     state &&
     state.autoDestroy &&

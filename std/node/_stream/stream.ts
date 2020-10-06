@@ -1,5 +1,3 @@
-//TODO@Soremwar
-//Move from prototypes to classes
 import Buffer from "../buffer.ts";
 import EventEmitter from "../events.ts";
 import type Writable from "./writable.ts";
@@ -17,9 +15,11 @@ class Stream extends EventEmitter {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const source = this;
 
-    //TODO
+    //TODO(Soremwar)
     //isStdio exist on stdin || stdout only, which extend from Duplex
     //if (!dest._isStdio && (options?.end ?? true)) {
+    //Find an alternative to be able to pipe streams to stdin & stdout
+    //Port them as well?
     if (options?.end ?? true) {
       source.on("end", onend);
       source.on("close", onclose);

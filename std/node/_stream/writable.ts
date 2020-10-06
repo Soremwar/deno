@@ -241,7 +241,7 @@ function writeOrBuffer(
   return ret && !state.errored && !state.destroyed;
 }
 
-//TODO
+//TODO(Soremwar)
 //Bring encodings in
 function doWrite(
   stream: Writable,
@@ -422,20 +422,12 @@ function clearBuffer(stream: Writable, state: WritableState) {
     };
     const chunks = state.allNoop && i === 0 ? buffered : buffered.slice(i);
 
-    //TODO(Soremwar)
-    //I cannot figure this out at all
-    //Removing it doesn't seem to do anything though
-    //This should go here  > chunks.allBuffers = state.allBuffers;
-
     doWrite(stream, state, true, state.length, chunks, "", callback);
 
     resetBuffer(state);
   } else {
     do {
       const { chunk, encoding, callback } = buffered[i];
-      //TODO(Soremwar)
-      //Cant figure this out either
-      //buffered[i++] = null;
       const len = objectMode ? 1 : chunk.length;
       doWrite(stream, state, false, len, chunk, encoding, callback);
     } while (i < buffered.length && !state.writing);
@@ -527,7 +519,7 @@ function needFinish(state: WritableState) {
 interface WritableOptions {
   autoDestroy?: boolean;
   decodeStrings?: boolean;
-  //TODO
+  //TODO(Soremwar)
   //Bring encodings in
   defaultEncoding?: string;
   destroy?(
@@ -539,7 +531,7 @@ interface WritableOptions {
   final?(this: Writable, callback: (error?: Error | null) => void): void;
   highWaterMark?: number;
   objectMode?: boolean;
-  //TODO
+  //TODO(Soremwar)
   //Bring encodings in
   write?(
     this: Writable,
@@ -548,7 +540,7 @@ interface WritableOptions {
     encoding: string,
     callback: (error?: Error | null) => void,
   ): void;
-  //TODO
+  //TODO(Soremwar)
   //Bring encodings in
   writev?(
     this: Writable,
@@ -564,7 +556,7 @@ class WritableState {
   allBuffers = true;
   allNoop = true;
   autoDestroy: boolean;
-  //TODO
+  //TODO(Soremwar)
   //Bring in encodings
   buffered: Array<{
     allBuffers?: boolean;
@@ -775,7 +767,7 @@ class Writable extends Stream {
   end(cb?: () => void): void;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   end(chunk: any, cb?: () => void): void;
-  //TODO
+  //TODO(Soremwar)
   //Bring in encodings
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   end(chunk: any, encoding: string, cb?: () => void): void;
@@ -783,7 +775,7 @@ class Writable extends Stream {
   end(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     x?: any | (() => void),
-    //TODO
+    //TODO(Soremwar)
     //Bring in encodings
     y?: string | (() => void),
     z?: () => void,
@@ -791,7 +783,7 @@ class Writable extends Stream {
     const state = this._writableState;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let chunk: any | null;
-    //TODO
+    //TODO(Soremwar)
     //Bring in encodings
     let encoding: string | null;
     let cb: undefined | ((error?: Error) => void);
@@ -843,7 +835,7 @@ class Writable extends Stream {
     return this;
   }
 
-  //TODO
+  //TODO(Soremwar)
   //Bring in encodings
   _write(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -866,7 +858,7 @@ class Writable extends Stream {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   write(chunk: any, cb?: (error: Error | null | undefined) => void): boolean;
-  //TODO
+  //TODO(Soremwar)
   //Bring in encodings
   write(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -875,7 +867,7 @@ class Writable extends Stream {
     cb?: (error: Error | null | undefined) => void,
   ): boolean;
 
-  //TODO
+  //TODO(Soremwar)
   //Bring in encodings
   write(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -884,7 +876,7 @@ class Writable extends Stream {
     y?: ((error: Error | null | undefined) => void),
   ) {
     const state = this._writableState;
-    //TODO
+    //TODO(Soremwar)
     //Bring in encodings
     let encoding: string;
     let cb: (error?: Error | null) => void;
@@ -961,7 +953,7 @@ class Writable extends Stream {
     }
   }
 
-  //TODO
+  //TODO(Soremwar)
   //Bring allowed encodings
   setDefaultEncoding(encoding: string) {
     // node::ParseEncoding() requires lower case.

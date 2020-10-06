@@ -1,7 +1,3 @@
-//TODO@Soremwar
-//Investigate/Bring back inspect calls
-//Add types
-
 import Buffer from "../buffer.ts";
 
 type BufferListItem = {
