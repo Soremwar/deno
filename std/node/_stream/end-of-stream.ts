@@ -1,6 +1,8 @@
 import { once } from "../_utils.ts";
 import type Readable from "./readable.ts";
+import type { ReadableState } from "./readable.ts";
 import type Writable from "./writable.ts";
+import type { WritableState } from "./writable.ts";
 import {
   ERR_INVALID_ARG_TYPE,
   ERR_STREAM_PREMATURE_CLOSE,
@@ -9,33 +11,23 @@ import {
 
 type Stream = Readable | Writable;
 
-function isRequest(stream: Stream) {
-  // deno-lint-ignore ban-ts-comment
-  //@ts-ignore
-  return stream.setHeader && typeof stream.abort === "function";
-}
+// TODO(Soremwar)
+// Bring back once requests are implemented
+// function isRequest(stream: Stream) {
+//   return stream.setHeader && typeof stream.abort === "function";
+// }
 
-function isReadable(stream: Stream) {
-  // deno-lint-ignore ban-ts-comment
-  //@ts-ignore
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function isReadable(stream: any) {
   return typeof stream.readable === "boolean" ||
-    // deno-lint-ignore ban-ts-comment
-    //@ts-ignore
     typeof stream.readableEnded === "boolean" ||
-    // deno-lint-ignore ban-ts-comment
-    //@ts-ignore
     !!stream._readableState;
 }
 
-function isWritable(stream: Stream) {
-  // deno-lint-ignore ban-ts-comment
-  //@ts-ignore
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function isWritable(stream: any) {
   return typeof stream.writable === "boolean" ||
-    // deno-lint-ignore ban-ts-comment
-    //@ts-ignore
     typeof stream.writableEnded === "boolean" ||
-    // deno-lint-ignore ban-ts-comment
-    //@ts-ignore
     !!stream._writableState;
 }
 
@@ -61,6 +53,10 @@ interface FinishedOptions {
   writable?: boolean;
 }
 
+/**
+ * Appends an ending callback triggered when a stream is no longer readable,
+ * writable or has experienced an error or a premature close event
+*/
 export default function eos(
   stream: Stream,
   options: FinishedOptions | null,
@@ -70,7 +66,6 @@ export default function eos(
   stream: Stream,
   callback: (err?: NodeErrorAbstraction | null) => void,
 ): () => void;
-
 export default function eos(
   stream: Stream,
   x: FinishedOptions | ((err?: NodeErrorAbstraction | null) => void) | null,
@@ -99,64 +94,54 @@ export default function eos(
 
   callback = once(callback);
 
-  const readable = opts.readable ||
-    (opts.readable !== false && isReadable(stream));
-  const writable = opts.writable ||
-    (opts.writable !== false && isWritable(stream));
+  const readable = opts.readable ?? isReadable(stream);
+  const writable = opts.writable ?? isWritable(stream);
 
-  // deno-lint-ignore ban-ts-comment
-  //@ts-ignore
-  const wState = stream._writableState;
-  // deno-lint-ignore ban-ts-comment
-  //@ts-ignore
-  const rState = stream._readableState;
-  const state = wState || rState;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const wState: WritableState | undefined = (stream as any)._writableState;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rState: ReadableState | undefined = (stream as any)._readableState;
+  const valid_state = wState || rState;
 
   const onlegacyfinish = () => {
-    // deno-lint-ignore ban-ts-comment
-    //@ts-ignore
-    if (!stream.writable) onfinish();
+    if (!(stream as Writable).writable) {
+      onfinish();
+    }
   };
 
   let willEmitClose = (
-    state &&
-    state.autoDestroy &&
-    state.emitClose &&
-    state.closed === false &&
+    valid_state?.autoDestroy &&
+    valid_state?.emitClose &&
+    valid_state?.closed === false &&
     isReadable(stream) === readable &&
     isWritable(stream) === writable
   );
 
-  // deno-lint-ignore ban-ts-comment
-  //@ts-ignore
-  let writableFinished = stream.writableFinished ||
-    (wState && wState.finished);
+  let writableFinished = (stream as Writable).writableFinished ||
+    wState?.finished;
   const onfinish = () => {
     writableFinished = true;
-    // deno-lint-ignore ban-ts-comment
-    //@ts-ignore
     if (stream.destroyed) willEmitClose = false;
 
-    // deno-lint-ignore ban-ts-comment
-    //@ts-ignore
-    if (willEmitClose && (!stream.readable || readable)) return;
-    if (!readable || readableEnded) callback.call(stream);
+    if (willEmitClose && (!(stream as Readable).readable || readable)) {
+      return;
+    }
+    if (!readable || readableEnded) {
+      callback.call(stream);
+    }
   };
 
-  // deno-lint-ignore ban-ts-comment
-  //@ts-ignore
-  let readableEnded = stream.readableEnded ||
-    (rState && rState.endEmitted);
+  let readableEnded = (stream as Readable).readableEnded || rState?.endEmitted;
   const onend = () => {
     readableEnded = true;
-    // deno-lint-ignore ban-ts-comment
-    //@ts-ignore
     if (stream.destroyed) willEmitClose = false;
 
-    // deno-lint-ignore ban-ts-comment
-    //@ts-ignore
-    if (willEmitClose && (!stream.writable || writable)) return;
-    if (!writable || writableFinished) callback.call(stream);
+    if (willEmitClose && (!(stream as Writable).writable || writable)) {
+      return;
+    }
+    if (!writable || writableFinished) {
+      callback.call(stream);
+    }
   };
 
   const onerror = (err: NodeErrorAbstraction) => {
@@ -165,45 +150,45 @@ export default function eos(
 
   const onclose = () => {
     if (readable && !readableEnded) {
-      // deno-lint-ignore ban-ts-comment
-      //@ts-ignore
-      if (!isReadableEnded(stream)) {
+      if (!isReadableEnded(stream as Readable)) {
         return callback.call(stream, new ERR_STREAM_PREMATURE_CLOSE());
       }
     }
     if (writable && !writableFinished) {
-      // deno-lint-ignore ban-ts-comment
-      //@ts-ignore
-      if (!isWritableFinished(stream)) {
+      if (!isWritableFinished(stream as Writable)) {
         return callback.call(stream, new ERR_STREAM_PREMATURE_CLOSE());
       }
     }
     callback.call(stream);
   };
 
-  const onrequest = () => {
-    // deno-lint-ignore ban-ts-comment
-    //@ts-ignore
-    stream.req.on("finish", onfinish);
-  };
+  // TODO(Soremwar)
+  // Bring back once requests are implemented
+  // const onrequest = () => {
+  //   stream.req.on("finish", onfinish);
+  // };
 
-  if (isRequest(stream)) {
-    stream.on("complete", onfinish);
-    stream.on("abort", onclose);
-    // deno-lint-ignore ban-ts-comment
-    //@ts-ignore
-    if (stream.req) onrequest();
-    else stream.on("request", onrequest);
-  } else if (writable && !wState) { // legacy streams
+  // TODO(Soremwar)
+  // Bring back once requests are implemented
+  // if (isRequest(stream)) {
+  //   stream.on("complete", onfinish);
+  //   stream.on("abort", onclose);
+  //   if (stream.req) {
+  //     onrequest();
+  //   } else {
+  //     stream.on("request", onrequest);
+  //   }
+  // } else
+  if (writable && !wState) {
     stream.on("end", onlegacyfinish);
     stream.on("close", onlegacyfinish);
   }
 
-  // deno-lint-ignore ban-ts-comment
-  //@ts-ignore
-  if (typeof stream.aborted === "boolean") {
-    stream.on("aborted", onclose);
-  }
+  // TODO(Soremwar)
+  // Bring back once requests are implemented
+  // if (typeof stream.aborted === "boolean") {
+  //   stream.on("aborted", onclose);
+  // }
 
   stream.on("end", onend);
   stream.on("finish", onfinish);
@@ -211,16 +196,16 @@ export default function eos(
   stream.on("close", onclose);
 
   const closed = (
-    (wState && wState.closed) ||
-    (rState && rState.closed) ||
-    (wState && wState.errorEmitted) ||
-    (rState && rState.errorEmitted) ||
-    // deno-lint-ignore ban-ts-comment
-    //@ts-ignore
-    (rState && stream.req && stream.aborted) ||
+    wState?.closed ||
+    rState?.closed ||
+    wState?.errorEmitted ||
+    rState?.errorEmitted ||
+    // TODO(Soremwar)
+    // Bring back once requests are implemented
+    // (rState && stream.req && stream.aborted) ||
     (
-      (!writable || (wState && wState.finished)) &&
-      (!readable || (rState && rState.endEmitted))
+      (!writable || wState?.finished) &&
+      (!readable || rState?.endEmitted)
     )
   );
 
@@ -233,10 +218,10 @@ export default function eos(
     stream.removeListener("aborted", onclose);
     stream.removeListener("complete", onfinish);
     stream.removeListener("abort", onclose);
-    stream.removeListener("request", onrequest);
-    // deno-lint-ignore ban-ts-comment
-    //@ts-ignore
-    if (stream.req) stream.req.removeListener("finish", onfinish);
+    // TODO(Soremwar)
+    // Bring back once requests are implemented
+    // stream.removeListener("request", onrequest);
+    // if (stream.req) stream.req.removeListener("finish", onfinish);
     stream.removeListener("end", onlegacyfinish);
     stream.removeListener("close", onlegacyfinish);
     stream.removeListener("finish", onfinish);

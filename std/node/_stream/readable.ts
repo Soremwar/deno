@@ -511,7 +511,7 @@ export interface ReadableOptions {
   read?(this: Readable): void;
 }
 
-class ReadableState {
+export class ReadableState {
   [kPaused]: boolean | null = null;
   awaitDrainWriters: Writable | Set<Writable> | null = null;
   buffer = new BufferList();
