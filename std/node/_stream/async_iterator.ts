@@ -15,13 +15,20 @@ const kStream = Symbol("stream");
 // Add Duplex streams
 type IterableStreams = Stream | Readable;
 
-type IterableItem = Buffer | string | Uint8Array | undefined
+type IterableItem = Buffer | string | Uint8Array | undefined;
 type ReadableIteratorResult = IteratorResult<IterableItem>;
 
-function initIteratorSymbols(o: ReadableStreamAsyncIterator, symbols: symbol[]) {
-  let properties: PropertyDescriptorMap = {};
+function initIteratorSymbols(
+  o: ReadableStreamAsyncIterator,
+  symbols: symbol[],
+) {
+  const properties: PropertyDescriptorMap = {};
   for (const sym in symbols) {
-    properties[sym] = { configurable: false, enumerable: false, writable: true };
+    properties[sym] = {
+      configurable: false,
+      enumerable: false,
+      writable: true,
+    };
   }
   Object.defineProperties(o, properties);
 }
@@ -44,7 +51,10 @@ function destroyer(stream: any, err?: Error | null) {
   if (typeof stream.close === "function") return stream.close();
 }
 
-function createIterResult(value: IterableItem, done: boolean): ReadableIteratorResult {
+function createIterResult(
+  value: IterableItem,
+  done: boolean,
+): ReadableIteratorResult {
   return { value, done };
 }
 
@@ -108,7 +118,8 @@ const AsyncIteratorPrototype = Object.getPrototypeOf(
   Object.getPrototypeOf(async function* () {}).prototype,
 );
 
-class ReadableStreamAsyncIterator implements AsyncIterableIterator<IterableItem> {
+class ReadableStreamAsyncIterator
+  implements AsyncIterableIterator<IterableItem> {
   [kEnded]: boolean;
   [kError]: Error | null = null;
   [kHandlePromise] = (
