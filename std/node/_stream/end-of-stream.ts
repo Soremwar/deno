@@ -1,5 +1,6 @@
 import { once } from "../_utils.ts";
 import type Readable from "./readable.ts";
+import type Stream from "./stream.ts";
 import type { ReadableState } from "./readable.ts";
 import type Writable from "./writable.ts";
 import type { WritableState } from "./writable.ts";
@@ -9,7 +10,7 @@ import {
   NodeErrorAbstraction,
 } from "../_errors.ts";
 
-type Stream = Readable | Writable;
+type StreamImplementations = Readable | Stream | Writable;
 
 // TODO(Soremwar)
 // Bring back once requests are implemented
@@ -58,16 +59,16 @@ interface FinishedOptions {
  * writable or has experienced an error or a premature close event
 */
 export default function eos(
-  stream: Stream,
+  stream: StreamImplementations,
   options: FinishedOptions | null,
   callback: (err?: NodeErrorAbstraction | null) => void,
 ): () => void;
 export default function eos(
-  stream: Stream,
+  stream: StreamImplementations,
   callback: (err?: NodeErrorAbstraction | null) => void,
 ): () => void;
 export default function eos(
-  stream: Stream,
+  stream: StreamImplementations,
   x: FinishedOptions | ((err?: NodeErrorAbstraction | null) => void) | null,
   y?: (err?: NodeErrorAbstraction | null) => void,
 ) {
@@ -121,7 +122,10 @@ export default function eos(
     wState?.finished;
   const onfinish = () => {
     writableFinished = true;
-    if (stream.destroyed) willEmitClose = false;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((stream as any).destroyed) {
+      willEmitClose = false;
+    }
 
     if (willEmitClose && (!(stream as Readable).readable || readable)) {
       return;
@@ -134,7 +138,10 @@ export default function eos(
   let readableEnded = (stream as Readable).readableEnded || rState?.endEmitted;
   const onend = () => {
     readableEnded = true;
-    if (stream.destroyed) willEmitClose = false;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((stream as any).destroyed) {
+      willEmitClose = false;
+    }
 
     if (willEmitClose && (!(stream as Writable).writable || writable)) {
       return;
