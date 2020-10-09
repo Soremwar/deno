@@ -9,20 +9,35 @@ const kLastPromise = Symbol("lastPromise");
 const kHandlePromise = Symbol("handlePromise");
 const kStream = Symbol("stream");
 
+// TODO(Soremwar)
+// Add Duplex streams
+type IterableStreams = Readable;
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ReadableIteratorResult = IteratorResult<any>;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function isRequest(stream: any) {
-  return stream && stream.setHeader && typeof stream.abort === "function";
+function initIteratorSymbols(o: ReadableStreamAsyncIterator, symbols: symbol[]) {
+  let properties: PropertyDescriptorMap = {};
+  for (const sym in symbols) {
+    properties[sym] = { configurable: false, enumerable: false, writable: true };
+  }
+  Object.defineProperties(o, properties);
 }
+
+// TODO(Soremwar)
+// Bring back once requests are implemented
+// function isRequest(stream: any) {
+//   return stream && stream.setHeader && typeof stream.abort === "function";
+// }
 
 //TODO(Soremwar)
 //Should be any implementation of stream
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function destroyer(stream: any, err?: Error | null) {
-  if (isRequest(stream)) return stream.abort();
-  if (isRequest(stream.req)) return stream.req.abort();
+  // TODO(Soremwar)
+  // Bring back once requests are implemented
+  // if (isRequest(stream)) return stream.abort();
+  // if (isRequest(stream.req)) return stream.req.abort();
   if (typeof stream.destroy === "function") return stream.destroy(err);
   if (typeof stream.close === "function") return stream.close();
 }
@@ -36,7 +51,6 @@ function readAndResolve(iter: ReadableStreamAsyncIterator) {
   const resolve = iter[kLastResolve];
   if (resolve !== null) {
     const data = iter[kStream].read();
-    // We defer if data is null. We can be expecting either 'end' or 'error'.
     if (data !== null) {
       iter[kLastPromise] = null;
       iter[kLastResolve] = null;
@@ -124,27 +138,15 @@ class ReadableStreamAsyncIterator implements AsyncIterableIterator<any> {
   constructor(stream: Readable) {
     this[kEnded] = stream.readableEnded || stream._readableState.endEmitted;
     this[kStream] = stream;
-    Object.defineProperties(this, {
-      [kEnded]: { configurable: false, enumerable: false, writable: true },
-      [kError]: { configurable: false, enumerable: false, writable: true },
-      [kHandlePromise]: {
-        configurable: false,
-        enumerable: false,
-        writable: true,
-      },
-      [kLastPromise]: {
-        configurable: false,
-        enumerable: false,
-        writable: true,
-      },
-      [kLastReject]: { configurable: false, enumerable: false, writable: true },
-      [kLastResolve]: {
-        configurable: false,
-        enumerable: false,
-        writable: true,
-      },
-      [kStream]: { configurable: false, enumerable: false, writable: true },
-    });
+    initIteratorSymbols(this, [
+      kEnded,
+      kError,
+      kHandlePromise,
+      kLastPromise,
+      kLastReject,
+      kLastResolve,
+      kStream,
+    ]);
   }
 
   get stream() {
@@ -152,8 +154,6 @@ class ReadableStreamAsyncIterator implements AsyncIterableIterator<any> {
   }
 
   next(): Promise<ReadableIteratorResult> {
-    // If we have detected an error in the meanwhile
-    // reject straight away.
     const error = this[kError];
     if (error !== null) {
       return Promise.reject(error);
@@ -214,10 +214,7 @@ class ReadableStreamAsyncIterator implements AsyncIterableIterator<any> {
   }
 }
 
-//TODO(Soremwar)
-//Should be all implementation of Stream
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const createReadableStreamAsyncIterator = (stream: any) => {
+const createReadableStreamAsyncIterator = (stream: IterableStreams) => {
   if (typeof stream.read !== "function") {
     const src = stream;
     stream = new Readable({ objectMode: true }).wrap(src);
@@ -230,8 +227,6 @@ const createReadableStreamAsyncIterator = (stream: any) => {
   finished(stream, { writable: false }, (err) => {
     if (err && err.code !== "ERR_STREAM_PREMATURE_CLOSE") {
       const reject = iterator[kLastReject];
-      // Reject if we are waiting for data in the Promise returned by next() and
-      // store the error.
       if (reject !== null) {
         iterator[kLastPromise] = null;
         iterator[kLastResolve] = null;
