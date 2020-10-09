@@ -1,3 +1,4 @@
+import type Buffer from "../buffer.ts";
 import finished from "./end-of-stream.ts";
 import Readable from "./readable.ts";
 import type Stream from "./stream.ts";
@@ -14,8 +15,8 @@ const kStream = Symbol("stream");
 // Add Duplex streams
 type IterableStreams = Stream | Readable;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type ReadableIteratorResult<T> = IteratorResult<T>;
+type IterableItem = Buffer | string | Uint8Array | undefined
+type ReadableIteratorResult = IteratorResult<IterableItem>;
 
 function initIteratorSymbols(o: ReadableStreamAsyncIterator, symbols: symbol[]) {
   let properties: PropertyDescriptorMap = {};
@@ -43,7 +44,7 @@ function destroyer(stream: any, err?: Error | null) {
   if (typeof stream.close === "function") return stream.close();
 }
 
-function createIterResult(value: any, done: boolean): ReadableIteratorResult<any> {
+function createIterResult(value: IterableItem, done: boolean): ReadableIteratorResult {
   return { value, done };
 }
 
@@ -65,11 +66,11 @@ function onReadable(iter: ReadableStreamAsyncIterator) {
 }
 
 function wrapForNext(
-  lastPromise: Promise<ReadableIteratorResult<any>>,
+  lastPromise: Promise<ReadableIteratorResult>,
   iter: ReadableStreamAsyncIterator,
 ) {
   return (
-    resolve: (value: ReadableIteratorResult<any>) => void,
+    resolve: (value: ReadableIteratorResult) => void,
     reject: (error: Error) => void,
   ) => {
     lastPromise.then(() => {
@@ -86,7 +87,7 @@ function wrapForNext(
 function finish(self: ReadableStreamAsyncIterator, err?: Error) {
   return new Promise(
     (
-      resolve: (result: ReadableIteratorResult<any>) => void,
+      resolve: (result: ReadableIteratorResult) => void,
       reject: (error: Error) => void,
     ) => {
       const stream = self[kStream];
@@ -107,12 +108,11 @@ const AsyncIteratorPrototype = Object.getPrototypeOf(
   Object.getPrototypeOf(async function* () {}).prototype,
 );
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-class ReadableStreamAsyncIterator implements AsyncIterableIterator<any> {
+class ReadableStreamAsyncIterator implements AsyncIterableIterator<IterableItem> {
   [kEnded]: boolean;
   [kError]: Error | null = null;
   [kHandlePromise] = (
-    resolve: (value: ReadableIteratorResult<any>) => void,
+    resolve: (value: ReadableIteratorResult) => void,
     reject: (value: Error) => void,
   ) => {
     const data = this[kStream].read();
@@ -126,12 +126,9 @@ class ReadableStreamAsyncIterator implements AsyncIterableIterator<any> {
       this[kLastReject] = reject;
     }
   };
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [kLastPromise]: null | Promise<any>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [kLastReject]: null | ((value: any) => void) = null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [kLastResolve]: null | ((value: any) => void) = null;
+  [kLastPromise]: null | Promise<ReadableIteratorResult>;
+  [kLastReject]: null | ((value: Error) => void) = null;
+  [kLastResolve]: null | ((value: ReadableIteratorResult) => void) = null;
   [kStream]: Readable;
   [Symbol.asyncIterator] = AsyncIteratorPrototype[Symbol.asyncIterator];
 
@@ -153,7 +150,7 @@ class ReadableStreamAsyncIterator implements AsyncIterableIterator<any> {
     return this[kStream];
   }
 
-  next(): Promise<ReadableIteratorResult<any>> {
+  next(): Promise<ReadableIteratorResult> {
     const error = this[kError];
     if (error !== null) {
       return Promise.reject(error);
@@ -200,11 +197,11 @@ class ReadableStreamAsyncIterator implements AsyncIterableIterator<any> {
     return promise;
   }
 
-  return(): Promise<ReadableIteratorResult<any>> {
+  return(): Promise<ReadableIteratorResult> {
     return finish(this);
   }
 
-  throw(err: Error): Promise<ReadableIteratorResult<any>> {
+  throw(err: Error): Promise<ReadableIteratorResult> {
     return finish(this, err);
   }
 }

@@ -70,7 +70,7 @@ Deno.test("Readable stream from Buffer", async () => {
   const stream = Readable.from(Buffer.from(string));
 
   for await (const chunk of stream) {
-    assertStrictEquals(chunk.toString(), string);
+    assertStrictEquals((chunk as Buffer).toString(), string);
   }
 });
 
@@ -92,7 +92,7 @@ Deno.test("Readable stream gets destroyed on error", async () => {
 Deno.test("Readable stream works as Transform stream", async () => {
   async function* generate(stream: Readable) {
     for await (const chunk of stream) {
-      yield chunk.toUpperCase();
+      yield (chunk as string).toUpperCase();
     }
   }
 
