@@ -20,38 +20,34 @@
 // USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import Duplex from "./_stream/duplex.ts";
-import eos from "./internal/streams/end-of-stream.js";
-import PassThrough from "./_stream/passthrough.js";
-import pipeline from "./internal/streams/pipeline.js";
-import promises from "./_stream/promises.js";
-import Readable from "./_stream/readable.js";
-import Stream from "./internal/streams/legacy.js";
-import Transform from "./_stream/transform.js";
-import Writable from "./_stream/writable.js";
-import {
-  types,
-} from "./util.ts";
+import eos from "./_stream/end-of-stream.ts";
+import PassThrough from "./_stream/passthrough.ts";
+import pipeline from "./_stream/pipeline.ts";
+import * as promises from "./_stream/promises.ts";
+import Readable from "./_stream/readable.ts";
+import Stream from "./_stream/stream.ts";
+import Transform from "./_stream/transform.ts";
+import Writable from "./_stream/writable.ts";
 
-const _isUint8Array = types.isUint8Array;
+const exports = {
+  Duplex,
+  finished: eos,
+  PassThrough,
+  pipeline,
+  promises,
+  Readable,
+  Stream,
+  Transform,
+  Writable,
+};
 
-Stream._isUint8Array = _isUint8Array;
-Stream.Duplex = Duplex;
-Stream.finished = eos;
-Stream.PassThrough = PassThrough;
-Stream.pipeline = pipeline;
-Stream.promises = promises;
-Stream.Readable = Readable;
-Stream.Stream = Stream;
-Stream.Transform = Transform;
-Stream.Writable = Writable;
-
-export default Stream;
+export default exports;
 export {
-  _isUint8Array,
   Duplex,
   eos as finished,
   PassThrough,
   pipeline,
+  promises,
   Readable,
   Stream,
   Transform,

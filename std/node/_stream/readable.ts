@@ -30,8 +30,6 @@ import { StringDecoder } from "../string_decoder.ts";
 import createReadableStreamAsyncIterator from "./async_iterator.ts";
 import streamFrom from "./from.ts";
 import { kDestroy, kPaused } from "./symbols.ts";
-import type Writable from "./writable.ts";
-import Duplex, { errorOrDestroy as errorOrDestroyDuplex } from "./duplex.ts";
 import {
   _destroy,
   computeNewHighWaterMark,
@@ -47,6 +45,9 @@ import {
   resume,
   updateReadableListening,
 } from "./readable_internal.ts";
+import Writable from "./writable.ts";
+import {errorOrDestroy as errorOrDestroyWritable} from "./writable_internal.ts";
+import Duplex, { errorOrDestroy as errorOrDestroyDuplex } from "./duplex.ts";
 
 export interface ReadableOptions {
   autoDestroy?: boolean;
@@ -263,7 +264,7 @@ class Readable extends Stream {
 
   //TODO(Soremwar)
   //Should be duplex
-  pipe(dest: Duplex, pipeOpts?: { end?: boolean }): Duplex {
+  pipe<T extends Duplex | Writable>(dest: T, pipeOpts?: { end?: boolean }): T {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const src = this;
     const state = this._readableState;
@@ -358,10 +359,13 @@ class Readable extends Stream {
       unpipe();
       dest.removeListener("error", onerror);
       if (dest.listenerCount("error") === 0) {
-        const s = dest._writableState || dest._readableState;
+        const s = dest._writableState || (dest as Duplex)._readableState;
         if (s && !s.errorEmitted) {
-          // User incorrectly emitted 'error' directly on the stream.
-          errorOrDestroyDuplex(dest, er);
+          if(dest instanceof Duplex){
+            errorOrDestroyDuplex(dest as unknown as Duplex, er);
+          }else{
+            errorOrDestroyWritable(dest as Writable, er);
+          }
         } else {
           dest.emit("error", er);
         }

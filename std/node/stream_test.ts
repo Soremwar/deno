@@ -1,8 +1,8 @@
 import { assert, assertEquals } from "../testing/asserts.ts";
 import { deferred } from "../async/mod.ts";
 import Buffer from "./buffer.ts";
-import Readable from "./_stream/readable.js";
-import Writable from "./_stream/writable.js";
+import Readable from "./_stream/readable.ts";
+import Writable from "./_stream/writable.ts";
 
 Deno.test("Readable and Writable stream backpressure test", async () => {
   let pushes = 0;
