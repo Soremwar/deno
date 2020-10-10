@@ -496,7 +496,7 @@ class Readable extends Stream {
 
   off = this.removeListener;
 
-  destroy(err?: Error, cb?: () => void) {
+  destroy(err?: Error | null, cb?: () => void) {
     const r = this._readableState;
 
     if (r.destroyed) {

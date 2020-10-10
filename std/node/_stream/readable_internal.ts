@@ -16,7 +16,7 @@ import {
 
 export function _destroy(
   self: Readable,
-  err?: Error,
+  err?: Error | null,
   cb?: (error?: Error | null) => void,
 ) {
   self._destroy(err || null, (err) => {

@@ -2,6 +2,7 @@ import type Buffer from "../buffer.ts";
 import finished from "./end-of-stream.ts";
 import Readable from "./readable.ts";
 import type Stream from "./stream.ts";
+import { destroyer } from "./destroy.ts";
 
 const kLastResolve = Symbol("lastResolve");
 const kLastReject = Symbol("lastReject");
@@ -31,24 +32,6 @@ function initIteratorSymbols(
     };
   }
   Object.defineProperties(o, properties);
-}
-
-// TODO(Soremwar)
-// Bring back once requests are implemented
-// function isRequest(stream: any) {
-//   return stream && stream.setHeader && typeof stream.abort === "function";
-// }
-
-//TODO(Soremwar)
-//Should be any implementation of stream
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function destroyer(stream: any, err?: Error | null) {
-  // TODO(Soremwar)
-  // Bring back once requests are implemented
-  // if (isRequest(stream)) return stream.abort();
-  // if (isRequest(stream.req)) return stream.req.abort();
-  if (typeof stream.destroy === "function") return stream.destroy(err);
-  if (typeof stream.close === "function") return stream.close();
 }
 
 function createIterResult(

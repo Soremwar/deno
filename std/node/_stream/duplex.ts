@@ -66,7 +66,7 @@ import {
 } from "./duplex_internal.ts";
 export {errorOrDestroy} from "./duplex_internal.ts";
 
-interface DuplexOptions {
+export interface DuplexOptions {
   allowHalfOpen?: boolean;
   autoDestroy?: boolean;
   decodeStrings?: boolean;
@@ -81,7 +81,7 @@ interface DuplexOptions {
   final?(this: Duplex, callback: (error?: Error | null) => void): void;
   highWaterMark?: number;
   objectMode?: boolean;
-  read?(this: Duplex): void;
+  read?(this: Duplex, size: number): void;
   readable?: boolean;
   readableHighWaterMark?: number;
   readableObjectMode?: boolean;
@@ -307,7 +307,7 @@ class Duplex extends Stream {
     return ret;
   }
 
-  _read() {
+  _read(size?: number) {
     throw new ERR_METHOD_NOT_IMPLEMENTED("_read()");
   }
 
@@ -346,7 +346,7 @@ class Duplex extends Stream {
     }
 
     dest.on("unpipe", onunpipe);
-    function onunpipe(readable: Readable, unpipeInfo: { hasUnpiped: boolean }) {
+    function onunpipe(readable: Duplex, unpipeInfo: { hasUnpiped: boolean }) {
       if (readable === src) {
         if (unpipeInfo && unpipeInfo.hasUnpiped === false) {
           unpipeInfo.hasUnpiped = true;
@@ -548,7 +548,7 @@ class Duplex extends Stream {
 
   off = this.removeListener;
 
-  destroy(err?: Error, cb?: (error?: Error | null) => void) {
+  destroy(err?: Error | null, cb?: (error?: Error | null) => void) {
     const r = this._readableState;
     const w = this._writableState;
   

@@ -1,5 +1,6 @@
-import Transform from "./transform.js";
-import finished from "../internal/streams/end-of-stream.js";
+import Buffer from "../buffer.ts";
+import Transform from "./transform.ts";
+import finished from "./end-of-stream.ts";
 import {
   deferred,
 } from "../../async/mod.ts";
@@ -9,7 +10,7 @@ import {
 } from "../../testing/asserts.ts";
 
 Deno.test("Transform stream finishes correctly", async () => {
-  const finished_executed = 0;
+  let finished_executed = 0;
   const finished_executed_expected = 1;
   const finished_execution = deferred();
 
@@ -31,6 +32,7 @@ Deno.test("Transform stream finishes correctly", async () => {
   });
 
   finished(tr, (err) => {
+    finished_executed++;
     if(finished_executed === finished_executed_expected){
       finished_execution.resolve();
     }
@@ -51,32 +53,20 @@ Deno.test("Transform stream finishes correctly", async () => {
   assertEquals(finished_executed, finished_executed_expected);
 });
 
-const tr = new Transform({
-  transform(_data, _enc, cb) {
-    cb();
-  }
+Deno.test("Transform stream flushes data correctly", async () => {  
+  const expected = 'asdf';
+
+  const t = new Transform({
+    transform: (_d, _e, n) => {
+      n();
+    },
+    flush: (n) => {
+      n(null, expected);
+    }
+  });
+  
+  t.end(Buffer.from('blerg'));
+  t.on('data', (data) => {
+    assertEquals(data.toString(), expected);
+  });
 });
-
-let finish = false;
-let ended = false;
-
-tr.on('end', () => {
-  ended = true;
-});
-
-tr.on('finish', () => {
-  finish = true;
-});
-
-tr.on('prefinish', () => {
-  console.log("prefinish is emitted correctly")
-})
-
-finished(tr, (err) => {
-  assert(!err, 'no error');
-  assert(finish);
-  assert(ended);
-});
-
-tr.end();
-tr.resume();

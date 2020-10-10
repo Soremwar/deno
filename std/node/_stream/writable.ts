@@ -271,7 +271,7 @@ class Writable extends Stream {
     cb(err);
   }
 
-  destroy(err?: Error, cb?: () => void) {
+  destroy(err?: Error | null, cb?: () => void) {
     const state = this._writableState;
     if (!state.destroyed) {
       queueMicrotask(() => errorBuffer(state));

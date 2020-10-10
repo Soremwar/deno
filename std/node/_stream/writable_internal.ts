@@ -28,7 +28,7 @@ export const kOnFinished = Symbol("kOnFinished");
 
 function _destroy(
   self: Writable,
-  err?: Error,
+  err?: Error | null,
   cb?: (error?: Error | null) => void,
 ) {
   self._destroy(err || null, (err) => {
@@ -159,7 +159,7 @@ export function clearBuffer(stream: Duplex | Writable, state: WritableState) {
   state.bufferProcessing = false;
 }
 
-export function destroy(this: Writable, err?: Error, cb?: () => void) {
+export function destroy(this: Writable, err?: Error | null, cb?: () => void) {
   const w = this._writableState;
 
   if (w.destroyed) {

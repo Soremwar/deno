@@ -1,7 +1,7 @@
 import { once } from "../_utils.ts";
 import {
   destroyer as impl_destroyer,
-} from "./destroy.js";
+} from "./destroy.ts";
 import eos from "./end-of-stream.ts";
 import createReadableStreamAsyncIterator from "./async_iterator.ts";
 import * as events from "../events.ts";
