@@ -27,7 +27,7 @@ import Transform from "./transform.ts";
 import type {TransformOptions} from "./transform.ts";
 
 export default class PassThrough extends Transform {
-  constructor(options: TransformOptions){
+  constructor(options?: TransformOptions){
     super(options);
   }
 

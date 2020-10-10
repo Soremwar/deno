@@ -1,5 +1,12 @@
 // Copyright 2018-2020 the Deno authors. All rights reserved. MIT license.
 
+import {
+  deferred,
+} from "../async/mod.ts";
+import {
+  fail,
+} from "../testing/asserts.ts";
+
 export function notImplemented(msg?: string): never {
   const message = msg ? `Not implemented: ${msg}` : "Not implemented";
   throw new Error(message);
@@ -132,14 +139,50 @@ export function validateIntegerRange(
   }
 }
 
-type OptionalSpread<T> = T extends undefined ? []
+type OptionalSpread<T> = T extends undefined
+  ? []
   : [T];
 
-export function once(callback: (...args: OptionalSpread<undefined>) => void) {
+export function once<T = undefined>(callback: (...args: OptionalSpread<T>) => void) {
   let called = false;
-  return function (this: unknown, ...args: OptionalSpread<undefined>) {
+  return function (this: unknown, ...args: OptionalSpread<T>) {
     if (called) return;
     called = true;
     callback.apply(this, args);
   };
+}
+
+/**
+ * @param {number} [expected_executions = 1]
+ * @param {number} [timeout = 1000] Milliseconds to wait before the promise is forcefully exited
+*/
+export function mustCall<T = undefined>(
+  fn: ((...args: OptionalSpread<T>) => void) = () => {},
+  expected_executions = 1,
+  timeout = 1000,
+): [ Promise<void>, (...args: OptionalSpread<T>) => void ] {
+  if(expected_executions < 1){
+    throw new Error("Expected executions can't be lower than 1");
+  }
+  let times_executed = 0;
+  const completed = deferred();
+
+  const abort = setTimeout(() => completed.reject(), timeout);
+
+  function callback(this: unknown, ...args: OptionalSpread<T>){
+    times_executed++;
+    if(times_executed === expected_executions){
+      completed.resolve();
+    }
+    fn.apply(this, args);
+  }
+
+  const result = completed
+    .then(() => clearTimeout(abort))
+    .catch(() => fail(`Async operation not completed: Expected ${expected_executions}, executed ${times_executed}`));
+
+  return [
+    result,
+    callback,
+  ];
 }

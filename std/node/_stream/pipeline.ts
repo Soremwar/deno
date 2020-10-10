@@ -5,16 +5,51 @@ import {
 import eos from "./end-of-stream.ts";
 import createReadableStreamAsyncIterator from "./async_iterator.ts";
 import * as events from "../events.ts";
-import PassThrough from "./passthrough.js";
+import PassThrough from "./passthrough.ts";
 import {
   ERR_INVALID_ARG_TYPE,
   ERR_INVALID_RETURN_VALUE,
   ERR_INVALID_CALLBACK,
   ERR_MISSING_ARGS,
   ERR_STREAM_DESTROYED,
+  NodeErrorAbstraction,
 } from "../_errors.ts";
+import type Duplex from "./duplex.ts";
+import type Readable from "./readable.ts";
+import type Stream from "./stream.ts";
+import type Transform from "./transform.ts";
+import type Writable from "./writable.ts";
 
-function destroyer(stream, reading, writing, callback) {
+type Streams = Duplex | Readable | Writable;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type EndCallback = (err?: NodeErrorAbstraction | null, val?: any) => void;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type TransformCallback = ((value?: any) => AsyncGenerator<any>) | ((value?: any) => Promise<any>);
+/**
+ * This type represents an array that contains a data source,
+ * many Transform Streams, a writable stream destination
+ * and end in an optional callback
+ * */
+type DataSource = 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (() => AsyncGenerator<any>) |
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  AsyncIterable<any> |
+  Duplex |
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  Iterable<any> |
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (() => Generator<any>) |
+  Readable;
+type Transformers = Duplex | Transform | TransformCallback | Writable;
+type PipelineArguments = [DataSource, ...Array<Transformers | EndCallback>];
+
+function destroyer(
+  stream: Streams,
+  reading: boolean,
+  writing: boolean,
+  callback: EndCallback,
+) {
   callback = once(callback);
 
   let finished = false;
@@ -25,21 +60,14 @@ function destroyer(stream, reading, writing, callback) {
   eos(stream, { readable: reading, writable: writing }, (err) => {
     finished = !err;
 
-    const rState = stream._readableState;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rState = (stream as any)?._readableState;
     if (
       err &&
       err.code === "ERR_STREAM_PREMATURE_CLOSE" &&
       reading &&
-      (rState && rState.ended && !rState.errored && !rState.errorEmitted)
+      (rState?.ended && !rState?.errored && !rState?.errorEmitted)
     ) {
-      // Some readable streams will emit 'close' before 'end'. However, since
-      // this is on the readable side 'end' should still be emitted if the
-      // stream has been ended and no error emitted. This should be allowed in
-      // favor of backwards compatibility. Since the stream is piped to a
-      // destination this should not result in any observable difference.
-      // We don't need to check if this is a writable premature close since
-      // eos will only fail with premature close on the reading side for
-      // duplex streams.
       stream
         .once("end", callback)
         .once("error", callback);
@@ -48,7 +76,7 @@ function destroyer(stream, reading, writing, callback) {
     }
   });
 
-  return (err) => {
+  return (err: NodeErrorAbstraction) => {
     if (finished) return;
     finished = true;
     impl_destroyer(stream, err);
@@ -56,33 +84,34 @@ function destroyer(stream, reading, writing, callback) {
   };
 }
 
-function popCallback(streams) {
-  // Streams should never be an empty array. It should always contain at least
-  // a single stream. Therefore optimize for the average case instead of
-  // checking for length === 0 as well.
+function popCallback(streams: PipelineArguments): EndCallback {
   if (typeof streams[streams.length - 1] !== "function") {
-    throw new ERR_INVALID_CALLBACK(streams[streams.length - 1]);
+    throw new ERR_INVALID_CALLBACK(streams[streams.length - 1] as Streams);
   }
-  return streams.pop();
+  return streams.pop() as EndCallback;
 }
 
-function isPromise(obj) {
-  return !!(obj && typeof obj.then === "function");
-}
+// function isPromise(obj) {
+//   return !!(obj && typeof obj.then === "function");
+// }
 
-function isReadable(obj) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function isReadable(obj: any): obj is Stream {
   return !!(obj && typeof obj.pipe === "function");
 }
 
-function isWritable(obj) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function isWritable(obj: any) {
   return !!(obj && typeof obj.write === "function");
 }
 
-function isStream(obj) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function isStream(obj: any) {
   return isReadable(obj) || isWritable(obj);
 }
 
-function isIterable(obj, isAsync) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function isIterable(obj: any, isAsync?: boolean) {
   if (!obj) return false;
   if (isAsync === true) return typeof obj[Symbol.asyncIterator] === "function";
   if (isAsync === false) return typeof obj[Symbol.iterator] === "function";
@@ -90,12 +119,12 @@ function isIterable(obj, isAsync) {
     typeof obj[Symbol.iterator] === "function";
 }
 
-function makeAsyncIterable(val) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function makeAsyncIterable(val: Readable | Iterable<any> | AsyncIterable<any>) {
   if (isIterable(val)) {
     return val;
   } else if (isReadable(val)) {
-    // Legacy streams are not Iterable.
-    return fromReadable(val);
+    return fromReadable(val as Readable);
   }
   throw new ERR_INVALID_ARG_TYPE(
     "val",
@@ -104,11 +133,16 @@ function makeAsyncIterable(val) {
   );
 }
 
-async function* fromReadable(val) {
+async function* fromReadable(val: Readable) {
   yield* createReadableStreamAsyncIterator(val);
 }
 
-async function pump(iterable, writable, finish) {
+async function pump(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  iterable: Iterable<any>,
+  writable: Duplex | Writable,
+  finish: (err?: NodeErrorAbstraction | null) => void
+) {
   let error;
   try {
     for await (const chunk of iterable) {
@@ -125,22 +159,24 @@ async function pump(iterable, writable, finish) {
   }
 }
 
-function pipeline(...streams) {
-  const callback = once(popCallback(streams));
+export default function pipeline(...args: PipelineArguments) {
+  const callback: EndCallback = once(popCallback(args));
 
-  if (Array.isArray(streams[0])) streams = streams[0];
-
-  if (streams.length < 2) {
+  let streams: [DataSource, ...Array<Transformers>];
+  if (args.length > 1) {
+    streams = args as [DataSource, ...Array<Transformers>];
+  }else{
     throw new ERR_MISSING_ARGS("streams");
   }
 
-  let error;
-  let value;
-  const destroys = [];
+  let error: NodeErrorAbstraction;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let value: any;
+  const destroys: Array<(err: NodeErrorAbstraction) => void> = [];
 
   let finishCount = 0;
 
-  function finish(err) {
+  function finish(err?: NodeErrorAbstraction | null) {
     const final = --finishCount === 0;
 
     if (err && (!error || error.code === "ERR_STREAM_PREMATURE_CLOSE")) {
@@ -152,7 +188,7 @@ function pipeline(...streams) {
     }
 
     while (destroys.length) {
-      destroys.shift()(error);
+      (destroys.shift() as (err: NodeErrorAbstraction) => void)(error);
     }
 
     if (final) {
@@ -160,7 +196,10 @@ function pipeline(...streams) {
     }
   }
 
-  let ret;
+  // TODO(Soremwar)
+  // Simplify the hell out of this
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let ret: any;
   for (let i = 0; i < streams.length; i++) {
     const stream = streams[i];
     const reading = i < streams.length - 1;
@@ -168,7 +207,7 @@ function pipeline(...streams) {
 
     if (isStream(stream)) {
       finishCount++;
-      destroys.push(destroyer(stream, reading, writing, finish));
+      destroys.push(destroyer(stream as Streams, reading, writing, finish));
     }
 
     if (i === 0) {
@@ -207,11 +246,10 @@ function pipeline(...streams) {
         // we must create a proxy stream so that pipeline(...)
         // always returns a stream which can be further
         // composed through `.pipe(stream)`.
-
         const pt = new PassThrough({
           objectMode: true,
         });
-        if (isPromise(ret)) {
+        if (ret instanceof Promise) {
           ret
             .then((val) => {
               value = val;
@@ -237,19 +275,18 @@ function pipeline(...streams) {
       }
     } else if (isStream(stream)) {
       if (isReadable(ret)) {
-        ret.pipe(stream);
+        ret.pipe(stream as any);
 
-        // Compat. Before node v10.12.0 stdio used to throw an error so
-        // pipe() did/does not end() stdio destinations.
-        // Now they allow it but "secretly" don't close the underlying fd.
-        if (stream === process.stdout || stream === process.stderr) {
-          ret.on("end", () => stream.end());
-        }
+        // TODO(Soremwar)
+        // Reimplement after stdout and stderr are implemented
+        // if (stream === process.stdout || stream === process.stderr) {
+        //   ret.on("end", () => stream.end());
+        // }
       } else {
         ret = makeAsyncIterable(ret);
 
         finishCount++;
-        pump(ret, stream, finish);
+        pump(ret, stream as Writable, finish);
       }
       ret = stream;
     } else {
@@ -261,11 +298,6 @@ function pipeline(...streams) {
       );
     }
   }
-
-  // TODO(ronag): Consider returning a Duplex proxy if the first argument
-  // is a writable. Would improve composability.
-  // See, https://github.com/nodejs/node/issues/32020
-  return ret;
+  
+  return ret as unknown as Readable;
 }
-
-export default pipeline;

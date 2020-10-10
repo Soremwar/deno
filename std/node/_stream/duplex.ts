@@ -39,6 +39,7 @@ import {
   ERR_METHOD_NOT_IMPLEMENTED, ERR_STREAM_ALREADY_FINISHED, ERR_STREAM_DESTROYED, ERR_STREAM_NULL_VALUES, ERR_STREAM_WRITE_AFTER_END, ERR_UNKNOWN_ENCODING,
 } from "../_errors.ts";
 import createReadableStreamAsyncIterator from "./async_iterator.ts";
+import type {ReadableStreamAsyncIterator} from "./async_iterator.ts";
 import {
   _destroy,
   computeNewHighWaterMark,
@@ -829,7 +830,7 @@ class Duplex extends Stream {
     return this;
   }
 
-  [Symbol.asyncIterator]() {
+  [Symbol.asyncIterator](): ReadableStreamAsyncIterator {
     return createReadableStreamAsyncIterator(this);
   }
 

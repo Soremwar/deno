@@ -54,7 +54,7 @@ export default class Transform extends Duplex {
   [kCallback]: null | ((error?: Error | null) => void);
   _flush?: TransformFlush;
 
-  constructor(options: TransformOptions){
+  constructor(options?: TransformOptions){
     super(options);
     this._readableState.sync = false;
   

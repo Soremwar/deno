@@ -101,7 +101,7 @@ const AsyncIteratorPrototype = Object.getPrototypeOf(
   Object.getPrototypeOf(async function* () {}).prototype,
 );
 
-class ReadableStreamAsyncIterator
+export class ReadableStreamAsyncIterator
   implements AsyncIterableIterator<IterableItem> {
   [kEnded]: boolean;
   [kError]: Error | null = null;
