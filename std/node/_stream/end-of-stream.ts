@@ -11,7 +11,7 @@ import {
   NodeErrorAbstraction,
 } from "../_errors.ts";
 
-type StreamImplementations = Duplex | Readable | Stream | Writable;
+export type StreamImplementations = Duplex | Readable | Stream | Writable;
 
 // TODO(Soremwar)
 // Bring back once requests are implemented
@@ -49,7 +49,7 @@ function isReadableEnded(stream: Readable) {
   return rState.endEmitted || (rState.ended && rState.length === 0);
 }
 
-interface FinishedOptions {
+export interface FinishedOptions {
   error?: boolean;
   readable?: boolean;
   writable?: boolean;

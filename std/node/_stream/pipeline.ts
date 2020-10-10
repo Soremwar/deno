@@ -42,7 +42,7 @@ type DataSource =
   (() => Generator<any>) |
   Readable;
 type Transformers = Duplex | Transform | TransformCallback | Writable;
-type PipelineArguments = [DataSource, ...Array<Transformers | EndCallback>];
+export type PipelineArguments = [DataSource, ...Array<Transformers | EndCallback>];
 
 function destroyer(
   stream: Streams,
