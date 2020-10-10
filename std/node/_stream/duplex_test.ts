@@ -7,7 +7,7 @@ import {
   assertStrictEquals,
   assertThrows,
 } from "../../testing/asserts.ts";
-import { deferred } from "../../async/mod.ts";
+import { delay, deferred } from "../../async/mod.ts";
 
 Deno.test("Duplex stream works normally", () => {
   const stream = new Duplex({ objectMode: true });
@@ -484,38 +484,6 @@ Deno.test("Duplex stream throws on unexpected close", async () => {
   assertEquals(finished_executed, finished_executed_expected);
 });
 
-Deno.test("Duplex stream finishes correctly", async () => {
-  let finished_executed = 0;
-  const finished_executed_expected = 1;
-  const finished_expected_executions = deferred();
-
-  const w = new Duplex({
-    write(_chunk, _encoding, cb) {
-      cb();
-    },
-    autoDestroy: false,
-  });
-
-  w.end("asd");
-
-  queueMicrotask(() => {
-    finished(w, () => {
-      finished_executed++;
-      if (finished_executed == finished_executed_expected) {
-        finished_expected_executions.resolve();
-      }
-    });
-  });
-
-  const finished_timeout = setTimeout(
-    () => finished_expected_executions.reject(),
-    1000,
-  );
-  await finished_expected_executions;
-  clearTimeout(finished_timeout);
-  assertEquals(finished_executed, finished_executed_expected);
-});
-
 Deno.test("Duplex stream finishes correctly after error", async () => {
   let error_executed = 0;
   const error_executed_expected = 1;
@@ -564,4 +532,162 @@ Deno.test("Duplex stream finishes correctly after error", async () => {
 Deno.test("Duplex stream fails on 'write' null value", () => {
   const writable = new Duplex();
   assertThrows(() => writable.write(null));
+});
+
+Deno.test("Duplex stream is destroyed correctly", async () => {
+  let close_executed = 0;
+  const close_executed_expected = 1;
+  const close_expected_executions = deferred();
+
+  const unexpected_execution = deferred();
+
+  const duplex = new Duplex({
+    write(_chunk, _enc, cb) { cb(); },
+    read() {}
+  });
+
+  duplex.resume();
+
+  function never(){
+    unexpected_execution.reject();
+  }
+
+  duplex.on('end', never);
+  duplex.on('finish', never);
+  duplex.on('close', () => {
+    close_executed++;
+    if (close_executed == close_executed_expected) {
+      close_expected_executions.resolve();
+    }
+  });
+
+  duplex.destroy();
+  assertEquals(duplex.destroyed, true);
+
+  const close_timeout = setTimeout(
+    () => close_expected_executions.reject(),
+    1000,
+  );
+  await Promise.race([
+    unexpected_execution,
+    delay(100),
+  ]);
+  await close_expected_executions;
+  clearTimeout(close_timeout);
+  assertEquals(close_executed, close_executed_expected);
+});
+
+Deno.test("Duplex stream errors correctly on destroy", async () => {
+  let error_executed = 0;
+  const error_executed_expected = 1;
+  const error_expected_executions = deferred();
+
+  const unexpected_execution = deferred();
+
+  const duplex = new Duplex({
+    write(_chunk, _enc, cb) { cb(); },
+    read() {}
+  });
+  duplex.resume();
+
+  const expected = new Error('kaboom');
+
+  function never(){
+    unexpected_execution.reject();
+  }
+
+  duplex.on('end', never);
+  duplex.on('finish', never);
+  duplex.on('error', (err) => {
+    error_executed++;
+    if (error_executed == error_executed_expected) {
+      error_expected_executions.resolve();
+    }
+    assertStrictEquals(err, expected);
+  });
+
+  duplex.destroy(expected);
+  assertEquals(duplex.destroyed, true);
+
+  const error_timeout = setTimeout(
+    () => error_expected_executions.reject(),
+    1000,
+  );
+  await Promise.race([
+    unexpected_execution,
+    delay(100),
+  ]);
+  await error_expected_executions;
+  clearTimeout(error_timeout);
+  assertEquals(error_executed, error_executed_expected);
+});
+
+Deno.test("Duplex stream doesn't finish on allowHalfOpen", async () => {
+  const unexpected_execution = deferred();
+
+  const duplex = new Duplex({
+    read() {}
+  });
+
+  assertEquals(duplex.allowHalfOpen, true);
+  duplex.on('finish', () => unexpected_execution.reject());
+  assertEquals(duplex.listenerCount('end'), 0);
+  duplex.resume();
+  duplex.push(null);
+
+  await Promise.race([
+    unexpected_execution,
+    delay(100),
+  ]);
+});
+
+Deno.test("Duplex stream finishes when allowHalfOpen is disabled", async () => {
+  let finish_executed = 0;
+  const finish_executed_expected = 1;
+  const finish_expected_executions = deferred();
+
+  const duplex = new Duplex({
+    read() {},
+    allowHalfOpen: false,
+  });
+
+  assertEquals(duplex.allowHalfOpen, false);
+  duplex.on('finish', () => {
+    finish_executed++;
+    if (finish_executed == finish_executed_expected) {
+      finish_expected_executions.resolve();
+    }
+  });
+  assertEquals(duplex.listenerCount('end'), 0);
+  duplex.resume();
+  duplex.push(null);
+
+  const finish_timeout = setTimeout(
+    () => finish_expected_executions.reject(),
+    1000,
+  );
+  await finish_expected_executions;
+  clearTimeout(finish_timeout);
+  assertEquals(finish_executed, finish_executed_expected);
+});
+
+Deno.test("Duplex stream doesn't finish when allowHalfOpen is disabled but stream ended", async () => {
+  const unexpected_execution = deferred();
+
+  const duplex = new Duplex({
+    read() {},
+    allowHalfOpen: false,
+  });
+
+  assertEquals(duplex.allowHalfOpen, false);
+  duplex._writableState.ended = true;
+  duplex.on('finish', () => unexpected_execution.reject());
+  assertEquals(duplex.listenerCount('end'), 0);
+  duplex.resume();
+  duplex.push(null);
+
+  await Promise.race([
+    unexpected_execution,
+    delay(100),
+  ]);
 });
