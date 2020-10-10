@@ -30,7 +30,7 @@ const kCallback = Symbol("kCallback");
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type TransformFlush = (this: Transform, callback: (error?: Error | null, data?: any) => void) => void;
 
-interface TransformOptions extends DuplexOptions {
+export interface TransformOptions extends DuplexOptions {
   read?(this: Transform, size: number): void;
   //TODO(Soremwar)
   //Bring encodings in

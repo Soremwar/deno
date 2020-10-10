@@ -23,14 +23,23 @@
 // basically just the most minimal sort of Transform stream.
 // Every written chunk gets output as-is.
 
-import Transform from "./transform.js";
+import Transform from "./transform.ts";
+import type {TransformOptions} from "./transform.ts";
 
 export default class PassThrough extends Transform {
-  constructor(options){
+  constructor(options: TransformOptions){
     super(options);
   }
 
-  _transform(chunk, _encoding, cb) {
+  //TODO(Soremwar)
+  //Bring encodings in
+  _transform(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    chunk: any,
+    _encoding: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    cb: (error?: Error | null, data?: any) => void
+  ) {
     cb(null, chunk);
   }
 }
