@@ -26,7 +26,6 @@
 * ERR_INVALID_PACKAGE_TARGET
 * ERR_INVALID_URL_SCHEME
 * ERR_MANIFEST_ASSERT_INTEGRITY
-* ERR_MISSING_ARGS
 * ERR_MODULE_NOT_FOUND
 * ERR_PACKAGE_PATH_NOT_EXPORTED
 * ERR_QUICSESSION_VERSION_NEGOTIATION
@@ -1475,6 +1474,29 @@ export class ERR_METHOD_NOT_IMPLEMENTED extends NodeError {
     super(
       "ERR_METHOD_NOT_IMPLEMENTED",
       `The ${x} method is not implemented`,
+    );
+  }
+}
+export class ERR_MISSING_ARGS extends NodeTypeError {
+  constructor(...args: string[]) {
+    args = args.map((a) => `"${a}"`);
+
+    let msg = "The ";
+    switch (args.length) {
+      case 1:
+        msg += `${args[0]} argument`;
+        break;
+      case 2:
+        msg += `${args[0]} and ${args[1]} arguments`;
+        break;
+      default:
+        msg += args.slice(0, args.length - 1).join(", ");
+        msg += `, and ${args[args.length - 1]} arguments`;
+        break;
+    }
+    super(
+      "ERR_MISSING_ARGS",
+      `${msg} must be specified`,
     );
   }
 }
