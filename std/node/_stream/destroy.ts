@@ -22,9 +22,15 @@ export function destroyer(stream: Stream, err?: Error | null) {
   // Bring back once requests are implemented
   // if (isRequest(stream)) return stream.abort();
   // if (isRequest(stream.req)) return stream.req.abort();
-  if (typeof (stream as Streams).destroy === "function") return (stream as Streams).destroy(err);
+  if (
+    typeof (stream as Streams).destroy === "function"
+  ) {
+    return (stream as Streams).destroy(err);
+  }
   //A test of async iterator mocks an upcoming implementation of stream
-  //This is casted to any in the meanwhile 
+  //This is casted to any in the meanwhile
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  if (typeof (stream as any).close === "function") return (stream as any).close();
+  if (typeof (stream as any).close === "function") {
+    return (stream as any).close();
+  }
 }

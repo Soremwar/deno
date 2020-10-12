@@ -1,13 +1,8 @@
 import type Duplex from "./duplex.ts";
 import type Writable from "./writable.ts";
-import type {
-  WritableState,
-} from "./writable.ts";
+import type { WritableState } from "./writable.ts";
 import { kDestroy } from "./symbols.ts";
-import {
-  ERR_MULTIPLE_CALLBACK,
-  ERR_STREAM_DESTROYED,
-} from "../_errors.ts";
+import { ERR_MULTIPLE_CALLBACK, ERR_STREAM_DESTROYED } from "../_errors.ts";
 
 //TODO(Soremwar)
 //Bring in encodings
@@ -291,7 +286,11 @@ function finish(stream: Writable, state: WritableState) {
   }
 }
 
-export function finishMaybe(stream: Writable, state: WritableState, sync?: boolean) {
+export function finishMaybe(
+  stream: Writable,
+  state: WritableState,
+  sync?: boolean,
+) {
   if (needFinish(state)) {
     prefinish(stream, state);
     if (state.pendingcb === 0 && needFinish(state)) {

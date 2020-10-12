@@ -46,7 +46,7 @@ import {
   updateReadableListening,
 } from "./readable_internal.ts";
 import Writable from "./writable.ts";
-import {errorOrDestroy as errorOrDestroyWritable} from "./writable_internal.ts";
+import { errorOrDestroy as errorOrDestroyWritable } from "./writable_internal.ts";
 import Duplex, { errorOrDestroy as errorOrDestroyDuplex } from "./duplex.ts";
 
 export interface ReadableOptions {
@@ -361,9 +361,9 @@ class Readable extends Stream {
       if (dest.listenerCount("error") === 0) {
         const s = dest._writableState || (dest as Duplex)._readableState;
         if (s && !s.errorEmitted) {
-          if(dest instanceof Duplex){
+          if (dest instanceof Duplex) {
             errorOrDestroyDuplex(dest as unknown as Duplex, er);
-          }else{
+          } else {
             errorOrDestroyWritable(dest as Writable, er);
           }
         } else {

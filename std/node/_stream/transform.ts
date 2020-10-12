@@ -20,32 +20,51 @@
 // USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import Duplex from "./duplex.ts";
-import type {DuplexOptions} from "./duplex.ts"
-import {
-  ERR_METHOD_NOT_IMPLEMENTED,
-} from "../_errors.ts";
+import type { DuplexOptions } from "./duplex.ts";
+import { ERR_METHOD_NOT_IMPLEMENTED } from "../_errors.ts";
 
 const kCallback = Symbol("kCallback");
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type TransformFlush = (this: Transform, callback: (error?: Error | null, data?: any) => void) => void;
+type TransformFlush = (
+  this: Transform,
+  callback: (error?: Error | null, data?: any) => void,
+) => void;
 
 export interface TransformOptions extends DuplexOptions {
   read?(this: Transform, size: number): void;
   //TODO(Soremwar)
   //Bring encodings in
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  write?(this: Transform, chunk: any, encoding: string, callback: (error?: Error | null) => void): void;
+  write?(
+    this: Transform,
+    chunk: any,
+    encoding: string,
+    callback: (error?: Error | null) => void,
+  ): void;
   //TODO(Soremwar)
   //Bring encodings in
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  writev?(this: Transform, chunks: Array<{ chunk: any, encoding: string }>, callback: (error?: Error | null) => void): void;
+  writev?(
+    this: Transform,
+    chunks: Array<{ chunk: any; encoding: string }>,
+    callback: (error?: Error | null) => void,
+  ): void;
   final?(this: Transform, callback: (error?: Error | null) => void): void;
-  destroy?(this: Transform, error: Error | null, callback: (error: Error | null) => void): void;
+  destroy?(
+    this: Transform,
+    error: Error | null,
+    callback: (error: Error | null) => void,
+  ): void;
   //TODO(Soremwar)
   //Bring encodings in
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  transform?(this: Transform, chunk: any, encoding: string, callback: (error?: Error | null, data?: any) => void): void;
+  transform?(
+    this: Transform,
+    chunk: any,
+    encoding: string,
+    callback: (error?: Error | null, data?: any) => void,
+  ): void;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   flush?: TransformFlush;
 }
@@ -54,30 +73,30 @@ export default class Transform extends Duplex {
   [kCallback]: null | ((error?: Error | null) => void);
   _flush?: TransformFlush;
 
-  constructor(options?: TransformOptions){
+  constructor(options?: TransformOptions) {
     super(options);
     this._readableState.sync = false;
-  
+
     this[kCallback] = null;
-  
+
     if (options) {
       if (typeof options.transform === "function") {
         this._transform = options.transform;
       }
-  
+
       if (typeof options.flush === "function") {
         this._flush = options.flush;
       }
     }
 
-    this.on("prefinish", function(this: Transform) {
+    this.on("prefinish", function (this: Transform) {
       if (typeof this._flush === "function" && !this.destroyed) {
         this._flush((er, data) => {
           if (er) {
             this.destroy(er);
             return;
           }
-    
+
           if (data != null) {
             this.push(data);
           }
@@ -116,17 +135,17 @@ export default class Transform extends Duplex {
     const rState = this._readableState;
     const wState = this._writableState;
     const length = rState.length;
-  
+
     this._transform(chunk, encoding, (err, val) => {
       if (err) {
         callback(err);
         return;
       }
-  
+
       if (val != null) {
         this.push(val);
       }
-  
+
       if (
         wState.ended || // Backwards compat.
         length === rState.length || // Backwards compat.

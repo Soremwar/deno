@@ -20,26 +20,23 @@
 // USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import { captureRejectionSymbol } from "../events.ts";
-import Readable, {
-  ReadableState,
-} from "./readable.ts";
+import Readable, { ReadableState } from "./readable.ts";
 import Stream from "./stream.ts";
-import Writable, {
-  WritableState,
-} from "./writable.ts";
-import {
-  StringDecoder,
-} from "../string_decoder.ts";
+import Writable, { WritableState } from "./writable.ts";
+import { StringDecoder } from "../string_decoder.ts";
 import Buffer from "../buffer.ts";
-import {
-  kPaused,
-} from "./symbols.ts";
+import { kPaused } from "./symbols.ts";
 import {
   ERR_INVALID_ARG_TYPE,
-  ERR_METHOD_NOT_IMPLEMENTED, ERR_STREAM_ALREADY_FINISHED, ERR_STREAM_DESTROYED, ERR_STREAM_NULL_VALUES, ERR_STREAM_WRITE_AFTER_END, ERR_UNKNOWN_ENCODING,
+  ERR_METHOD_NOT_IMPLEMENTED,
+  ERR_STREAM_ALREADY_FINISHED,
+  ERR_STREAM_DESTROYED,
+  ERR_STREAM_NULL_VALUES,
+  ERR_STREAM_WRITE_AFTER_END,
+  ERR_UNKNOWN_ENCODING,
 } from "../_errors.ts";
 import createReadableStreamAsyncIterator from "./async_iterator.ts";
-import type {ReadableStreamAsyncIterator} from "./async_iterator.ts";
+import type { ReadableStreamAsyncIterator } from "./async_iterator.ts";
 import {
   _destroy,
   computeNewHighWaterMark,
@@ -65,7 +62,7 @@ import {
   finishMaybe,
   onwrite,
 } from "./duplex_internal.ts";
-export {errorOrDestroy} from "./duplex_internal.ts";
+export { errorOrDestroy } from "./duplex_internal.ts";
 
 export interface DuplexOptions {
   allowHalfOpen?: boolean;
@@ -74,7 +71,11 @@ export interface DuplexOptions {
   //TODO
   //Bring encodings in
   defaultEncoding?: string;
-  destroy?(this: Duplex, error: Error | null, callback: (error: Error | null) => void): void;
+  destroy?(
+    this: Duplex,
+    error: Error | null,
+    callback: (error: Error | null) => void,
+  ): void;
   emitClose?: boolean;
   //TODO(Soremwar)
   //Import available encodings
@@ -93,11 +94,20 @@ export interface DuplexOptions {
   //TODO(Soremwar)
   //Bring encodings in
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  write?(this: Duplex, chunk: any, encoding: string, callback: (error?: Error | null) => void): void;
+  write?(
+    this: Duplex,
+    chunk: any,
+    encoding: string,
+    callback: (error?: Error | null) => void,
+  ): void;
   //TODO(Soremwar)
   //Bring encodings in
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  writev?(this: Duplex, chunks: Array<{ chunk: any, encoding: string }>, callback: (error?: Error | null) => void): void;
+  writev?(
+    this: Duplex,
+    chunks: Array<{ chunk: any; encoding: string }>,
+    callback: (error?: Error | null) => void,
+  ): void;
 }
 
 /**
@@ -112,13 +122,15 @@ class Duplex extends Stream {
   ) => void;
   _readableState: ReadableState;
   _writableState: WritableState;
-  _writev?: ((
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    chunks: Array<{ chunk: any; encoding: string }>,
-    callback: (error?: Error | null) => void,
-  ) => void) | null;
-  
-  constructor(options?: DuplexOptions){
+  _writev?:
+    | ((
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      chunks: Array<{ chunk: any; encoding: string }>,
+      callback: (error?: Error | null) => void,
+    ) => void)
+    | null;
+
+  constructor(options?: DuplexOptions) {
     super();
 
     if (options) {
@@ -134,10 +146,10 @@ class Duplex extends Stream {
       if (typeof options.read === "function") {
         this._read = options.read;
       }
-      if (options.readable === false){
+      if (options.readable === false) {
         this.readable = false;
       }
-      if (options.writable === false){
+      if (options.writable === false) {
         this.writable = false;
       }
       if (typeof options.write === "function") {
@@ -173,7 +185,10 @@ class Duplex extends Stream {
         callback: (error: Error | null) => void,
       ) => void,
       emitClose: options?.emitClose,
-      final: options?.final as unknown as (this: Writable, callback: (error?: Error | null) => void) => void,
+      final: options?.final as unknown as (
+        this: Writable,
+        callback: (error?: Error | null) => void,
+      ) => void,
       highWaterMark: options?.highWaterMark ?? options?.writableHighWaterMark,
       objectMode: options?.objectMode ?? options?.writableObjectMode,
       write: options?.write as unknown as (
@@ -194,7 +209,10 @@ class Duplex extends Stream {
     };
 
     this._readableState = new ReadableState(readable_options);
-    this._writableState = new WritableState(writable_options, this as unknown as Writable);
+    this._writableState = new WritableState(
+      writable_options,
+      this as unknown as Writable,
+    );
     //Very important to override onwrite here, duplex implementation adds a check
     //on the readable side
     this._writableState.onwrite = onwrite.bind(undefined, this);
@@ -552,19 +570,19 @@ class Duplex extends Stream {
   destroy(err?: Error | null, cb?: (error?: Error | null) => void) {
     const r = this._readableState;
     const w = this._writableState;
-  
+
     if (w.destroyed || r.destroyed) {
-      if (typeof cb === 'function') {
+      if (typeof cb === "function") {
         cb();
       }
-  
+
       return this;
     }
-  
+
     if (err) {
       // Avoid V8 leak, https://github.com/nodejs/node/pull/34103#issuecomment-652002364
       err.stack;
-  
+
       if (!w.errored) {
         w.errored = err;
       }
@@ -572,15 +590,15 @@ class Duplex extends Stream {
         r.errored = err;
       }
     }
-  
+
     w.destroyed = true;
     r.destroyed = true;
-  
+
     this._destroy(err || null, (err) => {
       if (err) {
         // Avoid V8 leak, https://github.com/nodejs/node/pull/34103#issuecomment-652002364
         err.stack;
-  
+
         if (!w.errored) {
           w.errored = err;
         }
@@ -588,14 +606,14 @@ class Duplex extends Stream {
           r.errored = err;
         }
       }
-  
+
       w.closed = true;
       r.closed = true;
-  
-      if (typeof cb === 'function') {
+
+      if (typeof cb === "function") {
         cb(err);
       }
-  
+
       if (err) {
         queueMicrotask(() => {
           const r = this._readableState;
@@ -604,14 +622,14 @@ class Duplex extends Stream {
           if (!w.errorEmitted && !r.errorEmitted) {
             w.errorEmitted = true;
             r.errorEmitted = true;
-  
-            this.emit('error', err);
+
+            this.emit("error", err);
           }
 
           r.closeEmitted = true;
 
           if (w.emitClose || r.emitClose) {
-            this.emit('close');
+            this.emit("close");
           }
         });
       } else {
@@ -622,12 +640,12 @@ class Duplex extends Stream {
           r.closeEmitted = true;
 
           if (w.emitClose || r.emitClose) {
-            this.emit('close');
+            this.emit("close");
           }
         });
       }
     });
-  
+
     return this;
   }
 

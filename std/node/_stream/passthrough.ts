@@ -24,10 +24,10 @@
 // Every written chunk gets output as-is.
 
 import Transform from "./transform.ts";
-import type {TransformOptions} from "./transform.ts";
+import type { TransformOptions } from "./transform.ts";
 
 export default class PassThrough extends Transform {
-  constructor(options?: TransformOptions){
+  constructor(options?: TransformOptions) {
     super(options);
   }
 
@@ -38,7 +38,7 @@ export default class PassThrough extends Transform {
     chunk: any,
     _encoding: string,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    cb: (error?: Error | null, data?: any) => void
+    cb: (error?: Error | null, data?: any) => void,
   ) {
     cb(null, chunk);
   }

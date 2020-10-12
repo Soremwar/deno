@@ -1,15 +1,13 @@
 import { once } from "../_utils.ts";
-import {
-  destroyer as impl_destroyer,
-} from "./destroy.ts";
+import { destroyer as impl_destroyer } from "./destroy.ts";
 import eos from "./end-of-stream.ts";
 import createReadableStreamAsyncIterator from "./async_iterator.ts";
 import * as events from "../events.ts";
 import PassThrough from "./passthrough.ts";
 import {
   ERR_INVALID_ARG_TYPE,
-  ERR_INVALID_RETURN_VALUE,
   ERR_INVALID_CALLBACK,
+  ERR_INVALID_RETURN_VALUE,
   ERR_MISSING_ARGS,
   ERR_STREAM_DESTROYED,
   NodeErrorAbstraction,
@@ -24,25 +22,30 @@ type Streams = Duplex | Readable | Writable;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type EndCallback = (err?: NodeErrorAbstraction | null, val?: any) => void;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type TransformCallback = ((value?: any) => AsyncGenerator<any>) | ((value?: any) => Promise<any>);
+type TransformCallback =
+  | ((value?: any) => AsyncGenerator<any>)
+  | ((value?: any) => Promise<any>);
 /**
  * This type represents an array that contains a data source,
  * many Transform Streams, a writable stream destination
  * and end in an optional callback
  * */
-type DataSource = 
+type DataSource =
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (() => AsyncGenerator<any>) |
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  AsyncIterable<any> |
-  Duplex |
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  Iterable<any> |
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (() => Generator<any>) |
-  Readable;
+  | (() => AsyncGenerator<any>)
+  | // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  AsyncIterable<any>
+  | Duplex
+  | // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  Iterable<any>
+  | // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (() => Generator<any>)
+  | Readable;
 type Transformers = Duplex | Transform | TransformCallback | Writable;
-export type PipelineArguments = [DataSource, ...Array<Transformers | EndCallback>];
+export type PipelineArguments = [
+  DataSource,
+  ...Array<Transformers | EndCallback>,
+];
 
 function destroyer(
   stream: Streams,
@@ -141,7 +144,7 @@ async function pump(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   iterable: Iterable<any>,
   writable: Duplex | Writable,
-  finish: (err?: NodeErrorAbstraction | null) => void
+  finish: (err?: NodeErrorAbstraction | null) => void,
 ) {
   let error;
   try {
@@ -165,7 +168,7 @@ export default function pipeline(...args: PipelineArguments) {
   let streams: [DataSource, ...Array<Transformers>];
   if (args.length > 1) {
     streams = args as [DataSource, ...Array<Transformers>];
-  }else{
+  } else {
     throw new ERR_MISSING_ARGS("streams");
   }
 
@@ -298,6 +301,6 @@ export default function pipeline(...args: PipelineArguments) {
       );
     }
   }
-  
+
   return ret as unknown as Readable;
 }

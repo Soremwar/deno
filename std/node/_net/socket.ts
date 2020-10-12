@@ -1,9 +1,5 @@
-import type {
-  Buffer,
-} from "https://deno.land/std@0.69.0/node/buffer.ts";
-import {
-  EventEmitter,
-} from "https://deno.land/std@0.69.0/node/events.ts";
+import type { Buffer } from "https://deno.land/std@0.69.0/node/buffer.ts";
+import { EventEmitter } from "https://deno.land/std@0.69.0/node/events.ts";
 
 interface ConnectOptions {
   /**

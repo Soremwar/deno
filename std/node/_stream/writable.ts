@@ -33,10 +33,7 @@ import {
   ERR_STREAM_WRITE_AFTER_END,
   ERR_UNKNOWN_ENCODING,
 } from "../_errors.ts";
-import type {
-  AfterWriteTick,
-  write_v,
-} from "./writable_internal.ts";
+import type { AfterWriteTick, write_v } from "./writable_internal.ts";
 import {
   clearBuffer,
   destroy,

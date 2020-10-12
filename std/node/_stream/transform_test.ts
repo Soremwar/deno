@@ -1,13 +1,8 @@
 import Buffer from "../buffer.ts";
 import Transform from "./transform.ts";
 import finished from "./end-of-stream.ts";
-import {
-  deferred,
-} from "../../async/mod.ts";
-import {
-  assert,
-  assertEquals,
-} from "../../testing/asserts.ts";
+import { deferred } from "../../async/mod.ts";
+import { assert, assertEquals } from "../../testing/asserts.ts";
 
 Deno.test("Transform stream finishes correctly", async () => {
   let finished_executed = 0;
@@ -17,26 +12,26 @@ Deno.test("Transform stream finishes correctly", async () => {
   const tr = new Transform({
     transform(_data, _enc, cb) {
       cb();
-    }
+    },
   });
 
   let finish = false;
   let ended = false;
 
-  tr.on('end', () => {
+  tr.on("end", () => {
     ended = true;
   });
 
-  tr.on('finish', () => {
+  tr.on("finish", () => {
     finish = true;
   });
 
   finished(tr, (err) => {
     finished_executed++;
-    if(finished_executed === finished_executed_expected){
+    if (finished_executed === finished_executed_expected) {
       finished_execution.resolve();
     }
-    assert(!err, 'no error');
+    assert(!err, "no error");
     assert(finish);
     assert(ended);
   });
@@ -53,8 +48,8 @@ Deno.test("Transform stream finishes correctly", async () => {
   assertEquals(finished_executed, finished_executed_expected);
 });
 
-Deno.test("Transform stream flushes data correctly", async () => {  
-  const expected = 'asdf';
+Deno.test("Transform stream flushes data correctly", async () => {
+  const expected = "asdf";
 
   const t = new Transform({
     transform: (_d, _e, n) => {
@@ -62,11 +57,11 @@ Deno.test("Transform stream flushes data correctly", async () => {
     },
     flush: (n) => {
       n(null, expected);
-    }
+    },
   });
-  
-  t.end(Buffer.from('blerg'));
-  t.on('data', (data) => {
+
+  t.end(Buffer.from("blerg"));
+  t.on("data", (data) => {
     assertEquals(data.toString(), expected);
   });
 });

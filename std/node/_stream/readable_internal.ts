@@ -3,12 +3,8 @@ import type Duplex from "./duplex.ts";
 import type EventEmitter from "../events.ts";
 import type Readable from "./readable.ts";
 import type Writable from "./writable.ts";
-import type {
-  ReadableState,
-} from "./readable.ts";
-import {
-  kPaused,
-} from "./symbols.ts";
+import type { ReadableState } from "./readable.ts";
+import { kPaused } from "./symbols.ts";
 import {
   ERR_STREAM_PUSH_AFTER_EOF,
   ERR_STREAM_UNSHIFT_AFTER_END_EVENT,
@@ -150,7 +146,11 @@ function endReadableNT(state: ReadableState, stream: Readable) {
   }
 }
 
-export function errorOrDestroy(stream: Duplex | Readable, err: Error, sync = false) {
+export function errorOrDestroy(
+  stream: Duplex | Readable,
+  err: Error,
+  sync = false,
+) {
   const r = stream._readableState;
 
   if (r.destroyed) {
@@ -180,7 +180,7 @@ export function errorOrDestroy(stream: Duplex | Readable, err: Error, sync = fal
   }
 }
 
-function flow (stream: Duplex | Readable) {
+function flow(stream: Duplex | Readable) {
   const state = stream._readableState;
   while (state.flowing && stream.read() !== null);
 }

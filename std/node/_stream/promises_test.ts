@@ -1,12 +1,8 @@
 import Buffer from "../buffer.ts";
 import Readable from "./readable.ts";
 import Writable from "./writable.ts";
-import {
-  pipeline,
-} from "./promises.ts";
-import {
-  deferred,
-} from "../../async/mod.ts";
+import { pipeline } from "./promises.ts";
+import { deferred } from "../../async/mod.ts";
 import {
   assert,
   assertEquals,

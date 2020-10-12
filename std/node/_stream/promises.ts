@@ -1,5 +1,5 @@
 import pl from "./pipeline.ts";
-import type {PipelineArguments} from "./pipeline.ts";
+import type { PipelineArguments } from "./pipeline.ts";
 import eos from "./end-of-stream.ts";
 import type {
   FinishedOptions,
@@ -16,7 +16,7 @@ export function pipeline(...streams: PipelineArguments) {
         } else {
           resolve(value);
         }
-      }
+      },
     );
   });
 }

@@ -1,10 +1,7 @@
-
 import type { ReadableState } from "./readable.ts";
 import type Writable from "./writable.ts";
 import type { WritableState } from "./writable.ts";
-import {
-  AfterWriteTick, kOnFinished,
-} from "./writable_internal.ts";
+import { AfterWriteTick, kOnFinished } from "./writable_internal.ts";
 import {
   afterWrite,
   afterWriteTick,
@@ -27,10 +24,12 @@ export function endDuplex(stream: Duplex) {
 
 function endReadableNT(state: ReadableState, stream: Duplex) {
   // Check that we didn't get one last unshift.
-  if (!state.errorEmitted && !state.closeEmitted &&
-      !state.endEmitted && state.length === 0) {
+  if (
+    !state.errorEmitted && !state.closeEmitted &&
+    !state.endEmitted && state.length === 0
+  ) {
     state.endEmitted = true;
-    stream.emit('end');
+    stream.emit("end");
 
     if (stream.writable && stream.allowHalfOpen === false) {
       queueMicrotask(() => endWritableNT(state, stream));
@@ -62,7 +61,12 @@ function endWritableNT(state: ReadableState, stream: Duplex) {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function errorOrDestroy(this: any, stream: Duplex, err: Error, sync = false) {
+export function errorOrDestroy(
+  this: any,
+  stream: Duplex,
+  err: Error,
+  sync = false,
+) {
   const r = stream._readableState;
   const w = stream._writableState;
 
@@ -70,7 +74,7 @@ export function errorOrDestroy(this: any, stream: Duplex, err: Error, sync = fal
     return this;
   }
 
-  if (r.autoDestroy || w.autoDestroy){
+  if (r.autoDestroy || w.autoDestroy) {
     stream.destroy(err);
   } else if (err) {
     // Avoid V8 leak, https://github.com/nodejs/node/pull/34103#issuecomment-652002364
@@ -92,7 +96,7 @@ export function errorOrDestroy(this: any, stream: Duplex, err: Error, sync = fal
         w.errorEmitted = true;
         r.errorEmitted = true;
 
-        stream.emit('error', err);
+        stream.emit("error", err);
       });
     } else {
       if (w.errorEmitted || r.errorEmitted) {
@@ -102,7 +106,7 @@ export function errorOrDestroy(this: any, stream: Duplex, err: Error, sync = fal
       w.errorEmitted = true;
       r.errorEmitted = true;
 
-      stream.emit('error', err);
+      stream.emit("error", err);
     }
   }
 }
@@ -126,7 +130,11 @@ function finish(stream: Duplex, state: WritableState) {
   }
 }
 
-export function finishMaybe(stream: Duplex, state: WritableState, sync?: boolean) {
+export function finishMaybe(
+  stream: Duplex,
+  state: WritableState,
+  sync?: boolean,
+) {
   if (needFinish(state)) {
     prefinish(stream as Writable, state);
     if (state.pendingcb === 0 && needFinish(state)) {

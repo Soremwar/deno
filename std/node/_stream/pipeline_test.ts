@@ -4,17 +4,13 @@ import pipeline from "./pipeline.ts";
 import Readable from "./readable.ts";
 import Transform from "./transform.ts";
 import Writable from "./writable.ts";
-import {
-  mustCall,
-} from "../_utils.ts";
+import { mustCall } from "../_utils.ts";
 import {
   assert,
   assertEquals,
   assertStrictEquals,
 } from "../../testing/asserts.ts";
-import type {
-  NodeErrorAbstraction,
-} from "../_errors.ts";
+import type { NodeErrorAbstraction } from "../_errors.ts";
 
 Deno.test("Pipeline ends on stream finished", async () => {
   let finished = false;
@@ -22,23 +18,23 @@ Deno.test("Pipeline ends on stream finished", async () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const processed: any[] = [];
   const expected = [
-    Buffer.from('a'),
-    Buffer.from('b'),
-    Buffer.from('c')
+    Buffer.from("a"),
+    Buffer.from("b"),
+    Buffer.from("c"),
   ];
 
   const read = new Readable({
-    read() {}
+    read() {},
   });
 
   const write = new Writable({
     write(data, _enc, cb) {
       processed.push(data);
       cb();
-    }
+    },
   });
 
-  write.on('finish', () => {
+  write.on("finish", () => {
     finished = true;
   });
 
@@ -47,11 +43,14 @@ Deno.test("Pipeline ends on stream finished", async () => {
   }
   read.push(null);
 
-  const [finished_completed, finished_cb] = mustCall((err?: NodeErrorAbstraction | null) => {
-    assert(!err);
-    assert(finished);
-    assertEquals(processed, expected);
-  }, 1);
+  const [finished_completed, finished_cb] = mustCall(
+    (err?: NodeErrorAbstraction | null) => {
+      assert(!err);
+      assert(finished);
+      assertEquals(processed, expected);
+    },
+    1,
+  );
 
   pipeline(read, write, finished_cb);
 
@@ -60,68 +59,73 @@ Deno.test("Pipeline ends on stream finished", async () => {
 
 Deno.test("Pipeline fails on stream destroyed", async () => {
   const read = new Readable({
-    read() {}
+    read() {},
   });
 
   const write = new Writable({
     write(_data, _enc, cb) {
       cb();
-    }
+    },
   });
 
-  read.push('data');
+  read.push("data");
   queueMicrotask(() => read.destroy());
 
-  const [pipeline_executed, pipeline_cb] = mustCall((err?: NodeErrorAbstraction | null) => {
-    assert(err);
-  }, 1);
+  const [pipeline_executed, pipeline_cb] = mustCall(
+    (err?: NodeErrorAbstraction | null) => {
+      assert(err);
+    },
+    1,
+  );
   pipeline(read, write, pipeline_cb);
 
   await pipeline_executed;
 });
 
-Deno.test("Pipeline exits on stream error", async() => {
+Deno.test("Pipeline exits on stream error", async () => {
   const read = new Readable({
-    read() {}
+    read() {},
   });
 
   const transform = new Transform({
     transform(_data, _enc, cb) {
-      cb(new Error('kaboom'));
-    }
+      cb(new Error("kaboom"));
+    },
   });
 
   const write = new Writable({
     write(_data, _enc, cb) {
       cb();
-    }
+    },
   });
 
   const [read_execution, read_cn] = mustCall();
-  read.on('close', read_cn);
+  read.on("close", read_cn);
   const [close_execution, close_cn] = mustCall();
-  transform.on('close', close_cn);
+  transform.on("close", close_cn);
   const [write_execution, write_cn] = mustCall();
-  write.on('close', write_cn);
+  write.on("close", write_cn);
 
   const error_executions = [read, transform, write]
     .map((stream) => {
       const [execution, cb] = mustCall((err?: NodeErrorAbstraction | null) => {
-        assertEquals(err, new Error('kaboom'));
+        assertEquals(err, new Error("kaboom"));
       });
 
-      stream.on('error', cb);
+      stream.on("error", cb);
       return execution;
     });
 
-  const [pipeline_execution, pipeline_cb] = mustCall((err?: NodeErrorAbstraction | null) => {
-    assertEquals(err, new Error('kaboom'));
-  });
+  const [pipeline_execution, pipeline_cb] = mustCall(
+    (err?: NodeErrorAbstraction | null) => {
+      assertEquals(err, new Error("kaboom"));
+    },
+  );
   const dst = pipeline(read, transform, write, pipeline_cb);
 
   assertStrictEquals(dst, write);
 
-  read.push('hello');
+  read.push("hello");
 
   await read_execution;
   await close_execution;
@@ -137,19 +141,19 @@ Deno.test("Pipeline exits on stream error 2", async () => {
     const tr = new Transform({
       transform(data, _enc, cb) {
         cb(null, data);
-      }
+      },
     });
 
     const [execution, cb] = mustCall();
-    tr.on('close', cb);
+    tr.on("close", cb);
     transform_executions.push(execution);
     return tr;
   };
 
   const rs = new Readable({
     read() {
-      rs.push('hello');
-    }
+      rs.push("hello");
+    },
   });
 
   let cnt = 10;
@@ -157,19 +161,21 @@ Deno.test("Pipeline exits on stream error 2", async () => {
   const ws = new Writable({
     write(_data, _enc, cb) {
       cnt--;
-      if (cnt === 0) return cb(new Error('kaboom'));
+      if (cnt === 0) return cb(new Error("kaboom"));
       cb();
-    }
+    },
   });
 
   const [r_close_execution, r_close_cb] = mustCall();
-  rs.on('close', r_close_cb);
+  rs.on("close", r_close_cb);
   const [w_close_execution, w_close_cb] = mustCall();
-  ws.on('close', w_close_cb);
+  ws.on("close", w_close_cb);
 
-  const [pipeline_execution, pipeline_cb] = mustCall((err?: NodeErrorAbstraction | null) => {
-    assertEquals(err, new Error('kaboom'));
-  });
+  const [pipeline_execution, pipeline_cb] = mustCall(
+    (err?: NodeErrorAbstraction | null) => {
+      assertEquals(err, new Error("kaboom"));
+    },
+  );
 
   pipeline(
     rs,
@@ -190,22 +196,24 @@ Deno.test("Pipeline exits on stream error 2", async () => {
 });
 
 Deno.test("Pipeline processes iterators correctly", async () => {
-  let res = '';
+  let res = "";
   const w = new Writable({
     write(chunk, _encoding, callback) {
       res += chunk;
       callback();
-    }
+    },
   });
 
-  const [pipeline_execution, pipeline_cb] = mustCall((err?: NodeErrorAbstraction | null) => {
-    assert(!err);
-    assertEquals(res, 'helloworld');
-  });
+  const [pipeline_execution, pipeline_cb] = mustCall(
+    (err?: NodeErrorAbstraction | null) => {
+      assert(!err);
+      assertEquals(res, "helloworld");
+    },
+  );
   pipeline(
-    function*() {
-      yield 'hello';
-      yield 'world';
+    function* () {
+      yield "hello";
+      yield "world";
     }(),
     w,
     pipeline_cb,
@@ -215,23 +223,25 @@ Deno.test("Pipeline processes iterators correctly", async () => {
 });
 
 Deno.test("Pipeline processes async iterators correctly", async () => {
-  let res = '';
+  let res = "";
   const w = new Writable({
     write(chunk, _encoding, callback) {
       res += chunk;
       callback();
-    }
+    },
   });
 
-  const [pipeline_execution, pipeline_cb] = mustCall((err?: NodeErrorAbstraction | null) => {
-    assert(!err);
-    assertEquals(res, 'helloworld');
-  });
+  const [pipeline_execution, pipeline_cb] = mustCall(
+    (err?: NodeErrorAbstraction | null) => {
+      assert(!err);
+      assertEquals(res, "helloworld");
+    },
+  );
   pipeline(
-    async function*() {
+    async function* () {
       await Promise.resolve();
-      yield 'hello';
-      yield 'world';
+      yield "hello";
+      yield "world";
     }(),
     w,
     pipeline_cb,
@@ -241,22 +251,24 @@ Deno.test("Pipeline processes async iterators correctly", async () => {
 });
 
 Deno.test("Pipeline processes generators correctly", async () => {
-  let res = '';
+  let res = "";
   const w = new Writable({
     write(chunk, _encoding, callback) {
       res += chunk;
       callback();
-    }
+    },
   });
 
-  const [pipeline_execution, pipeline_cb] = mustCall((err?: NodeErrorAbstraction | null) => {
-    assert(!err);
-    assertEquals(res, 'helloworld');
-  });
+  const [pipeline_execution, pipeline_cb] = mustCall(
+    (err?: NodeErrorAbstraction | null) => {
+      assert(!err);
+      assertEquals(res, "helloworld");
+    },
+  );
   pipeline(
-    function*() {
-      yield 'hello';
-      yield 'world';
+    function* () {
+      yield "hello";
+      yield "world";
     },
     w,
     pipeline_cb,
@@ -266,23 +278,25 @@ Deno.test("Pipeline processes generators correctly", async () => {
 });
 
 Deno.test("Pipeline processes async generators correctly", async () => {
-  let res = '';
+  let res = "";
   const w = new Writable({
     write(chunk, _encoding, callback) {
       res += chunk;
       callback();
-    }
+    },
   });
 
-  const [pipeline_execution, pipeline_cb] = mustCall((err?: NodeErrorAbstraction | null) => {
-    assert(!err);
-    assertEquals(res, 'helloworld');
-  });
+  const [pipeline_execution, pipeline_cb] = mustCall(
+    (err?: NodeErrorAbstraction | null) => {
+      assert(!err);
+      assertEquals(res, "helloworld");
+    },
+  );
   pipeline(
-    async function*() {
+    async function* () {
       await Promise.resolve();
-      yield 'hello';
-      yield 'world';
+      yield "hello";
+      yield "world";
     },
     w,
     pipeline_cb,
@@ -292,24 +306,26 @@ Deno.test("Pipeline processes async generators correctly", async () => {
 });
 
 Deno.test("Pipeline handles generator transforms", async () => {
-  let res = '';
+  let res = "";
 
-  const [pipeline_executed, pipeline_cb] = mustCall((err?: NodeErrorAbstraction | null) => {
-    assert(!err);
-    assertEquals(res, 'HELLOWORLD');
-  });
-  pipeline(
-    async function*() {
-      await Promise.resolve();
-      yield 'hello';
-      yield 'world';
+  const [pipeline_executed, pipeline_cb] = mustCall(
+    (err?: NodeErrorAbstraction | null) => {
+      assert(!err);
+      assertEquals(res, "HELLOWORLD");
     },
-    async function*(source: string[]) {
+  );
+  pipeline(
+    async function* () {
+      await Promise.resolve();
+      yield "hello";
+      yield "world";
+    },
+    async function* (source: string[]) {
       for await (const chunk of source) {
         yield chunk.toUpperCase();
       }
     },
-    async function(source: string[]) {
+    async function (source: string[]) {
       for await (const chunk of source) {
         res += chunk;
       }
@@ -322,23 +338,25 @@ Deno.test("Pipeline handles generator transforms", async () => {
 
 Deno.test("Pipeline passes result to final callback", async () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [pipeline_executed, pipeline_cb] = mustCall((err?: NodeErrorAbstraction | null, val?: any) => {
-    assert(!err);
-    assertEquals(val, 'HELLOWORLD');
-  });
-  pipeline(
-    async function*() {
-      await Promise.resolve();
-      yield 'hello';
-      yield 'world';
+  const [pipeline_executed, pipeline_cb] = mustCall(
+    (err?: NodeErrorAbstraction | null, val?: any) => {
+      assert(!err);
+      assertEquals(val, "HELLOWORLD");
     },
-    async function*(source: string[]) {
+  );
+  pipeline(
+    async function* () {
+      await Promise.resolve();
+      yield "hello";
+      yield "world";
+    },
+    async function* (source: string[]) {
       for await (const chunk of source) {
         yield chunk.toUpperCase();
       }
     },
-    async function(source: string[]) {
-      let ret = '';
+    async function (source: string[]) {
+      let ret = "";
       for await (const chunk of source) {
         ret += chunk;
       }
@@ -351,16 +369,18 @@ Deno.test("Pipeline passes result to final callback", async () => {
 });
 
 Deno.test("Pipeline returns a stream after ending", async () => {
-  const [pipeline_executed, pipeline_cb] = mustCall((err?: NodeErrorAbstraction | null) => {
-    assertEquals(err, undefined);
-  });
+  const [pipeline_executed, pipeline_cb] = mustCall(
+    (err?: NodeErrorAbstraction | null) => {
+      assertEquals(err, undefined);
+    },
+  );
   const ret = pipeline(
-    async function*() {
+    async function* () {
       await Promise.resolve();
-      yield 'hello';
+      yield "hello";
     },
     // deno-lint-ignore require-yield
-    async function*(source: string[]) {
+    async function* (source: string[]) {
       for await (const chunk of source) {
         chunk;
       }
@@ -370,7 +390,7 @@ Deno.test("Pipeline returns a stream after ending", async () => {
 
   ret.resume();
 
-  assertEquals(typeof ret.pipe, 'function');
+  assertEquals(typeof ret.pipe, "function");
 
   await pipeline_executed;
 });
@@ -378,17 +398,19 @@ Deno.test("Pipeline returns a stream after ending", async () => {
 Deno.test("Pipeline returns a stream after erroring", async () => {
   const error_text = "kaboom";
 
-  const [pipeline_executed, pipeline_cb] = mustCall((err?: NodeErrorAbstraction | null) => {
-    assertEquals(err?.message, error_text);
-  });
+  const [pipeline_executed, pipeline_cb] = mustCall(
+    (err?: NodeErrorAbstraction | null) => {
+      assertEquals(err?.message, error_text);
+    },
+  );
   const ret = pipeline(
     // deno-lint-ignore require-yield
-    async function*() {
+    async function* () {
       await Promise.resolve();
       throw new Error(error_text);
     },
     // deno-lint-ignore require-yield
-    async function*(source: string[]) {
+    async function* (source: string[]) {
       for await (const chunk of source) {
         chunk;
       }
@@ -398,7 +420,7 @@ Deno.test("Pipeline returns a stream after erroring", async () => {
 
   ret.resume();
 
-  assertEquals(typeof ret.pipe, 'function');
+  assertEquals(typeof ret.pipe, "function");
 
   await pipeline_executed;
 });
@@ -407,13 +429,15 @@ Deno.test("Pipeline destination gets destroyed on error", async () => {
   const error_text = "kaboom";
   const s = new PassThrough();
 
-  const [pipeline_execution, pipeline_cb] = mustCall((err?: NodeErrorAbstraction | null) => {
-    assertEquals(err?.message, error_text);
-    assertEquals(s.destroyed, true);
-  });
+  const [pipeline_execution, pipeline_cb] = mustCall(
+    (err?: NodeErrorAbstraction | null) => {
+      assertEquals(err?.message, error_text);
+      assertEquals(s.destroyed, true);
+    },
+  );
   pipeline(
     // deno-lint-ignore require-yield
-    async function*() {
+    async function* () {
       throw new Error(error_text);
     },
     s,
